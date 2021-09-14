@@ -49,7 +49,9 @@ class Translator:
         translate_cfg(doc, updater)
         orig = ConfigUpdater(**profile.cfg_parser_opts).read_string(cfg)
         doc = reduce(lambda acc, fn: fn(orig, acc), profile.post_processors, doc)
-        return dumps(doc)
+        return dumps(doc).strip()
+        # TODO: tomlkit is always appending a newline at the end of the document when
+        #       a section is replaced (even if it exists before), so we need to strip()
 
 
 def translate_cfg(out: TOMLDocument, cfg: ConfigUpdater):

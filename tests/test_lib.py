@@ -66,35 +66,85 @@ def test_apply():
     option3 = "1, 2, 3 # comment"
     option4 = "a=1, b=2, c=3 # comment"
     option5 = "\\n   a=1 # comment\\n   b=2, c=3 # comment\\n"
+    option6 = "\\n   1\\n    2 # comment\\n    3\\n"
+    option7 = "\\n   # comment\\n    1\\n    2\\n"
     """
 
+    doc = tomlkit.parse(dedent(example))
     split_int = partial(lib.split_list, coerce_fn=int)
     split_kv_int = partial(lib.split_kv_pairs, coerce_fn=int)
 
-    doc = tomlkit.parse(dedent(example))
     doc["table"] = lib.apply(doc["table"], "option1", int)
     expected = "option1 = 1"
     assert expected in tomlkit.dumps(doc)
+
+    # assert len(_trailing_nl()) == 1
 
     doc["table"] = lib.apply(doc["table"], "option2", lib.split_comment)
     expected = 'option2 = "value" # comment'
     assert expected in tomlkit.dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option3", split_int)
-    expected = "option3 = [1, 2, 3]"  # TODO: add # comment"
-    print(tomlkit.dumps(doc))
+    expected = "option3 = [1, 2, 3] # comment"
     assert expected in tomlkit.dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option4", split_kv_int)
-    expected = "option4 = { a = 1, b = 2, c = 3 } # comment"
+    expected = "option4 = {a = 1, b = 2, c = 3} # comment"
     assert expected in tomlkit.dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option5", split_kv_int)
     expected = """\
-    option5 = {
-        a = 1, # comment
-        b = 2,
-        c = 3 # comment
-    }
+    [table.option5]
+    a = 1 # comment
+    b = 2
+    c = 3 # comment
     """
     assert dedent(expected) in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option6", split_int)
+    expected = """\
+    option6 = [
+        1,
+        2, # comment,
+        3,
+    ]
+    """
+    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
+    assert dedent(expected) in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option7", split_int)
+    expected = """\
+    option7 = [
+        # comment,
+        1,
+        2,
+    ]
+    """
+    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
+    assert dedent(expected) in tomlkit.dumps(doc)
+
+    # TODO: remove workarounds once tomlkit is fixed
+    expected = """\
+    [table]
+    option1 = 1
+    option2 = "value" # comment
+    option3 = [1, 2, 3] # comment
+    option4 = {a = 1, b = 2, c = 3} # comment
+    [table.option5]
+    a = 1 # comment
+    b = 2
+    c = 3 # comment
+
+    option6 = [
+        1,
+        2, # comment,
+        3,
+    ]
+    option7 = [
+        # comment,
+        1,
+        2,
+    ]
+    """
+    print(tomlkit.dumps(doc))
+    assert tomlkit.dumps(doc).strip() == dedent(expected).strip()

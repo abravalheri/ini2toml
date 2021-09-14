@@ -3,7 +3,6 @@ from collections import UserList
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -16,13 +15,9 @@ from typing import (
     overload,
 )
 
-from tomlkit import array, comment, inline_table
-
-if TYPE_CHECKING:
-    pass
-
-    from tomlkit.container import Container
-    from tomlkit.items import Item
+from tomlkit import array, comment, inline_table, table
+from tomlkit.container import Container
+from tomlkit.items import Item
 
 LONG_VALUE = 60
 
@@ -68,22 +63,36 @@ class CommentedList(Generic[T], UserList):
 
     def add_to_container(self, container: "Container", field: str):
         out = array()
-        if len(self) > 1:
-            out.multiline(True)
+        multiline = len(self) > 1
+        out.multiline(multiline)
+        container[field] = out
 
         for item in self.data:
             values = item.value_or([])
             for value in values:
                 out.append(value)
-            if item.comment_only():
+            if not item.has_comment():
+                continue
+            if not multiline:
+                cast("Item", out).comment(item.comment)
+                continue
+            # TODO: tomlkit have problems to add comments to Array items
+            if len(values) > 0:
+                last = out[-1]
+                last.comment(item.comment)
+                # this is the workaround:
+                _before_patch = last.as_string
+
+                def _workaroud():
+                    trivia = last.trivia
+                    return _before_patch() + "," + trivia.comment_ws + trivia.comment
+
+                last.as_string = _workaroud
+            else:
                 cmt = comment(item.comment)
-                out.multiline(True)
-                setattr(cmt, "value", cmt)
-                # TODO: open an issue in tomlkit to allow adding comments to arrays
+                cmt.trivia.trail = ""  # workaround
+                cmt.__dict__["value"] = cmt.as_string()  # workaround
                 out.append(cmt)
-            elif item.has_comment():
-                out[-1].comment(item.comment)
-        container[field] = out
 
 
 class CommentedKV(Generic[T], UserList):
@@ -91,21 +100,21 @@ class CommentedKV(Generic[T], UserList):
         super().__init__(data)
 
     def add_to_container(self, container: "Container", field: str):
-        out = inline_table()
+        multiline = len(self) > 1
+        out = table() if multiline else inline_table()
+        container[field] = out
 
-        for i, item in enumerate(self.data):
+        for item in self.data:
             values = item.value_or([cast(KV, ())])
             k: Optional[str] = None
             for value in values:
                 if value:
                     k, v = value
-                    out.append(k, v)
-            if k is None or item.comment_only():
-                out.append(None, comment(item.comment))  # type: ignore
-                # TODO: open an issue in tomlkit to allow adding comments to inline tab
-            elif item.has_comment():
+                    out.append(k, v)  # type: ignore
+            if multiline and k:
                 out[k].comment(item.comment)
-        container[field] = out
+            else:
+                cast("Item", out).comment(item.comment)
 
 
 # ---- High level function ----
@@ -255,11 +264,3 @@ def _strip_comment(msg: Optional[str], prefixes: str = CP) -> Optional[str]:
     if not msg:
         return None
     return msg.strip().lstrip(prefixes).strip()
-
-
-def _count_comments(commented: Union[CommentedList, CommentedKV]) -> int:
-    for item in commented:
-        if item.has_comment():
-            count += 1
-
-    return count

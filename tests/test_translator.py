@@ -79,7 +79,7 @@ def test_simple_example():
     translator["simple"]
     out = translator.translate(dedent(example), "simple")
     print(out)
-    assert out == dedent(expected)
+    assert out == dedent(expected).strip()
 
 
 def test_parser_opts():
@@ -120,7 +120,7 @@ def test_parser_opts():
     translator["simple"]
     out = translator.translate(dedent(example), "simple")
     print(out)
-    assert out == dedent(expected)
+    assert out == dedent(expected).strip()
 
 
 def test_undefined_profile():
