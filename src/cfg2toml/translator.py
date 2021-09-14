@@ -90,7 +90,7 @@ def translate_option(container: Table, item: Option, parser_opts: dict):
     value = item.value
     prefixes = [p for p in parser_opts.get("comment_prefixes", "#;") if p in value]
 
-    # We just inline comments for single line options
+    # We just process inline comments for single line options
     if not prefixes or len(value.splitlines()) > 1:
         container[item.key] = item.value
         return
