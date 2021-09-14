@@ -75,8 +75,9 @@ You can also use ``cfg2toml`` in your Python scripts or projects:
 .. code-block:: python
 
     # in your python code
-    import cfg2toml
-    toml_str = cfg2toml.translate(original_contents_str, profile="setup.cfg")
+    from cfg2toml import Translator
+
+    toml_str = Translator().translate(original_contents_str, profile="setup.cfg")
 
 To do so, don't forget to add it to your `virtual environment`_ or specify it as a
 `project dependency`_.
@@ -160,7 +161,8 @@ Each pre-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   def pre_process(cfg: ConfigUpdater) -> ConfigUpdater: ...
+   def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
+       ...
 
 Pre-processors are called in sequence, so the output of one pre-processor is
 the input of the following (also working as a pipeline).
@@ -177,7 +179,8 @@ Each post-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   def post_process(cfg: ConfigUpdater, toml: TOMLDocument) -> TOMLDocument: ...
+   def post_process(cfg: ConfigUpdater, toml: TOMLDocument) -> TOMLDocument:
+       ...
 
 Please notice your function **SHOULD NOT** modify the ``cfg`` parameter. This
 parameter corresponds to the original |dos_ini| document, as originally parsed by
@@ -201,6 +204,7 @@ example bellow.
 
 .. code-block:: python
    from cfg2toml import Translator
+
 
    def activate(translator: Translator):
        profile = translator["setup.cfg"]

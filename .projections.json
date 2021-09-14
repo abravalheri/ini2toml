@@ -1,0 +1,21 @@
+{
+  "*.py": {
+    "autoformat": true,
+    "textwidth": 88
+  },
+  "src/cfg2toml/*/__init__.py" : {
+    "alternate": "tests/test_{basename}.py",
+    "type": "source"
+  },
+  "src/cfg2toml/*.py" : {
+    "alternate": "tests/{dirname}/test_{basename}.py",
+    "type": "source"
+  },
+  "tests/**/test_*.py" : {
+    "alternate": [
+      "src/cfg2toml/{dirname}/{basename}.py",
+      "src/cfg2toml/{dirname}/{basename}/__init__.py"
+    ],
+    "type": "test"
+  }
+}
