@@ -110,7 +110,9 @@ class CommentedKV(Generic[T], UserList):
             for value in values:
                 if value:
                     k, v = value
-                    out.append(k, v)  # type: ignore
+                    out[k] = v  # type: ignore
+            if not item.has_comment():
+                continue
             if multiline and k:
                 out[k].comment(item.comment)
             else:
@@ -178,39 +180,64 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
 
 @overload
 def split_list(
-    value: str, sep: str = ",", *, comment_prefixes=CP
+    value: str, sep: str = ",", *, subsplit_dangling=True, comment_prefixes=CP
 ) -> CommentedList[str]:
     ...
 
 
 @overload
 def split_list(
-    value: str, sep: str = ",", *, coerce_fn: CoerceFn[T], comment_prefixes=CP
+    value: str,
+    sep: str = ",",
+    *,
+    coerce_fn: CoerceFn[T],
+    subsplit_dangling=True,
+    comment_prefixes=CP,
 ) -> CommentedList[T]:
     ...
 
 
 @overload
 def split_list(
-    value: str, sep: str, coerce_fn: CoerceFn[T], comment_prefixes=CP
+    value: str,
+    sep: str,
+    coerce_fn: CoerceFn[T],
+    subsplit_dangling=True,
+    comment_prefixes=CP,
 ) -> CommentedList[T]:
     ...
 
 
-def split_list(value, sep=",", coerce_fn=noop, comment_prefixes=CP):
-    """Value encoded as a (potentially) dangling list values separated by ``sep``"""
+def split_list(
+    value, sep=",", coerce_fn=noop, subsplit_dangling=True, comment_prefixes=CP
+):
+    """Value encoded as a (potentially) dangling list values separated by ``sep``.
+
+    This function will first try to split the value by lines (dangling list) using
+    :func:`str.splitlines`. Then, if ``subsplit_dangling=True``, it will split each line
+    using ``sep``. As a result a list of items is obtained.
+    For each item in this list ``coerce_fn`` is applied.
+    """
     comment_prefixes = comment_prefixes.replace(sep, "")
 
-    def _split(line: str) -> list:
-        return [coerce_fn(v.strip()) for v in line.split(sep)]
-
     values = value.strip().splitlines()
+    if not subsplit_dangling and len(values) > 0:
+        sep += "\n"  # force a pattern that cannot be found in a split line
+
+    def _split(line: str) -> list:
+        return [coerce_fn(v.strip()) for v in line.split(sep) if v]
+
     return CommentedList([split_comment(v, _split, comment_prefixes) for v in values])
 
 
 @overload
 def split_kv_pairs(
-    value: str, sep: str = "=", *, item_sep=",", comment_prefixes=CP
+    value: str,
+    key_sep: str = "=",
+    *,
+    pair_sep=",",
+    subsplit_dangling=True,
+    comment_prefixes=CP,
 ) -> CommentedKV[str]:
     ...
 
@@ -218,10 +245,11 @@ def split_kv_pairs(
 @overload
 def split_kv_pairs(
     value: str,
-    sep: str = "=",
+    key_sep: str = "=",
     *,
     coerce_fn: CoerceFn[T],
-    item_sep=",",
+    pair_sep=",",
+    subsplit_dangling=True,
     comment_prefixes=CP,
 ) -> CommentedKV[T]:
     ...
@@ -229,24 +257,47 @@ def split_kv_pairs(
 
 @overload
 def split_kv_pairs(
-    value: str, sep: str, coerce_fn: CoerceFn[T], item_sep=",", comment_prefixes=CP
+    value: str,
+    key_sep: str,
+    coerce_fn: CoerceFn[T],
+    pair_sep=",",
+    subsplit_dangling=True,
+    comment_prefixes=CP,
 ) -> CommentedKV[T]:
     ...
 
 
-def split_kv_pairs(value, sep="=", coerce_fn=noop, item_sep=",", comment_prefixes=CP):
+def split_kv_pairs(
+    value,
+    key_sep="=",
+    coerce_fn=noop,
+    pair_sep=",",
+    subsplit_dangling=True,
+    comment_prefixes=CP,
+):
     """Value encoded as a (potentially) dangling list of key-value pairs.
-    The key is separated from the values by ``sep``, and each key-value is separated
-    from each other by ``item_sep`` or a new line.
-    """
-    comment_prefixes = comment_prefixes.replace(sep, "")
-    comment_prefixes = comment_prefixes.replace(item_sep, "")
 
-    def _split_kv(line: str) -> List[KV]:
-        pairs = (item.split(sep) for item in line.strip().split(item_sep))
-        return [(k.strip(), coerce_fn(v.strip())) for k, v in pairs]
+    This function will first try to split the value by lines (dangling list) using
+    :func:`str.splitlines`. Then, if ``subsplit_dangling=True``, it will split each line
+    using ``pair_sep``. As a result a list of key-value pairs is obtained.
+    For each item in this list, the key is separated from the value by ``key_sep``.
+    ``coerce_fn`` is used to convert the value in each pair.
+    """
+    comment_prefixes = comment_prefixes.replace(key_sep, "")
+    comment_prefixes = comment_prefixes.replace(pair_sep, "")
 
     values = value.strip().splitlines()
+    if not subsplit_dangling and len(values) > 0:
+        pair_sep += "\n"  # force a pattern that cannot be found in a split line
+
+    def _split_kv(line: str) -> List[KV]:
+        pairs = (
+            item.split(key_sep, maxsplit=1)
+            for item in line.strip().split(pair_sep)
+            if key_sep in item
+        )
+        return [(k.strip(), coerce_fn(v.strip())) for k, v in pairs]
+
     return CommentedKV([split_comment(v, _split_kv, comment_prefixes) for v in values])
 
 
