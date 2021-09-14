@@ -20,6 +20,8 @@ def test_split_comment():
     example = "1 # comment"
     assert lib.split_comment(example) == lib.Commented("1", "comment")
     assert lib.split_comment(example, int) == lib.Commented(1, "comment")
+    example = lib.split_comment(" # comment only")
+    assert example.comment_only()
 
 
 def test_split_list():

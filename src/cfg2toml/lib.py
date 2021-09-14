@@ -1,7 +1,21 @@
 """Reusable post-processing and type casting operations"""
 from collections import UserList
 from dataclasses import dataclass, field
-from typing import Any, Callable, Generic, List, Optional, Tuple, TypeVar, overload
+from enum import Enum
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
+)
+
+NotGiven = Enum("NotGiven", "NOT_GIVEN")
+NOT_GIVEN = NotGiven.NOT_GIVEN
 
 CP = "#;"
 """Default Comment Prefixes"""
@@ -14,8 +28,14 @@ Transformation = Callable[[str], Any]
 
 @dataclass
 class Commented(Generic[T]):
-    value: Optional[T] = field(default_factory=lambda: None)
+    value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
     comment: Optional[str] = field(default_factory=lambda: None)
+
+    def comment_only(self):
+        return self.value == NOT_GIVEN
+
+    def has_comment(self):
+        return bool(self.comment)
 
 
 class CommentedList(Generic[T], UserList):
@@ -64,8 +84,8 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
     if not prefixes or len(value.splitlines()) > 1:
         return Commented(coerce_fn(value))
 
-    if value.startswith(comment_prefixes):
-        return Commented(None, _strip_comment(value, comment_prefixes))
+    if any(value.startswith(p) for p in comment_prefixes):
+        return Commented(NOT_GIVEN, _strip_comment(value, comment_prefixes))
 
     prefix = prefixes[0]  # We can only analyse one...
     value, cmt = _split_in_2(value, prefix)
