@@ -1,4 +1,8 @@
+from functools import partial
+from textwrap import dedent
+
 import pytest
+import tomlkit
 
 from cfg2toml import lib
 
@@ -52,3 +56,45 @@ def test_split_kv_pairs():
         lib.Commented([("d", 4), ("e", 5), ("f", 6)], "comment"),
     ]
     assert lib.split_kv_pairs(example, coerce_fn=int) == expected
+
+
+def test_apply():
+    example = """\
+    [table]
+    option1 = "1"
+    option2 = "value # comment"
+    option3 = "1, 2, 3 # comment"
+    option4 = "a=1, b=2, c=3 # comment"
+    option5 = "\\n   a=1 # comment\\n   b=2, c=3 # comment\\n"
+    """
+
+    split_int = partial(lib.split_list, coerce_fn=int)
+    split_kv_int = partial(lib.split_kv_pairs, coerce_fn=int)
+
+    doc = tomlkit.parse(dedent(example))
+    doc["table"] = lib.apply(doc["table"], "option1", int)
+    expected = "option1 = 1"
+    assert expected in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option2", lib.split_comment)
+    expected = 'option2 = "value" # comment'
+    assert expected in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option3", split_int)
+    expected = "option3 = [1, 2, 3]"  # TODO: add # comment"
+    print(tomlkit.dumps(doc))
+    assert expected in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option4", split_kv_int)
+    expected = "option4 = { a = 1, b = 2, c = 3 } # comment"
+    assert expected in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option5", split_kv_int)
+    expected = """\
+    option5 = {
+        a = 1, # comment
+        b = 2,
+        c = 3 # comment
+    }
+    """
+    assert dedent(expected) in tomlkit.dumps(doc)

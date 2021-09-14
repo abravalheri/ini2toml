@@ -3,6 +3,7 @@ from collections import UserList
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -11,8 +12,21 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
     overload,
 )
+
+from tomlkit import array, comment, inline_table
+
+if TYPE_CHECKING:
+    pass
+
+    from tomlkit.container import Container
+    from tomlkit.items import Item
+
+LONG_VALUE = 60
+
+# ---- Useful types ----
 
 NotGiven = Enum("NotGiven", "NOT_GIVEN")
 NOT_GIVEN = NotGiven.NOT_GIVEN
@@ -21,6 +35,8 @@ CP = "#;"
 """Default Comment Prefixes"""
 
 T = TypeVar("T")
+S = TypeVar("S")
+C = TypeVar("C", bound="Container")
 KV = Tuple[str, T]
 CoerceFn = Callable[[str], T]
 Transformation = Callable[[str], Any]
@@ -32,20 +48,79 @@ class Commented(Generic[T]):
     comment: Optional[str] = field(default_factory=lambda: None)
 
     def comment_only(self):
-        return self.value == NOT_GIVEN
+        return self.value is NOT_GIVEN
 
     def has_comment(self):
         return bool(self.comment)
+
+    def value_or(self, fallback: S) -> Union[T, S]:
+        return fallback if self.value is NOT_GIVEN else self.value
+
+    def add_to_container(self, container: "Container", field: str):
+        container[field] = self.value_or("")
+        if self.has_comment():
+            cast("Item", container[field]).comment(cast(str, self.comment))
 
 
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[T]]]):
         super().__init__(data)
 
+    def add_to_container(self, container: "Container", field: str):
+        out = array()
+        if len(self) > 1:
+            out.multiline(True)
+
+        for item in self.data:
+            values = item.value_or([])
+            for value in values:
+                out.append(value)
+            if item.comment_only():
+                cmt = comment(item.comment)
+                out.multiline(True)
+                setattr(cmt, "value", cmt)
+                # TODO: open an issue in tomlkit to allow adding comments to arrays
+                out.append(cmt)
+            elif item.has_comment():
+                out[-1].comment(item.comment)
+        container[field] = out
+
 
 class CommentedKV(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[KV[T]]]]):
         super().__init__(data)
+
+    def add_to_container(self, container: "Container", field: str):
+        out = inline_table()
+
+        for i, item in enumerate(self.data):
+            values = item.value_or([cast(KV, ())])
+            k: Optional[str] = None
+            for value in values:
+                if value:
+                    k, v = value
+                    out.append(k, v)
+            if k is None or item.comment_only():
+                out.append(None, comment(item.comment))  # type: ignore
+                # TODO: open an issue in tomlkit to allow adding comments to inline tab
+            elif item.has_comment():
+                out[k].comment(item.comment)
+        container[field] = out
+
+
+# ---- High level function ----
+
+
+def apply(container: C, field: str, fn: Transformation) -> C:
+    """Modify the TOML container by applying the transformation ``fn`` to the value
+    stored under the ``field`` key.
+    """
+    x = fn(str(container[field]))
+    if hasattr(x, "add_to_container"):
+        x.add_to_container(container, field)
+    else:
+        container[field] = x
+    return container
 
 
 # ---- Value processors ----
@@ -180,3 +255,11 @@ def _strip_comment(msg: Optional[str], prefixes: str = CP) -> Optional[str]:
     if not msg:
         return None
     return msg.strip().lstrip(prefixes).strip()
+
+
+def _count_comments(commented: Union[CommentedList, CommentedKV]) -> int:
+    for item in commented:
+        if item.has_comment():
+            count += 1
+
+    return count
