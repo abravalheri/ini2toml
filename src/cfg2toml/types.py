@@ -1,5 +1,6 @@
 import sys
-from typing import Callable, List
+from collections.abc import Mapping, MutableMapping
+from typing import Callable, List, TypeVar, Union
 
 from configupdater import ConfigUpdater
 from tomlkit.toml_document import TOMLDocument
@@ -11,8 +12,18 @@ else:  # pragma: no cover
     from typing import Protocol
 
 
-PreProcessor = Callable[[ConfigUpdater], ConfigUpdater]
-PostProcessor = Callable[[ConfigUpdater, TOMLDocument], TOMLDocument]
+M = TypeVar("M", bound=MutableMapping)
+
+# Specific, using ConfigUpdater and TOMLDocument objects
+PreProcessorCFG = Callable[[ConfigUpdater], ConfigUpdater]
+PostProcessorTOML = Callable[[ConfigUpdater, TOMLDocument], TOMLDocument]
+
+# Generic, using MutableMapping
+PreProcessorM = Callable[[M], M]
+PostProcessorM = Callable[[Mapping, M], M]
+
+PreProcessor = Union[PreProcessorCFG, PreProcessorM]
+PostProcessor = Union[PostProcessorTOML, PostProcessorM]
 
 
 class Profile(Protocol):

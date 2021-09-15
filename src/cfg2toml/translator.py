@@ -47,8 +47,7 @@ class Translator:
         updater = reduce(lambda acc, fn: fn(acc), profile.pre_processors, updater)
         doc = document()
         translate_cfg(doc, updater)
-        orig = ConfigUpdater(**profile.cfg_parser_opts).read_string(cfg)
-        doc = reduce(lambda acc, fn: fn(orig, acc), profile.post_processors, doc)
+        doc = reduce(lambda acc, fn: fn(updater, acc), profile.post_processors, doc)
         return dumps(doc).strip()
         # TODO: tomlkit is always appending a newline at the end of the document when
         #       a section is replaced (even if it exists before), so we need to strip()
