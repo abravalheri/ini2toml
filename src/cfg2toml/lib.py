@@ -17,7 +17,7 @@ from typing import (
 
 from tomlkit import array, comment, inline_table, table
 from tomlkit.container import Container
-from tomlkit.items import Item
+from tomlkit.items import Array, InlineTable, Item, Table
 
 LONG_VALUE = 60
 
@@ -65,7 +65,6 @@ class CommentedList(Generic[T], UserList):
         out = array()
         multiline = len(self) > 1
         out.multiline(multiline)
-        container[field] = out
 
         for item in self.data:
             values = item.value_or([])
@@ -74,25 +73,15 @@ class CommentedList(Generic[T], UserList):
             if not item.has_comment():
                 continue
             if not multiline:
-                cast("Item", out).comment(item.comment)
-                continue
-            # TODO: tomlkit have problems to add comments to Array items
+                container[field] = out
+                out.comment(item.comment)
+                return
             if len(values) > 0:
-                last = out[-1]
-                last.comment(item.comment)
-                # this is the workaround:
-                _before_patch = last.as_string
-
-                def _workaroud():
-                    trivia = last.trivia
-                    return _before_patch() + "," + trivia.comment_ws + trivia.comment
-
-                last.as_string = _workaroud
+                _add_comment_array_last_item(out, item.comment)
             else:
-                cmt = comment(item.comment)
-                cmt.trivia.trail = ""  # workaround
-                cmt.__dict__["value"] = cmt.as_string()  # workaround
-                out.append(cmt)
+                _add_comment_array_entire_line(out, item.comment)
+
+        container[field] = out
 
 
 class CommentedKV(Generic[T], UserList):
@@ -101,22 +90,26 @@ class CommentedKV(Generic[T], UserList):
 
     def add_to_container(self, container: "Container", field: str):
         multiline = len(self) > 1
-        out = table() if multiline else inline_table()
-        container[field] = out
+        out: Union[Table, InlineTable] = table() if multiline else inline_table()
 
         for item in self.data:
-            values = item.value_or([cast(KV, ())])
+            values = (v for v in item.value_or([cast(KV, ())]) if v)
             k: Optional[str] = None
             for value in values:
-                if value:
-                    k, v = value
-                    out[k] = v  # type: ignore
+                k, v = value
+                out[k] = v
             if not item.has_comment():
                 continue
-            if multiline and k:
+            if not multiline:
+                container[field] = out
+                out.comment(item.comment)
+                return
+            if k:
                 out[k].comment(item.comment)
             else:
-                cast("Item", out).comment(item.comment)
+                out.append(None, comment(item.comment))
+
+        container[field] = out
 
 
 # ---- High level function ----
@@ -315,3 +308,23 @@ def _strip_comment(msg: Optional[str], prefixes: str = CP) -> Optional[str]:
     if not msg:
         return None
     return msg.strip().lstrip(prefixes).strip()
+
+
+def _add_comment_array_last_item(toml_array: Array, cmt: str):
+    # Workaround for bug in tomlkit, it should be: toml_array[-1].comment(cmt)
+    # TODO: Remove when tomlkit fixes it
+    last = toml_array[-1]
+    last.comment(cmt)
+    trivia = last.trivia
+    # begin workaround -->
+    _before_patch = last.as_string
+    last.as_string = lambda: _before_patch() + "," + trivia.comment_ws + trivia.comment
+
+
+def _add_comment_array_entire_line(toml_array: Array, cmt_msg: str):
+    # Workaround for bug in tomlkit, it should be: toml_array.append(comment(cmt))
+    # TODO: Remove when tomlkit fixes it
+    cmt = comment(cmt_msg)
+    cmt.trivia.trail = ""
+    cmt.__dict__["value"] = cmt.as_string()
+    toml_array.append(cmt)

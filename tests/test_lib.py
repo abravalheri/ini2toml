@@ -70,6 +70,7 @@ def test_apply():
 
     # commented multiline compound value
     option5 = "\\n   a=1 # comment\\n   b=2, c=3 # comment\\n"
+    "option5.1" = "\\n   # header comment\\n   b=2, c=3 # comment\\n"
     option6 = "\\n   1\\n    2 # comment\\n    3\\n"
     option7 = "\\n   # comment\\n    1\\n    2\\n"
 
@@ -107,6 +108,15 @@ def test_apply():
     expected = """\
     [table.option5]
     a = 1 # comment
+    b = 2
+    c = 3 # comment
+    """
+    assert dedent(expected) in tomlkit.dumps(doc)
+
+    doc["table"] = lib.apply(doc["table"], "option5.1", split_kv_int)
+    expected = """\
+    [table."option5.1"]
+    # header comment
     b = 2
     c = 3 # comment
     """
