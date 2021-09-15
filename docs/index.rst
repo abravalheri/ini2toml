@@ -30,6 +30,7 @@ Contents
    :maxdepth: 2
 
    Overview <readme>
+   Setuptools & PEP 621 <setuptools_pep621>
    Contributions & Help <contributing>
    License <license>
    Authors <authors>
