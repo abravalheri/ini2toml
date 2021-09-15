@@ -19,10 +19,6 @@ from tomlkit import array, comment, inline_table, table
 from tomlkit.container import Container
 from tomlkit.items import Array, InlineTable, Item, Table
 
-LONG_VALUE = 60
-
-# ---- Useful types ----
-
 NotGiven = Enum("NotGiven", "NOT_GIVEN")
 NOT_GIVEN = NotGiven.NOT_GIVEN
 
