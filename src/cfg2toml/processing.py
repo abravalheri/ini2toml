@@ -1,5 +1,6 @@
 """Reusable post-processing and type casting operations"""
 from collections import UserList
+from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
@@ -115,11 +116,22 @@ def apply(container: C, field: str, fn: Transformation) -> C:
     """Modify the TOML container by applying the transformation ``fn`` to the value
     stored under the ``field`` key.
     """
-    x = fn(str(container[field]))
-    if hasattr(x, "add_to_container"):
-        x.add_to_container(container, field)
+    value = container[field]
+    if not isinstance(value, str):
+        return value
+    processed = fn(str(value))
+    if hasattr(processed, "add_to_container"):
+        processed.add_to_container(container, field)
     else:
-        container[field] = x
+        container[field] = processed
+    return container
+
+
+def apply_nested(container: C, path: Sequence, fn: Transformation) -> C:
+    *parent, last = path
+    nested = get_nested(container, parent)
+    if nested and last in nested:
+        apply(nested, last, fn)
     return container
 
 
@@ -210,7 +222,7 @@ def split_list(
     comment_prefixes = comment_prefixes.replace(sep, "")
 
     values = value.strip().splitlines()
-    if not subsplit_dangling and len(values) > 0:
+    if not subsplit_dangling and len(values) > 1:
         sep += "\n"  # force a pattern that cannot be found in a split line
 
     def _split(line: str) -> list:
@@ -276,7 +288,7 @@ def split_kv_pairs(
     comment_prefixes = comment_prefixes.replace(pair_sep, "")
 
     values = value.strip().splitlines()
-    if not subsplit_dangling and len(values) > 0:
+    if not subsplit_dangling and len(values) > 1:
         pair_sep += "\n"  # force a pattern that cannot be found in a split line
 
     def _split_kv(line: str) -> List[KV]:
@@ -290,7 +302,73 @@ def split_kv_pairs(
     return CommentedKV([split_comment(v, _split_kv, comment_prefixes) for v in values])
 
 
+# ---- Access Helpers ----
+
+
+def get_nested(m, keys, default=None):
+    """Nested version of Mapping.get"""
+    value = m
+    for k in keys:
+        try:
+            value = value[k]
+        except (KeyError, IndexError):
+            return default
+    return value
+
+
+def pop_nested(m, keys, default=None):
+    """Nested version of Mapping.get"""
+    *path, last = keys
+    parent = get_nested(m, path, NOT_GIVEN)
+    if parent is NOT_GIVEN:
+        return default
+    if isinstance(parent, MutableMapping):
+        return parent.pop(last, default)
+    if len(parent) > last:
+        return parent.pop(last)
+    return default
+
+
+def set_nested(m, keys, value):
+    last = keys[-1]
+    parent = [] if isinstance(last, int) else {}
+    parent = setdefault(m, keys[:-1], parent)
+    parent = get_nested(m, keys[:-1], parent)
+    try:
+        parent[last] = value
+    except IndexError:
+        parent.append(value)
+    if hasattr(value, "display_name"):
+        # Temporary workaround for tomlkit#144 and atoml#24
+        j = next((i for i, k in enumerate(keys) if isinstance(k, int)), 0)
+        value.display_name = ".".join(keys[j:])
+    return m
+
+
+def setdefault(m, keys, default=None):
+    """Nested version of MutableMapping.get"""
+    if len(keys) < 1:
+        return m
+    if len(keys) == 1:
+        return _setdefault(m, keys[0], default)
+    value = m
+    for (k, nxt) in zip(keys[:-1], keys[1:]):
+        value = _setdefault(value, k, [] if isinstance(nxt, int) else {})
+    return _setdefault(value, nxt, default)
+
+
 # ---- Private Helpers ----
+
+
+def _setdefault(container, key, default):
+    # Also "works" for lists
+    if hasattr(container, "setdefault"):
+        return container.setdefault(key, default)
+    try:
+        return container[key]
+    except IndexError:
+        container.append(default)
+    return default
 
 
 def _split_in_2(v: str, sep: str) -> Tuple[str, Optional[str]]:

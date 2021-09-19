@@ -4,8 +4,8 @@
 import sys
 from typing import Callable, Iterable, List, Optional, cast
 
-from .meta import __version__
-from .types import Extension
+from ..meta import __version__
+from ..types import Extension
 
 if sys.version_info[:2] >= (3, 8):  # pragma: no cover
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
