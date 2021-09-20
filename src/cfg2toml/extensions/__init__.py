@@ -42,7 +42,7 @@ def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
 def load_from_entry_point(entry_point: EntryPoint) -> Extension:
     """Carefully load the extension, raising a meaningful message in case of errors"""
     try:
-        return entry_point.load()(entry_point.name)
+        return entry_point.load()
     except Exception as ex:
         raise ErrorLoadingExtension(entry_point=entry_point) from ex
 

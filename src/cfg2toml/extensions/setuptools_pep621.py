@@ -21,7 +21,7 @@ from ..translator import Translator
 M = TypeVar("M", bound=MutableMapping)
 C = TypeVar("C", bound=Container)
 
-RenameRules = Dict[Tuple[str, ...], Union[Tuple[str, ...], None]]
+RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 
 
 def activate(translator: Translator):
@@ -93,7 +93,7 @@ def pep621_renaming() -> RenameRules:
     Rules are applied sequentially and therefore can interfere with the following
     ones. Please notice that renaming is applied after value processing.
     """
-    metadata = {
+    metadata: RenameRules = {
         ("project-urls",): ("urls",),
         ("url",): ("urls", "homepage"),
         ("download-url",): ("urls", "download"),
@@ -107,7 +107,7 @@ def pep621_renaming() -> RenameRules:
         ("license-files",): ("license", "file"),
         ("license",): ("license", "text"),
     }
-    options = {
+    options: RenameRules = {
         ("python-requires",): ("requires-python",),
         ("install-requires",): ("dependencies",),
         ("extras-require",): ("optional-dependencies",),
@@ -118,8 +118,14 @@ def pep621_renaming() -> RenameRules:
     return {
         ("metadata",): ("project",),
         ("options",): ("tool", "setuptools"),
-        **{("project", *k): ("project", *v) for k, v in metadata.items()},
-        **{("tool", "setuptools", *k): ("project", *v) for k, v in options.items()},
+        **{
+            ("project", *k): ("project", *v)  # type: ignore[misc]
+            for k, v in metadata.items()
+        },
+        **{
+            ("tool", "setuptools", *k): ("project", *v)  # type: ignore[misc]
+            for k, v in options.items()
+        },
         **{("project", *e): ("tool", "setuptools", *e) for e in specific},
     }
 
@@ -128,7 +134,6 @@ def convert_directives(_orig: ConfigUpdater, out: C) -> C:
     split_directive = partial(split_kv_pairs, key_sep=":")
     for keys, directives in setupcfg_directives().items():
         value = get_nested(out, keys)
-        print("keys:", *keys, "value:", value)
         if value and any(value.strip().startswith(f"{d}:") for d in directives):
             out = apply_nested(out, keys, split_directive)
     return out
@@ -246,5 +251,7 @@ def convert_case(field: str) -> str:
 
 def isdirective(value, valid=("file", "attr")) -> bool:
     return (
-        isinstance(value, Mapping) and len(value) == 1 and next(value.keys()) in valid
+        isinstance(value, Mapping)
+        and len(value) == 1
+        and next(value.keys()) in valid  # type: ignore[call-overload]
     )
