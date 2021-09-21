@@ -222,6 +222,22 @@ def fix_packages(_orig: Mapping, out: M) -> M:
     return out
 
 
+def ensure_pep518(_orig: Mapping, out: M) -> M:
+    """PEP 518 specifies that any other tool adding configuration under
+    ``pyproject.toml`` should use the ``tool`` table. This means that the only
+    top-level keys are ``build-system``, ``project`` and ``tool``
+    """
+    N = len("tool:")
+    allowed = ("build-system", "project", "tool")
+    for top_level_key in list(out.keys()):
+        key = top_level_key
+        if any(top_level_key[:N] == p for p in ("tool:", "tool.")):
+            key = top_level_key[N:]
+        if top_level_key not in allowed:
+            set_nested(out, ("tool", key), out.pop(top_level_key))
+    return out
+
+
 def post_process(orig: ConfigUpdater, out: C) -> C:
     transformations = [
         convert_directives,
@@ -232,6 +248,7 @@ def post_process(orig: ConfigUpdater, out: C) -> C:
         fix_dynamic,
         fix_packages,
         # fix_setup_requires,
+        ensure_pep518,
     ]
     return reduce(lambda acc, fn: fn(orig, acc), transformations, out)
 
