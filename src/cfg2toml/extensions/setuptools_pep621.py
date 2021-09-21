@@ -3,7 +3,6 @@ from functools import partial, reduce
 from typing import Dict, List, Tuple, TypeVar, Union
 
 from configupdater import ConfigUpdater
-from tomlkit.container import Container
 
 from ..processing import (
     NOT_GIVEN,
@@ -20,7 +19,6 @@ from ..processing import (
 from ..translator import Translator
 
 M = TypeVar("M", bound=MutableMapping)
-C = TypeVar("C", bound=Container)
 
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 ProcessingRules = Dict[Tuple[str, ...], Transformation]
@@ -238,7 +236,7 @@ def ensure_pep518(_orig: Mapping, out: M) -> M:
     return out
 
 
-def post_process(orig: ConfigUpdater, out: C) -> C:
+def post_process(orig: Mapping, out: M) -> M:
     transformations = [
         convert_directives,
         separate_subtables,
