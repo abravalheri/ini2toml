@@ -7,7 +7,7 @@ from tomlkit.container import Container
 
 from ..processing import (
     NOT_GIVEN,
-    apply_group,
+    Transformation,
     apply_nested,
     coerce_bool,
     get_nested,
@@ -23,6 +23,7 @@ M = TypeVar("M", bound=MutableMapping)
 C = TypeVar("C", bound=Container)
 
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
+ProcessingRules = Dict[Tuple[str, ...], Transformation]
 
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
@@ -61,7 +62,7 @@ def setupcfg_directives():
     }
 
 
-def value_processing():
+def processing_rules() -> ProcessingRules:
     """Value type processing, as defined in:
     https://setuptools.readthedocs.io/en/stable/userguide/declarative_config.html
     """
@@ -86,10 +87,20 @@ def value_processing():
         ("options", "namespace-packages"): split_list_comma,
         ("options", "py-modules"): split_list_comma,
         ("options", "data-files"): split_kv_pairs,
-        # ("options", "entry-points"): -> for each split_kv_pairs
-        # ("options", "extras-require"): -> for each split_list_comma
     }
+    # See also dynamic_processing_rules
     # Everything else should use split_comment
+
+
+def dynamic_processing_rules(doc: Mapping) -> ProcessingRules:
+    """Dynamically create processing rules, such as :func:`value_processing` based on
+    the existing document.
+    """
+    groups: Dict[Tuple[str, ...], Transformation] = {
+        ("options", "entry-points"): split_kv_pairs,
+        ("options", "extras-require"): split_list_comma,
+    }
+    return {(*p, k): fn for p, fn in groups.items() for k in get_nested(doc, p, ())}
 
 
 def pep621_renaming() -> RenameRules:
@@ -134,7 +145,7 @@ def pep621_renaming() -> RenameRules:
     }
 
 
-def convert_directives(_orig: ConfigUpdater, out: C) -> C:
+def convert_directives(_orig: Mapping, out: M) -> M:
     split_directive = partial(split_kv_pairs, key_sep=":")
     for keys, directives in setupcfg_directives().items():
         value = get_nested(out, keys)
@@ -156,21 +167,21 @@ def apply_renaming(_orig: Mapping, out: M) -> M:
     rules = pep621_renaming()
     for src, dest in rules.items():
         value = pop_nested(out, src, NOT_GIVEN)
-        if value is not NOT_GIVEN:
+        if dest and value is not NOT_GIVEN:
             out = set_nested(out, dest, value)
     return out
 
 
-def apply_value_processing(_orig: ConfigUpdater, out: C) -> C:
-    transformations = value_processing()
-    for name, section in out.items():
-        if name not in ("metadata", "options"):
-            continue
-        for option in section:
-            key = (name, option)
-            out = apply_nested(out, key, transformations.get(key, split_comment))
-    apply_group(out, ("options", "entry-points"), split_kv_pairs)
-    apply_group(out, ("options", "extras-require"), split_list_comma)
+def apply_value_processing(_orig: Mapping, out: M) -> M:
+    default = {
+        (name, option): split_comment
+        for name, section in out.items()
+        if name in ("metadata", "options")
+        for option in section
+    }
+    transformations = {**default, **processing_rules(), **dynamic_processing_rules(out)}
+    for path, fn in transformations.items():
+        out = apply_nested(out, path, fn)
     return out
 
 

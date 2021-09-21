@@ -144,21 +144,6 @@ def apply_nested(container: M, path: Sequence, fn: Transformation) -> M:
     return container
 
 
-def apply_group(container: M, path: Sequence, fn: Transformation) -> M:
-    """Similar to apply_nested, but apply ``fn`` to all the elements of a group"""
-    group = get_nested(container, path, None)
-    if isinstance(group, MutableMapping):
-        for key in list(group.keys()):
-            apply(group, key, fn)
-    elif isinstance(group, Sequence):
-        values = [v.as_toml_obj() if hasattr(v, "as_toml_obj") else v for v in group]
-        set_nested(container, path, values)
-    elif group:
-        msg = f"Cannot apply transformations to {group} ({group.__class__.__name__})"
-        raise ValueError(msg)
-    return container
-
-
 # ---- Value processors ----
 
 
