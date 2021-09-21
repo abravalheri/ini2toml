@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import List, Optional, Sequence
 
 from cfg2toml.meta import __version__
@@ -114,9 +115,10 @@ def _get_profile(profile: Optional[str], file_name: str, available: List[str]) -
     if profile:
         return profile
 
-    if file_name in available:
-        _logger.info(f"Profile not explicitly set, {file_name!r} inferred.")
-        return file_name
-    else:
-        _logger.warning(f"Profile not explicitly set, using {DEFAULT_PROFILE!r}.")
-        return DEFAULT_PROFILE
+    options = [file_name, Path(file_name).name]
+    for option in options:
+        if option in available:
+            _logger.info(f"Profile not explicitly set, {option!r} inferred.")
+            return option
+    _logger.warning(f"Profile not explicitly set, using {DEFAULT_PROFILE!r}.")
+    return DEFAULT_PROFILE
