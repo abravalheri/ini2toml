@@ -2,7 +2,7 @@ from functools import reduce
 from typing import Dict, List, Optional, Union
 
 from configupdater import Comment, ConfigUpdater, Option, Section, Space
-from tomlkit import comment, document, dumps, nl, table
+from tomlkit import comment, dumps, loads, nl, table
 from tomlkit.items import Table
 from tomlkit.toml_document import TOMLDocument
 
@@ -45,7 +45,7 @@ class Translator:
         profile = self[profile_name]
         updater = ConfigUpdater(**profile.cfg_parser_opts).read_string(cfg)
         updater = reduce(lambda acc, fn: fn(acc), profile.pre_processors, updater)
-        doc = document()
+        doc = loads(profile.toml_template)
         translate_cfg(doc, updater)
         doc = reduce(lambda acc, fn: fn(updater, acc), profile.post_processors, doc)
         return dumps(doc).strip()

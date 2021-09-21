@@ -30,6 +30,7 @@ class Profile(Protocol):
     pre_processors: List[PreProcessor]
     post_processors: List[PostProcessor]
     cfg_parser_opts: dict
+    toml_template: str
 
 
 class Translator(Protocol):

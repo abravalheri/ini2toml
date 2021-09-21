@@ -27,10 +27,18 @@ split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 
 
+TOML_TEMPLATE = """\
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+"""
+
+
 def activate(translator: Translator):
     profile = translator["setup.cfg"]
     profile.pre_processors.append(pre_process)
     profile.post_processors.append(post_process)
+    profile.toml_template = TOML_TEMPLATE
 
 
 def setupcfg_aliases():
