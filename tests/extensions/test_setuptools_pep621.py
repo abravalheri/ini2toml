@@ -123,9 +123,9 @@ install-requires = [
     "configupdater>=3,<=4",
 ]
 
-["options.entry-points"]
+[options.entry-points]
 # For example:
-["options.entry-points"."pyscaffold.cli"]
+[options.entry-points."pyscaffold.cli"]
 # comment
 fibonacci = "cfg2toml.skeleton:run" # comment
 awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
@@ -135,6 +135,7 @@ awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
 def test_apply_value_processing(cfg2tomlobj):
     cfg = ConfigUpdater().read_string(example_apply_value_processing)
     doc = cfg2tomlobj(example_apply_value_processing)
+    doc = separate_subtables(cfg, doc)
     doc = apply_value_processing(cfg, doc)
     assert tomlkit.dumps(doc).strip() == expected_apply_value_processing.strip()
 

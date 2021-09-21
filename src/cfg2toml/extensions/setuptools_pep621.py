@@ -7,6 +7,7 @@ from tomlkit.container import Container
 
 from ..processing import (
     NOT_GIVEN,
+    apply_group,
     apply_nested,
     coerce_bool,
     get_nested,
@@ -22,6 +23,9 @@ M = TypeVar("M", bound=MutableMapping)
 C = TypeVar("C", bound=Container)
 
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
+
+split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
+split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 
 
 def activate(translator: Translator):
@@ -61,13 +65,11 @@ def value_processing():
     """Value type processing, as defined in:
     https://setuptools.readthedocs.io/en/stable/userguide/declarative_config.html
     """
-    split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
-    # split_list_comma = partial(split_list, sep=",")
-    split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
     return {
         ("metadata", "classifiers"): split_list_comma,
         # ("metadata", "license_files",): split_list_comma,  # PEP621 => single file
         ("metadata", "keywords"): split_list_comma,
+        ("metadata", "project-urls"): split_kv_pairs,
         ("metadata", "provides"): split_list_comma,
         ("metadata", "requires"): split_list_comma,
         ("metadata", "obsoletes"): split_list_comma,
@@ -84,6 +86,8 @@ def value_processing():
         ("options", "namespace-packages"): split_list_comma,
         ("options", "py-modules"): split_list_comma,
         ("options", "data-files"): split_kv_pairs,
+        # ("options", "entry-points"): -> for each split_kv_pairs
+        # ("options", "extras-require"): -> for each split_list_comma
     }
     # Everything else should use split_comment
 
@@ -139,26 +143,11 @@ def convert_directives(_orig: ConfigUpdater, out: C) -> C:
     return out
 
 
-def apply_value_processing(_orig: ConfigUpdater, out: C) -> C:
-    transformations = value_processing()
-    for name, section in out.items():
-        if name not in ("metadata", "options"):
-            continue
-        for option in section:
-            key = (name, option)
-            out = apply_nested(out, key, transformations.get(key, split_comment))
-    # Split entry-points
-    for entrypoint in out.get("options.entry-points", {}):
-        out = apply_nested(out, ("options.entry-points", entrypoint), split_kv_pairs)
-    return out
-
-
 def separate_subtables(_orig: Mapping, out: M) -> M:
     """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
     sections = [k for k in out.keys() if k.startswith("options.")]
     for section in sections:
         value = out.pop(section)
-        print(f"{section.split('.')=}", f"{value=}")
         out = set_nested(out, section.split("."), value)
     return out
 
@@ -169,6 +158,19 @@ def apply_renaming(_orig: Mapping, out: M) -> M:
         value = pop_nested(out, src, NOT_GIVEN)
         if value is not NOT_GIVEN:
             out = set_nested(out, dest, value)
+    return out
+
+
+def apply_value_processing(_orig: ConfigUpdater, out: C) -> C:
+    transformations = value_processing()
+    for name, section in out.items():
+        if name not in ("metadata", "options"):
+            continue
+        for option in section:
+            key = (name, option)
+            out = apply_nested(out, key, transformations.get(key, split_comment))
+    apply_group(out, ("options", "entry-points"), split_kv_pairs)
+    apply_group(out, ("options", "extras-require"), split_list_comma)
     return out
 
 
@@ -184,7 +186,9 @@ def fix_dynamic(orig: Mapping, out: M) -> M:
     project = out.setdefault("project", {})
     fields = [f for f in potential if isdirective(project.get(f, None))]
     extras: List[str] = []
-    if "options" in orig and orig["options"].get("entry-points").startswith("file:"):
+    if "options" in orig and orig["options"].get("entry-points", "").startswith(
+        "file:"
+    ):
         fields.append("entry-points")
         extras = ["scripts", "gui-scripts"]
     if not fields:
@@ -210,8 +214,8 @@ def fix_packages(_orig: Mapping, out: M) -> M:
 def post_process(orig: ConfigUpdater, out: C) -> C:
     transformations = [
         convert_directives,
-        apply_value_processing,
         separate_subtables,
+        apply_value_processing,
         apply_renaming,
         fix_license,
         fix_dynamic,
@@ -236,7 +240,7 @@ def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
             option.key = convert_case(option.key)
     # Normalise aliases
     for alias, cannonic in setupcfg_aliases().items():
-        option = cfg.get("metadata", alias)
+        option = cfg.get("metadata", alias, None)
         if option:
             option.key = cannonic
     return cfg
