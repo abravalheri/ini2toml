@@ -24,8 +24,8 @@ def test_split_comment():
     example = "1 # comment"
     assert lib.split_comment(example) == lib.Commented("1", "comment")
     assert lib.split_comment(example, int) == lib.Commented(1, "comment")
-    example = lib.split_comment(" # comment only")
-    assert example.comment_only()
+    item = lib.split_comment(" # comment only")
+    assert item.comment_only()
 
 
 def test_split_list():
@@ -172,6 +172,38 @@ def test_apply():
     b = "2, c=3"
     """
     assert dedent(expected) in tomlkit.dumps(doc)
+
+
+def test_apply_group():
+    example = '''\
+    [options.extras_require]
+    all = """
+        pyscaffoldext-markdown>=0.4
+        pyscaffoldext-custom-extension>=0.6
+        virtualenv
+        pre-commit
+    """
+    md = """
+        pyscaffoldext-markdown>=0.4
+    """
+    ds = """
+        pyscaffoldext-dsproject>=0.5
+    """
+    # Add here test dependencies (used by tox)
+    testing = """
+        setuptools
+        tomlkit     # as dependency in `-e fast`
+        certifi     # tries to prevent certificate problems on windows
+        tox         # system tests use tox inside tox
+    """
+    '''
+    doc = tomlkit.parse(dedent(example))
+    out = lib.apply_group(doc, ("options", "extras_require"), lib.split_list)
+    deps = out["options"]["extras_require"]
+    assert deps["md"] == ["pyscaffoldext-markdown>=0.4"]
+    assert len(deps["all"]) == 4
+    for value in deps.values():
+        assert isinstance(value, list)
 
 
 def test_get_nested():

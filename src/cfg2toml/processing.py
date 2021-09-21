@@ -1,4 +1,5 @@
 """Reusable post-processing and type casting operations"""
+import logging
 from collections import UserList
 from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass, field
@@ -16,8 +17,7 @@ from typing import (
     overload,
 )
 
-from tomlkit import array, comment, inline_table, table
-from tomlkit.container import Container
+from tomlkit import array, comment, inline_table, item, table
 from tomlkit.items import Array, InlineTable, Item, Table
 
 NotGiven = Enum("NotGiven", "NOT_GIVEN")
@@ -28,10 +28,12 @@ CP = "#;"
 
 T = TypeVar("T")
 S = TypeVar("S")
-C = TypeVar("C", bound="Container")
+M = TypeVar("M", bound="MutableMapping")
 KV = Tuple[str, T]
 CoerceFn = Callable[[str], T]
-Transformation = Callable[[str], Any]
+Transformation = Union[Callable[[str], Any], Callable[[M], M]]
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -48,90 +50,112 @@ class Commented(Generic[T]):
     def value_or(self, fallback: S) -> Union[T, S]:
         return fallback if self.value is NOT_GIVEN else self.value
 
-    def add_to_container(self, container: "Container", field: str):
-        container[field] = self.value_or("")
-        if self.has_comment():
-            cast("Item", container[field]).comment(cast(str, self.comment))
+    def as_toml_obj(self, default_value="") -> Item:
+        obj = item(self.value_or(default_value))
+        if self.comment is not None:
+            obj.comment(self.comment)
+        return obj
 
 
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[T]]]):
         super().__init__(data)
+        self.comment: Optional[str] = None  # TODO: remove this workaround
 
-    def add_to_container(self, container: "Container", field: str):
+    def as_toml_obj(self) -> Array:
         out = array()
         multiline = len(self) > 1
         out.multiline(multiline)
 
-        for item in self.data:
-            values = item.value_or([])
+        for entry in self.data:
+            values = entry.value_or([])
             for value in values:
                 out.append(value)
-            if not item.has_comment():
+            if not entry.has_comment():
                 continue
             if not multiline:
-                container[field] = out
-                out.comment(item.comment)
-                return
+                self.comment = entry.comment
+                out.comment(entry.comment)
+                return out
             if len(values) > 0:
-                _add_comment_array_last_item(out, item.comment)
+                _add_comment_array_last_item(out, entry.comment)
             else:
-                _add_comment_array_entire_line(out, item.comment)
+                _add_comment_array_entire_line(out, entry.comment)
 
-        container[field] = out
+        return out
 
 
 class CommentedKV(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[KV[T]]]]):
         super().__init__(data)
+        self.comment: Optional[str] = None  # TODO: remove this workaround
 
-    def add_to_container(self, container: "Container", field: str):
+    def as_toml_obj(self) -> Union[Table, InlineTable]:
         multiline = len(self) > 1
         out: Union[Table, InlineTable] = table() if multiline else inline_table()
 
-        for item in self.data:
-            values = (v for v in item.value_or([cast(KV, ())]) if v)
+        for entry in self.data:
+            values = (v for v in entry.value_or([cast(KV, ())]) if v)
             k: Optional[str] = None
             for value in values:
                 k, v = value
-                out[k] = v
-            if not item.has_comment():
+                out[k] = v  # type: ignore
+            if not entry.has_comment():
                 continue
             if not multiline:
-                container[field] = out
-                out.comment(item.comment)
-                return
+                out.comment(entry.comment)  # type: ignore
+                self.comment = entry.comment
+                return out
             if k:
-                out[k].comment(item.comment)
+                out[k].comment(entry.comment)
             else:
-                out.append(None, comment(item.comment))
-
-        container[field] = out
+                out.append(None, comment(entry.comment))  # type: ignore
+        return out
 
 
 # ---- High level function ----
 
 
-def apply(container: C, field: str, fn: Transformation) -> C:
+def apply(container: M, field: str, fn: Transformation) -> M:
     """Modify the TOML container by applying the transformation ``fn`` to the value
     stored under the ``field`` key.
     """
     value = container[field]
-    if not isinstance(value, str):
-        return value
-    processed = fn(str(value))
-    if hasattr(processed, "add_to_container"):
-        processed.add_to_container(container, field)
-    else:
-        container[field] = processed
+    try:
+        processed = fn(value)
+    except Exception:
+        msg = f"Impossible to transform: {value} <{value.__class__.__name__}>"
+        _logger.warning(msg)
+        _logger.debug("Please check the following details", exc_info=True)
+        return container
+    return _add_to_container(container, field, processed)
+
+
+def apply_nested(container: M, path: Sequence, fn: Transformation) -> M:
+    *parent, last = path
+    nested = get_nested(container, parent, None)
+    if not nested:
+        return container
+    if not isinstance(nested, MutableMapping):
+        msg = f"Cannot apply transformations to {nested} ({nested.__class__.__name__})"
+        raise ValueError(msg)
+    if last in nested:
+        apply(nested, last, fn)
     return container
 
 
-def apply_nested(container: C, path: Sequence, fn: Transformation) -> C:
-    *parent, last = path
-    nested = get_nested(container, parent)
-    if nested and last in nested:
-        apply(nested, last, fn)
+def apply_group(container: M, path: Sequence, fn: Transformation) -> M:
+    """Similar to apply_nested, but apply ``fn`` to all the elements of a group"""
+    group = get_nested(container, path, None)
+    if isinstance(group, MutableMapping):
+        for key in list(group.keys()):
+            apply(group, key, fn)
+    elif isinstance(group, Sequence):
+        values = [v.as_toml_obj() if hasattr(v, "as_toml_obj") else v for v in group]
+        set_nested(container, path, values)
+    elif group:
+        msg = f"Cannot apply transformations to {group} ({group.__class__.__name__})"
+        raise ValueError(msg)
     return container
 
 
@@ -164,6 +188,8 @@ def split_comment(
 
 
 def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
+    if not isinstance(value, str):
+        return value
     value = value.strip()
     prefixes = [p for p in comment_prefixes if p in value]
 
@@ -219,6 +245,8 @@ def split_list(
     using ``sep``. As a result a list of items is obtained.
     For each item in this list ``coerce_fn`` is applied.
     """
+    if not isinstance(value, str):
+        return value
     comment_prefixes = comment_prefixes.replace(sep, "")
 
     values = value.strip().splitlines()
@@ -402,3 +430,21 @@ def _add_comment_array_entire_line(toml_array: Array, cmt_msg: str):
     cmt.trivia.trail = ""
     cmt.__dict__["value"] = cmt.as_string()
     toml_array.append(cmt)
+
+
+def _add_to_container(container: M, field: str, value: Any) -> M:
+    # Add a value to a TOML container
+    if not hasattr(value, "as_toml_obj"):
+        container[field] = value
+        return container
+
+    obj: Item = value.as_toml_obj()
+    container[field] = obj
+    if (
+        hasattr(value, "comment")
+        and value.comment is not None
+        and hasattr(obj, "comment")
+    ):
+        # BUG: we should not need to repeat the comment
+        obj.comment(value.comment)
+    return container
