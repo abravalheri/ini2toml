@@ -182,6 +182,10 @@ def coerce_bool(value: str) -> bool:
     raise ValueError(f"{value!r} cannot be converted to boolean")
 
 
+def kebab_case(field: str) -> str:
+    return field.lower().replace("_", "-")
+
+
 @overload
 def split_comment(value: str, *, comment_prefixes=CP) -> Commented[str]:
     ...

@@ -12,6 +12,7 @@ from ..processing import (
     apply_nested,
     coerce_bool,
     get_nested,
+    kebab_case,
     set_nested,
     split_comment,
     split_kv_pairs,
@@ -308,9 +309,9 @@ def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
     for section in cfg.iter_sections():
         if not any(section.name.startswith(s) for s in SETUPTOOLS_SECTIONS):
             continue
-        section.name = convert_case(section.name)
+        section.name = kebab_case(section.name)
         for option in section.iter_options():
-            option.key = convert_case(option.key)
+            option.key = kebab_case(option.key)
     # Normalise aliases
     for alias, cannonic in setupcfg_aliases().items():
         option = cfg.get("metadata", alias, None)
@@ -320,10 +321,6 @@ def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
 
 
 # ---- Helpers ----
-
-
-def convert_case(field: str) -> str:
-    return field.lower().replace("_", "-")
 
 
 def isdirective(value, valid=("file", "attr")) -> bool:
