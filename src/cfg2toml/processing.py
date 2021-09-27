@@ -45,6 +45,13 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 _logger = logging.getLogger(__name__)
 
 
+def create_item(value, comment):
+    obj = item(value)
+    if comment is not None:
+        obj.comment(comment)
+    return obj
+
+
 @dataclass
 class Commented(Generic[T]):
     value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
@@ -60,10 +67,7 @@ class Commented(Generic[T]):
         return fallback if self.value is NOT_GIVEN else self.value
 
     def as_toml_obj(self, default_value="") -> Item:
-        obj = item(self.value_or(default_value))
-        if self.comment is not None:
-            obj.comment(self.comment)
-        return obj
+        return create_item(self.value_or(default_value), self.comment)
 
 
 class CommentedList(Generic[T], UserList):
@@ -160,11 +164,20 @@ def noop(x: T) -> T:
     return x
 
 
-def coerce_bool(value: str) -> bool:
+def is_true(value: str):
     value = value.lower()
-    if value in ("true", "1", "yes", "on"):
+    return value in ("true", "1", "yes", "on")
+
+
+def is_false(value: str):
+    value = value.lower()
+    return value in ("false", "0", "no", "off", "none", "null", "nil")
+
+
+def coerce_bool(value: str) -> bool:
+    if is_true(value):
         return True
-    if value in ("false", "0", "no", "off", "none", "null", "nil"):
+    if is_false(value):
         return False
     raise ValueError(f"{value!r} cannot be converted to boolean")
 

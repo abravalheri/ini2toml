@@ -29,6 +29,7 @@ split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 chain_iter = chain.from_iterable
 
 SECTION_SPLITTER = re.compile(r"\.|:")
+SETUPTOOLS_SECTIONS = ("metadata", "options", "bdist", "sdist")
 
 
 TOML_TEMPLATE = """\
@@ -170,13 +171,16 @@ def pep621_renaming(_orig: Mapping, doc: M) -> M:
     # "entry-points"."console-scripts" => "scripts"
     if "console-scripts" in metadata.get("entry-points", {}):
         metadata["scripts"] = metadata["entry-points"].pop("console-scripts")
+    if not metadata.get("entry-points", {}):
+        metadata.pop("entry-points", None)
 
     # ---- setuptools metadata without correspondence in PEP 621 ----
     specific = ["platforms", "provides", "obsoletes"]
     options.update({k: metadata.pop(k) for k in specific if k in metadata})
 
     # ---- distutils/setuptools command specifics outside of "options" ----
-    extras = {k: doc.pop(k) for k in doc for p in ("bdist", "sdist") if k.startswith(p)}
+    it = list(doc.keys())
+    extras = {k: doc.pop(k) for k in it for p in ("bdist", "sdist") if k.startswith(p)}
     options.update(extras)
 
     # ----
@@ -253,7 +257,7 @@ def fix_packages(_orig: Mapping, out: M) -> M:
     setuptools = out.setdefault("tool", {}).setdefault("setuptools", {})
     packages = setuptools.setdefault("packages", {})
     if any(f"find{_}namespace" in packages for _ in "_-") and "find" in packages:
-        value = packages.pop("find_namespace", packages.pop("find-namespace"))
+        value = packages.pop("find_namespace", packages.pop("find-namespace", None))
         find_namespace = value if value and isinstance(value, MutableMapping) else {}
         find_namespace.update(packages.pop("find"))
         packages["find-namespace"] = find_namespace
@@ -302,6 +306,8 @@ def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
     """
     # Normalise for the same convention as pyproject
     for section in cfg.iter_sections():
+        if not any(section.name.startswith(s) for s in SETUPTOOLS_SECTIONS):
+            continue
         section.name = convert_case(section.name)
         for option in section.iter_options():
             option.key = convert_case(option.key)
@@ -324,5 +330,5 @@ def isdirective(value, valid=("file", "attr")) -> bool:
     return (
         isinstance(value, Mapping)
         and len(value) == 1
-        and next(value.keys()) in valid  # type: ignore[call-overload]
+        and next(iter(value.keys())) in valid
     )
