@@ -331,10 +331,9 @@ def get_nested(m, keys, default=None):
     """Nested version of Mapping.get"""
     value = m
     for k in keys:
-        try:
-            value = value[k]
-        except (KeyError, IndexError):
+        if k not in value:
             return default
+        value = value[k]
     return value
 
 
@@ -344,22 +343,13 @@ def pop_nested(m, keys, default=None):
     parent = get_nested(m, path, NOT_GIVEN)
     if parent is NOT_GIVEN:
         return default
-    if isinstance(parent, MutableMapping):
-        return parent.pop(last, default)
-    if len(parent) > last:
-        return parent.pop(last)
-    return default
+    return parent.pop(last, default)
 
 
 def set_nested(m, keys, value):
     last = keys[-1]
-    parent = [] if isinstance(last, int) else {}
-    parent = setdefault(m, keys[:-1], parent)
-    parent = get_nested(m, keys[:-1], parent)
-    try:
-        parent[last] = value
-    except IndexError:
-        parent.append(value)
+    parent = setdefault(m, keys[:-1], {})
+    parent[last] = value
     if hasattr(value, "display_name"):
         # Temporary workaround for tomlkit#144 and atoml#24
         j = next((i for i, k in enumerate(keys) if isinstance(k, int)), 0)
@@ -368,29 +358,18 @@ def set_nested(m, keys, value):
 
 
 def setdefault(m, keys, default=None):
-    """Nested version of MutableMapping.get"""
+    """Nested version of MutableMapping.setdefault"""
     if len(keys) < 1:
         return m
     if len(keys) == 1:
-        return _setdefault(m, keys[0], default)
+        return m.setdefault(keys[0], default)
     value = m
-    for (k, nxt) in zip(keys[:-1], keys[1:]):
-        value = _setdefault(value, k, [] if isinstance(nxt, int) else {})
-    return _setdefault(value, nxt, default)
+    for k in keys[:-1]:
+        value = value.setdefault(k, {})
+    return value.setdefault(keys[-1], default)
 
 
 # ---- Private Helpers ----
-
-
-def _setdefault(container, key, default):
-    # Also "works" for lists
-    if hasattr(container, "setdefault"):
-        return container.setdefault(key, default)
-    try:
-        return container[key]
-    except IndexError:
-        container.append(default)
-    return default
 
 
 def _split_in_2(v: str, sep: str) -> Tuple[str, Optional[str]]:

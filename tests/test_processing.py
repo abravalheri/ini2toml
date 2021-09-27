@@ -175,33 +175,28 @@ def test_apply():
 
 
 def test_get_nested():
-    nested = {"a": [{"b": [0, 1], "c": {"d": "e"}}, 1], "b": [0, [1, [2]]]}
-    assert lib.get_nested(nested, ("a", 0, "b", 1)) == 1
-    assert lib.get_nested(nested, ("a", 0, "c", "d")) == "e"
-    assert lib.get_nested(nested, ("b", 1, 1, 0)) == 2
+    nested = {"a": {"b": [0, 1], "c": {"d": "e"}}, "b": 1}
+    assert lib.get_nested(nested, ("a", "b")) == [0, 1]
+    assert lib.get_nested(nested, ("a", "c", "d")) == "e"
+    assert lib.get_nested(nested, ("b",)) == 1
 
 
 def test_set_nested():
     nested = {}
-    lib.set_nested(nested, ("a", 0, "b", 0), 0)
-    lib.set_nested(nested, ("a", 0, "b", 1), 1)
-    lib.set_nested(nested, ("a", 0, "c", "d"), "e")
-    lib.set_nested(nested, ("a", 1), 1)
-    lib.set_nested(nested, ("b", 0), 0)
-    lib.set_nested(nested, ("b", 1, 0), 1)
-    lib.set_nested(nested, ("b", 1, 1, 0), 2)
-    assert nested == {"a": [{"b": [0, 1], "c": {"d": "e"}}, 1], "b": [0, [1, [2]]]}
+    lib.set_nested(nested, ("a", "b"), 0)
+    lib.set_nested(nested, ("a", "c", "d"), "e")
+    assert nested == {"a": {"b": 0, "c": {"d": "e"}}}
 
-    nested = {"a": [{"b": [0, 1]}]}
-    lib.set_nested(nested, ("a", 0, "c", 1), 2)
-    assert nested == {"a": [{"b": [0, 1], "c": [2]}]}
-    lib.set_nested(nested, ("d", 1, "e"), 0)
-    assert nested == {"a": [{"b": [0, 1], "c": [2]}], "d": [{"e": 0}]}
+    nested = {"a": {"b": [0, 1]}}
+    lib.set_nested(nested, ("a", "c"), 2)
+    assert nested == {"a": {"b": [0, 1], "c": 2}}
+    lib.set_nested(nested, ("d", "e"), 0)
+    assert nested == {"a": {"b": [0, 1], "c": 2}, "d": {"e": 0}}
 
 
 def test_pop_nested():
-    nested = {"a": [{"b": [0, 1], "c": {"d": "e"}}, 1], "b": [0, [1, [2]]]}
-    assert lib.pop_nested(nested, ("a", 0, "b", 1)) == 1
-    assert lib.pop_nested(nested, ("a", 0, "c", "d")) == "e"
-    assert lib.pop_nested(nested, ("b", 1, 1, 0)) == 2
-    assert nested == {"a": [{"b": [0], "c": {}}, 1], "b": [0, [1, []]]}
+    nested = {"a": {"b": [0, 1], "c": {"d": "e"}}, "b": 1}
+    assert lib.pop_nested(nested, ("a", "b")) == [0, 1]
+    assert lib.pop_nested(nested, ("a", "c", "d")) == "e"
+    assert lib.pop_nested(nested, ("b",)) == 1
+    assert nested == {"a": {"c": {}}}
