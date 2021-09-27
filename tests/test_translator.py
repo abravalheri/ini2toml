@@ -1,12 +1,12 @@
 from textwrap import dedent
 
 import pytest
-from tomlkit import comment, document, dumps, table
 
+from cfg2toml.toml_adapter import comment, document, dumps, table
 from cfg2toml.translator import Translator, UndefinedProfile
 
 
-class TestUnderstandTomlkit:
+class TestUnderstandTomlLib:
     def test_opening_comment_without_nl_after(self):
         doc = document()
         doc.add(comment("opening comment"))

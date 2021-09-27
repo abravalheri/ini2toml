@@ -1,5 +1,4 @@
 import pytest
-import tomlkit
 from configupdater import ConfigUpdater
 
 from cfg2toml.extensions.setuptools_pep621 import (
@@ -10,6 +9,7 @@ from cfg2toml.extensions.setuptools_pep621 import (
     pre_process,
     separate_subtables,
 )
+from cfg2toml.toml_adapter import dumps, loads
 from cfg2toml.translator import Translator
 
 
@@ -22,7 +22,7 @@ def translate():
 
 @pytest.fixture
 def cfg2tomlobj(translate):
-    return lambda text: tomlkit.loads(translate(text))
+    return lambda text: loads(translate(text))
 
 
 example_pre_process = """\
@@ -77,9 +77,9 @@ packages = {find_namespace = ""}
 
 
 def test_convert_directives():
-    doc = tomlkit.loads(example_convert_directives)
+    doc = loads(example_convert_directives)
     doc = convert_directives(ConfigUpdater(), doc)
-    assert tomlkit.dumps(doc) == expected_convert_directives
+    assert dumps(doc) == expected_convert_directives
 
 
 # ----
@@ -137,7 +137,7 @@ def test_apply_value_processing(cfg2tomlobj):
     doc = cfg2tomlobj(example_apply_value_processing)
     doc = separate_subtables(cfg, doc)
     doc = apply_value_processing(cfg, doc)
-    assert tomlkit.dumps(doc).strip() == expected_apply_value_processing.strip()
+    assert dumps(doc).strip() == expected_apply_value_processing.strip()
 
 
 # ----
@@ -166,7 +166,7 @@ def test_separate_subtables(cfg2tomlobj):
     cfg = ConfigUpdater().read_string(example_separate_subtables.strip())
     doc = cfg2tomlobj(example_separate_subtables)
     doc = separate_subtables(cfg, doc)
-    assert tomlkit.dumps(doc).strip() == expected_separate_subtables.strip()
+    assert dumps(doc).strip() == expected_separate_subtables.strip()
 
 
 # ----
@@ -184,9 +184,9 @@ license = { file = "LICENSE.txt",  }
 
 
 def test_fix_license(cfg2tomlobj):
-    doc = tomlkit.loads(example_fix_license.strip())
+    doc = loads(example_fix_license.strip())
     doc = fix_license({}, doc)
-    assert tomlkit.dumps(doc).strip() == expected_fix_license.strip()
+    assert dumps(doc).strip() == expected_fix_license.strip()
 
 
 # ----
@@ -209,6 +209,6 @@ exclude = ["tests"]
 
 
 def test_fix_packages(cfg2tomlobj):
-    doc = tomlkit.loads(example_fix_packages.strip())
+    doc = loads(example_fix_packages.strip())
     doc = fix_packages({}, doc)
-    assert tomlkit.dumps(doc).strip() == expected_fix_packages.strip()
+    assert dumps(doc).strip() == expected_fix_packages.strip()

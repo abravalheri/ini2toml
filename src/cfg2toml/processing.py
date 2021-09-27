@@ -17,8 +17,17 @@ from typing import (
     overload,
 )
 
-from tomlkit import array, comment, inline_table, item, table
-from tomlkit.items import Array, InlineTable, Item, Table
+from .toml_adapter import (
+    Array,
+    InlineTable,
+    Item,
+    Table,
+    array,
+    comment,
+    inline_table,
+    item,
+    table,
+)
 
 NotGiven = Enum("NotGiven", "NOT_GIVEN")
 NOT_GIVEN = NotGiven.NOT_GIVEN

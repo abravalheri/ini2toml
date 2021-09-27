@@ -3,7 +3,8 @@ from collections.abc import Mapping, MutableMapping
 from typing import Callable, List, TypeVar, Union
 
 from configupdater import ConfigUpdater
-from tomlkit.toml_document import TOMLDocument
+
+from .toml_adapter import TOMLDocument
 
 if sys.version_info <= (3, 8):  # pragma: no cover
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`

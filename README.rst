@@ -103,7 +103,7 @@ The AST translation works as a 5-stage data pipeline:
 1. ``cfg2toml`` parses the |cfg_ini| file contents using |ConfigUpdater|_.
 2. The resulting object is ref:`pre-processed <pre-processing>`
 3. ``cfg2toml`` automatically converts the `ConfigUpdater's AST`_ into TOML AST
-   using tomlkit_
+   using atoml_/tomlkit_
 4. The resulting object is ref:`post-processed <post-processing>`
 5. ``cfg2toml`` convert the TOML object into a string that uses TOML syntax.
 
@@ -255,6 +255,7 @@ functions`_ that implement common operations.
 .. |ConfigUpdater| replace:: ``ConfigUpdater``
 
 .. _AST: https://en.wikipedia.org/wiki/Abstract_syntax_tree
+.. _atoml: https://github.com/frostming/atoml
 .. _basename: https://en.wikipedia.org/wiki/Basename
 .. _cfg_ini: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _ConfigUpdater's AST: https://configupdater.readthedocs.io/en/latest/api/configupdater.html#configupdater.document.Document

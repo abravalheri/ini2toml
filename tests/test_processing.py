@@ -2,9 +2,9 @@ from functools import partial
 from textwrap import dedent
 
 import pytest
-import tomlkit
 
 from cfg2toml import processing as lib
+from cfg2toml.toml_adapter import dumps, loads
 
 
 def test_coerce_bool():
@@ -80,7 +80,7 @@ def test_apply():
     option10 = "\\n   a=1\\n   b=2, c=3\\n"
     """
 
-    doc = tomlkit.parse(dedent(example))
+    doc = loads(dedent(example))
     split_int = partial(lib.split_list, coerce_fn=int)
     split_kv_int = partial(lib.split_kv_pairs, coerce_fn=int)
     dangling_list_no_subsplit = partial(lib.split_list, subsplit_dangling=False)
@@ -88,21 +88,21 @@ def test_apply():
 
     doc["table"] = lib.apply(doc["table"], "option1", int)
     expected = "option1 = 1"
-    assert expected in tomlkit.dumps(doc)
+    assert expected in dumps(doc)
 
     # assert len(_trailing_nl()) == 1
 
     doc["table"] = lib.apply(doc["table"], "option2", lib.split_comment)
     expected = 'option2 = "value" # comment'
-    assert expected in tomlkit.dumps(doc)
+    assert expected in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option3", split_int)
     expected = "option3 = [1, 2, 3] # comment"
-    assert expected in tomlkit.dumps(doc)
+    assert expected in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option4", split_kv_int)
     expected = "option4 = {a = 1, b = 2, c = 3} # comment"
-    assert expected in tomlkit.dumps(doc)
+    assert expected in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option5", split_kv_int)
     expected = """\
@@ -111,7 +111,7 @@ def test_apply():
     b = 2
     c = 3 # comment
     """
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option5.1", split_kv_int)
     expected = """\
@@ -120,7 +120,7 @@ def test_apply():
     b = 2
     c = 3 # comment
     """
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option6", split_int)
     expected = """\
@@ -131,7 +131,7 @@ def test_apply():
     ]
     """
     # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option7", split_int)
     expected = """\
@@ -142,7 +142,7 @@ def test_apply():
     ]
     """
     # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option8", dangling_list_no_subsplit)
     expected = """\
@@ -152,7 +152,7 @@ def test_apply():
     ]
     """
     # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option9", split_int)
     expected = """\
@@ -163,7 +163,7 @@ def test_apply():
     ]
     """
     # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option10", dangling_kv_no_subsplit)
     expected = """\
@@ -171,7 +171,7 @@ def test_apply():
     a = "1"
     b = "2, c=3"
     """
-    assert dedent(expected) in tomlkit.dumps(doc)
+    assert dedent(expected) in dumps(doc)
 
 
 def test_get_nested():

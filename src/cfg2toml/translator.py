@@ -2,13 +2,11 @@ from functools import reduce
 from typing import Dict, List, Optional, Union
 
 from configupdater import Comment, ConfigUpdater, Option, Section, Space
-from tomlkit import comment, dumps, loads, nl, table
-from tomlkit.items import Table
-from tomlkit.toml_document import TOMLDocument
 
 from . import types  # Structural/Abstract types
 from .extensions import list_from_entry_points as list_all_extensions
 from .profile import Profile
+from .toml_adapter import Table, TOMLDocument, comment, dumps, loads, nl, table
 
 TOMLContainer = Union[TOMLDocument, Table]
 
