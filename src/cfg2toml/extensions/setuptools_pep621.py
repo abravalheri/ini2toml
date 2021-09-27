@@ -1,16 +1,17 @@
+import re
 from collections.abc import Mapping, MutableMapping
 from functools import partial, reduce
+from itertools import chain
 from typing import Dict, List, Tuple, TypeVar, Union
 
 from configupdater import ConfigUpdater
 
 from ..processing import (
-    NOT_GIVEN,
     Transformation,
+    apply,
     apply_nested,
     coerce_bool,
     get_nested,
-    pop_nested,
     set_nested,
     split_comment,
     split_kv_pairs,
@@ -25,12 +26,17 @@ ProcessingRules = Dict[Tuple[str, ...], Transformation]
 
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
+chain_iter = chain.from_iterable
+
+SECTION_SPLITTER = re.compile(r"\.|:")
 
 
 TOML_TEMPLATE = """\
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
 """
 
 
@@ -93,6 +99,7 @@ def processing_rules() -> ProcessingRules:
         ("options", "namespace-packages"): split_list_comma,
         ("options", "py-modules"): split_list_comma,
         ("options", "data-files"): split_kv_pairs,
+        ("options", "packages", "find", "exclude"): split_list_comma,
     }
     # See also dynamic_processing_rules
     # Everything else should use split_comment
@@ -109,72 +116,97 @@ def dynamic_processing_rules(doc: Mapping) -> ProcessingRules:
     return {(*p, k): fn for p, fn in groups.items() for k in get_nested(doc, p, ())}
 
 
-def pep621_renaming() -> RenameRules:
+def pep621_renaming(_orig: Mapping, doc: M) -> M:
     """Renames that have a clear correspondence according to PEP 621.
     Rules are applied sequentially and therefore can interfere with the following
     ones. Please notice that renaming is applied after value processing.
     """
-    metadata: RenameRules = {
-        ("project-urls",): ("urls",),
-        ("url",): ("urls", "homepage"),
-        ("download-url",): ("urls", "download"),
-        ("author",): ("author", 0, "name"),
-        ("author-email",): ("author", 0, "email"),
-        ("maitainer",): ("author", 0, "name"),
-        ("maitainer-email",): ("author", 0, "email"),
-        ("long-description", "file"): ("readme", "file"),
-        ("long-description",): ("readme", "text"),
-        ("long-description-content-type",): ("readme", "content-type"),
-        ("license-files",): ("license", "file"),
-        ("license",): ("license", "text"),
+    # ---- Metadata according to PEP 621 ----
+    metadata = doc.pop("metadata", {})
+    #  url => urls.homepage
+    #  download-url => urls.download
+    #  project-urls => urls
+    urls = {
+        dest: metadata.pop(orig)
+        for orig, dest in [("url", "homepage"), ("download-url", "download")]
+        if orig in metadata
     }
-    options: RenameRules = {
-        ("python-requires",): ("requires-python",),
-        ("install-requires",): ("dependencies",),
-        ("extras-require",): ("optional-dependencies",),
-        ("entry-points", "console-scripts"): ("scripts",),
-        ("entry-points",): ("entry-points",),
+    urls = {**metadata.pop("project-urls", {}), **urls}
+    # author OR maintainer => author.name
+    # author-email OR maintainer-email => author.email
+    keys = ("author", "maintainer")
+    names = chain_iter(metadata.pop(k, "").strip().split(",") for k in keys)
+    emails = chain_iter(metadata.pop(f"{k}-email", "").strip().split(",") for k in keys)
+    author = [{"name": n, "email": e} for n, e in zip(names, emails) if n]
+    # long_description.file => readme.file
+    # long_description => readme.text
+    # long-description-content-type => readme.content-type
+    readme: Union[str, Dict[str, str]] = {}
+    if "file" in metadata.get("long-description", {}):
+        readme = {"file": metadata.pop("long-description")["file"]}
+    elif "long-description" in metadata:
+        readme = {"text": metadata.pop("long-description")}
+    if "long-description-content-type" in metadata:
+        readme["content-type"] = metadata.pop("long-description-content-type")
+    if len(list(readme.keys())) == 1 and "file" in readme:
+        readme = readme["file"]
+    # license-files => license.file
+    # license => license.text
+    naming = {"license-files": "file", "license": "text"}
+    license = {v: metadata.pop(k) for k, v in naming.items() if k in metadata}
+
+    converted = {"author": author, "readme": readme, "license": license, "urls": urls}
+    metadata.update({k: v for k, v in converted.items() if v})
+
+    # ---- Things in "options" that are covered by PEP 621 ----
+    options = doc.pop("options", {})
+    naming = {
+        "python-requires": "requires-python",
+        "install-requires": "dependencies",
+        "extras-require": "optional-dependencies",
+        "entry-points": "entry-points",
     }
+    metadata.update({v: options.pop(k) for k, v in naming.items() if k in options})
+    # "entry-points"."console-scripts" => "scripts"
+    if "console-scripts" in metadata.get("entry-points", {}):
+        metadata["scripts"] = metadata["entry-points"].pop("console-scripts")
+
+    # ---- setuptools metadata without correspondence in PEP 621 ----
     specific = ["platforms", "provides", "obsoletes"]
-    return {
-        ("metadata",): ("project",),
-        ("options",): ("tool", "setuptools"),
-        **{
-            ("project", *k): ("project", *v)  # type: ignore[misc]
-            for k, v in metadata.items()
-        },
-        **{
-            ("tool", "setuptools", *k): ("project", *v)  # type: ignore[misc]
-            for k, v in options.items()
-        },
-        **{("project", *e): ("tool", "setuptools", *e) for e in specific},
-    }
+    options.update({k: metadata.pop(k) for k in specific if k in metadata})
+
+    # ---- distutils/setuptools command specifics outside of "options" ----
+    extras = {k: doc.pop(k) for k in doc for p in ("bdist", "sdist") if k.startswith(p)}
+    options.update(extras)
+
+    # ----
+
+    if metadata:
+        doc["project"] = metadata
+    if options:
+        tool = doc.setdefault("tool", {})
+        tool["setuptools"] = options
+
+    return doc
 
 
 def convert_directives(_orig: Mapping, out: M) -> M:
     split_directive = partial(split_kv_pairs, key_sep=":")
-    for keys, directives in setupcfg_directives().items():
-        value = get_nested(out, keys)
-        if value and any(value.strip().startswith(f"{d}:") for d in directives):
-            out = apply_nested(out, keys, split_directive)
+    for (section, option), directives in setupcfg_directives().items():
+        value = out.get(section, {}).get(option, None)
+        if not isinstance(value, str):
+            continue
+        if any(value.strip().startswith(f"{d}:") for d in directives):
+            apply(out[section], option, split_directive)
     return out
 
 
 def separate_subtables(_orig: Mapping, out: M) -> M:
     """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
-    sections = [k for k in out.keys() if k.startswith("options.")]
+    sections = [k for k in out.keys() if k.startswith("options.") or ":" in k]
     for section in sections:
         value = out.pop(section)
-        out = set_nested(out, section.split("."), value)
-    return out
-
-
-def apply_renaming(_orig: Mapping, out: M) -> M:
-    rules = pep621_renaming()
-    for src, dest in rules.items():
-        value = pop_nested(out, src, NOT_GIVEN)
-        if dest and value is not NOT_GIVEN:
-            out = set_nested(out, dest, value)
+        out = set_nested(out, SECTION_SPLITTER.split(section), value)
     return out
 
 
@@ -220,8 +252,8 @@ def fix_dynamic(orig: Mapping, out: M) -> M:
 def fix_packages(_orig: Mapping, out: M) -> M:
     setuptools = out.setdefault("tool", {}).setdefault("setuptools", {})
     packages = setuptools.setdefault("packages", {})
-    if "find-namespace" in packages and "find" in packages:
-        value = packages["find-namespace"]
+    if any(f"find{_}namespace" in packages for _ in "_-") and "find" in packages:
+        value = packages.pop("find_namespace", packages.pop("find-namespace"))
         find_namespace = value if value and isinstance(value, MutableMapping) else {}
         find_namespace.update(packages.pop("find"))
         packages["find-namespace"] = find_namespace
@@ -240,7 +272,8 @@ def ensure_pep518(_orig: Mapping, out: M) -> M:
         if any(top_level_key[:N] == p for p in ("tool:", "tool.")):
             key = top_level_key[N:]
         if top_level_key not in allowed:
-            set_nested(out, ("tool", key), out.pop(top_level_key))
+            tool = out.setdefault("tool", {})
+            tool[key] = out.pop(top_level_key)
     return out
 
 
@@ -249,7 +282,7 @@ def post_process(orig: Mapping, out: M) -> M:
         convert_directives,
         separate_subtables,
         apply_value_processing,
-        apply_renaming,
+        pep621_renaming,
         fix_license,
         fix_dynamic,
         fix_packages,

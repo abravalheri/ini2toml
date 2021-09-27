@@ -202,6 +202,7 @@ exclude = ["tests"]
 
 expected_fix_packages = """\
 [tool.setuptools.packages]
+
 [tool.setuptools.packages.find-namespace]
 where = "src"
 exclude = ["tests"]
