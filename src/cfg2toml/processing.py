@@ -39,6 +39,7 @@ T = TypeVar("T")
 S = TypeVar("S")
 M = TypeVar("M", bound="MutableMapping")
 KV = Tuple[str, T]
+Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime
 CoerceFn = Callable[[str], T]
 Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 
@@ -164,14 +165,19 @@ def noop(x: T) -> T:
     return x
 
 
-def is_true(value: str):
+def is_true(value: str) -> bool:
     value = value.lower()
     return value in ("true", "1", "yes", "on")
 
 
-def is_false(value: str):
+def is_false(value: str) -> bool:
     value = value.lower()
     return value in ("false", "0", "no", "off", "none", "null", "nil")
+
+
+def is_float(value: str) -> bool:
+    cleaned = value.lower().lstrip("+-").replace(".", "").replace("_", "")
+    return cleaned.isdecimal() and value.count(".") <= 1 or cleaned in ("inf", "nan")
 
 
 def coerce_bool(value: str) -> bool:
@@ -180,6 +186,24 @@ def coerce_bool(value: str) -> bool:
     if is_false(value):
         return False
     raise ValueError(f"{value!r} cannot be converted to boolean")
+
+
+def coerce_scalar(value: str) -> Scalar:
+    value = value.strip()
+    if value.isdecimal():
+        return int(value)
+    if is_float(value):
+        return float(value)
+    if is_true(value):
+        return True
+    elif is_false(value):
+        return False
+    # Do we need this? Or is there a better way?
+    # > try:
+    # >     return datetime.fromisoformat(value)
+    # > except ValueError:
+    # >     pass
+    return value
 
 
 def kebab_case(field: str) -> str:
@@ -214,6 +238,10 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
     prefix = prefixes[0]  # We can only analyse one...
     value, cmt = _split_in_2(value, prefix)
     return Commented(coerce_fn(value.strip()), _strip_comment(cmt, comment_prefixes))
+
+
+def split_scalar(value: str, *, comment_prefixes=CP) -> Commented[Scalar]:
+    return split_comment(value, coerce_scalar, comment_prefixes)
 
 
 @overload

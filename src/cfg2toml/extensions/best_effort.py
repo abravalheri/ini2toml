@@ -1,55 +1,29 @@
 import re
 from collections.abc import Mapping, MutableMapping
-from typing import Any, TypeVar
+from functools import partial
+from typing import TypeVar
 
-from ..processing import (
-    apply,
-    create_item,
-    is_false,
-    is_true,
-    set_nested,
-    split_comment,
-    split_kv_pairs,
-    split_list,
-)
+from ..processing import apply, set_nested, split_kv_pairs, split_list, split_scalar
 from ..translator import Translator
 
 M = TypeVar("M", bound=MutableMapping)
 
-SECTION_SPLITTER = re.compile(r"\.|:")
+SECTION_SPLITTER = re.compile(r"\.|:|\\")
+KEY_SEP = "="
 
 
 def activate(translator: Translator):
     profile = translator["best_effort"]
-    profile.post_processors.append(post_process)
+    profile.post_processors.append(process_values)
 
 
-def post_process(_orig: Mapping, doc: M) -> M:
+def process_values(_orig: Mapping, doc: M) -> M:
     doc_items = list(doc.items())
     for name, section in doc_items:
         options = list(section.items())
         # Convert option values:
         for field, value in options:
-            if "\n" in value or "\r" in value:
-                if "=" in value:
-                    apply(section, field, split_kv_pairs)
-                else:
-                    apply(section, field, split_list)
-                continue
-
-            obj = split_comment(value)
-            value_str = obj.value_or("").strip()
-            if value_str.isdecimal():
-                v: Any = int(value_str)
-            elif value_str.replace(".", "").isdecimal() and value_str.count(".") <= 1:
-                v = float(value_str)
-            elif is_true(value_str):
-                v = True
-            elif is_false(value_str):
-                v = False
-            else:
-                v = value_str
-            section[field] = create_item(v, obj.comment)
+            apply_best_effort(section, field, value)
 
         # Separate nested sections
         if SECTION_SPLITTER.search(name):
@@ -60,3 +34,17 @@ def post_process(_orig: Mapping, doc: M) -> M:
             doc[name] = section
 
     return doc
+
+
+split_dict = partial(split_kv_pairs, key_sep=KEY_SEP)
+
+
+def apply_best_effort(container: M, field: str, value: str) -> M:
+    lines = value.splitlines()
+    if len(lines) > 1:
+        if KEY_SEP in value:
+            apply(container, field, split_dict)
+        else:
+            apply(container, field, split_list)
+    else:
+        apply(container, field, split_scalar)

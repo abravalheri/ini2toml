@@ -1,16 +1,8 @@
 from collections.abc import Mapping, MutableMapping
 from functools import partial
-from typing import Any, Set, TypeVar
+from typing import Set, TypeVar
 
-from ..processing import (
-    apply,
-    create_item,
-    is_false,
-    is_true,
-    kebab_case,
-    split_comment,
-    split_list,
-)
+from ..processing import apply, coerce_scalar, kebab_case, split_list
 from ..translator import Translator
 
 M = TypeVar("M", bound=MutableMapping)
@@ -57,21 +49,11 @@ def find_list_options(section: Mapping) -> Set[str]:
 def process_values(section_name: str, _orig: Mapping, doc: M) -> M:
     isort = doc.pop(section_name, doc.get("tool", {}).pop(section_name, {}))
     list_options = find_list_options(isort)
-    for field, value in isort.items():
+    for field in isort:
         if field in list_options:
             apply(isort, field, split_list)
-            continue
-        obj = split_comment(value)
-        value_str = obj.value_or("").strip()
-        if value_str.isdecimal():
-            v: Any = int(value_str)
-        elif is_true(value_str):
-            v = True
-        elif is_false(value_str):
-            v = False
         else:
-            v = value_str
-        isort[field] = create_item(v, obj.comment)
+            apply(isort, field, coerce_scalar)
 
     doc.setdefault("tool", {})["isort"] = isort
     return doc
