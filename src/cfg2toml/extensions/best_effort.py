@@ -48,3 +48,4 @@ def apply_best_effort(container: M, field: str, value: str) -> M:
             apply(container, field, split_list)
     else:
         apply(container, field, split_scalar)
+    return container

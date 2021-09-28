@@ -1,12 +1,12 @@
 from functools import reduce
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 from configupdater import Comment, ConfigUpdater, Option, Section, Space
 
 from . import types  # Structural/Abstract types
 from .extensions import list_from_entry_points as list_all_extensions
 from .profile import Profile
-from .toml_adapter import Table, TOMLDocument, comment, dumps, loads, nl, table
+from .toml_adapter import Item, Table, TOMLDocument, comment, dumps, loads, nl, table
 
 TOMLContainer = Union[TOMLDocument, Table]
 
@@ -47,7 +47,7 @@ class Translator:
         doc = loads(profile.toml_template)
         translate_cfg(doc, updater)
         doc = reduce(lambda acc, fn: fn(updater, acc), profile.toml_processors, doc)
-        toml = dumps(doc).strip()
+        toml = dumps(cast(dict, doc)).strip()
         # TODO: atoml/tomlkit is always appending a newline at the end of the document
         #       when a section is replaced (even if it exists before), so we need to
         #       strip()
@@ -74,7 +74,7 @@ def translate_section(doc: TOMLDocument, item: Section, parser_opts: dict):
     prefixes = "".join(parser_opts.get("comment_prefixes", "#;"))
     cmt = cmt.strip().lstrip(prefixes).strip()
     if cmt:
-        out.comment(cmt.strip().lstrip(prefixes).strip())
+        cast(Item, out).comment(cmt.strip().lstrip(prefixes).strip())
     # Children
     for block in item.iter_blocks():
         if isinstance(block, Option):

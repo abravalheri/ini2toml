@@ -1,7 +1,7 @@
 # https://mypy.readthedocs.io/en/stable/config_file.html
 from collections.abc import Mapping, MutableMapping, MutableSequence
 from functools import partial
-from typing import List, TypeVar
+from typing import List, TypeVar, cast
 
 from ..processing import apply, coerce_scalar, split_list
 from ..toml_adapter import aot
@@ -68,7 +68,7 @@ def process_options(sec: M) -> M:
 
 
 def create_overrides() -> MutableSequence:
-    return aot()
+    return cast(MutableSequence, aot())
 
 
 def add_overrides_modules(section: M, modules: List[str]) -> M:

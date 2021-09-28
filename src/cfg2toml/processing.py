@@ -84,12 +84,12 @@ class CommentedList(Generic[T], UserList):
         for entry in self.data:
             values = entry.value_or([])
             for value in values:
-                out.append(value)
+                cast(list, out).append(value)
             if not entry.has_comment():
                 continue
             if not multiline:
                 self.comment = entry.comment
-                out.comment(entry.comment)
+                cast(Item, out).comment(entry.comment)
                 return out
             if len(values) > 0:
                 _add_comment_array_last_item(out, entry.comment)
@@ -447,7 +447,7 @@ def _add_comment_array_entire_line(toml_array: Array, cmt_msg: str):
     cmt = comment(cmt_msg)
     cmt.trivia.trail = ""
     cmt.__dict__["value"] = cmt.as_string()
-    toml_array.append(cmt)
+    cast(list, toml_array).append(cmt)
 
 
 def _add_to_container(container: M, field: str, value: Any) -> M:

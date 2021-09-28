@@ -143,7 +143,7 @@ def pep621_renaming(_orig: Mapping, doc: M) -> M:
     # long_description.file => readme.file
     # long_description => readme.text
     # long-description-content-type => readme.content-type
-    readme: Union[str, Dict[str, str]] = {}
+    readme = {}
     if "file" in metadata.get("long-description", {}):
         readme = {"file": metadata.pop("long-description")["file"]}
     elif "long-description" in metadata:
@@ -170,8 +170,11 @@ def pep621_renaming(_orig: Mapping, doc: M) -> M:
     }
     metadata.update({v: options.pop(k) for k, v in naming.items() if k in options})
     # "entry-points"."console-scripts" => "scripts"
+    # "entry-points"."gui-scripts" => "gui-scripts"
     if "console-scripts" in metadata.get("entry-points", {}):
         metadata["scripts"] = metadata["entry-points"].pop("console-scripts")
+    if "gui-scripts" in metadata.get("entry-points", {}):
+        metadata["gui-scripts"] = metadata["entry-points"].pop("gui-scripts")
     if not metadata.get("entry-points", {}):
         metadata.pop("entry-points", None)
 
@@ -222,7 +225,11 @@ def apply_value_processing(_orig: Mapping, out: M) -> M:
         if name in ("metadata", "options")
         for option in section
     }
-    transformations = {**default, **processing_rules(), **dynamic_processing_rules(out)}
+    transformations: dict = {
+        **default,
+        **processing_rules(),
+        **dynamic_processing_rules(out),
+    }
     for path, fn in transformations.items():
         out = apply_nested(out, path, fn)
     return out
