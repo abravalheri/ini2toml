@@ -62,5 +62,8 @@ def test_isort():
     ]
     """
     translator = Translator(extensions=[coverage.activate])
-    out = translator.translate(dedent(example), ".coveragerc")
-    assert dedent(expected).strip() == out.strip()
+    out = translator.translate(dedent(example), ".coveragerc").strip()
+    expected = dedent(expected).strip()
+    print("expected=\n" + expected + "\n***")
+    print("out=\n" + out)
+    assert expected == out

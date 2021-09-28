@@ -33,5 +33,8 @@ def test_isort():
     ]
     """  # noqa
     translator = Translator(extensions=[pytest.activate])
-    out = translator.translate(dedent(example), "pytest.ini")
-    assert dedent(expected).strip() == out.strip()
+    out = translator.translate(dedent(example), "pytest.ini").strip()
+    expected = dedent(expected).strip()
+    print("expected=\n" + expected + "\n***")
+    print("out=\n" + out)
+    assert expected == out

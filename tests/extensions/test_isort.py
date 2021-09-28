@@ -29,6 +29,9 @@ def test_isort():
     multi_line_output = 5
     """
     translator = Translator(extensions=[isort.activate])
+    expected = dedent(expected).strip()
     for file, section in [(".isort.cfg", "settings"), ("setup.cfg", "isort")]:
-        out = translator.translate(f"[{section}]\n{dedent(example)}", file)
-        assert dedent(expected).strip() in out
+        out = translator.translate(f"[{section}]\n{dedent(example)}", file).strip()
+        print("expected=\n" + expected + "\n***")
+        print("out=\n" + out)
+        assert expected in out
