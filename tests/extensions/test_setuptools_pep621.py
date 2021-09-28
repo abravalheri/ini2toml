@@ -2,6 +2,7 @@ import pytest
 from configupdater import ConfigUpdater
 
 from cfg2toml.extensions.setuptools_pep621 import (
+    activate,
     apply_value_processing,
     convert_directives,
     fix_license,
@@ -183,7 +184,7 @@ license = { file = "LICENSE.txt",  }
 """  # TODO: unnecessary comma/space
 
 
-def test_fix_license(cfg2tomlobj):
+def test_fix_license():
     doc = loads(example_fix_license.strip())
     doc = fix_license({}, doc)
     assert dumps(doc).strip() == expected_fix_license.strip()
@@ -209,7 +210,41 @@ exclude = ["tests"]
 """
 
 
-def test_fix_packages(cfg2tomlobj):
+def test_fix_packages():
     doc = loads(example_fix_packages.strip())
     doc = fix_packages({}, doc)
     assert dumps(doc).strip() == expected_fix_packages.strip()
+
+
+# ----
+
+
+example_fix_setup_requires = """\
+[options]
+setup_requires =
+    setuptools>=46.1.0
+    setuptools_scm>=5
+"""
+
+expected_fix_setup_requires = """\
+[build-system]
+requires = ["setuptools>=46.1.0", "setuptools_scm>=5", "wheel"]
+build-backend = "setuptools.build_meta"
+"""
+
+
+def test_fix_setup_requires():
+    translator = Translator(extensions=[activate])
+    text = translator.translate(example_fix_setup_requires.strip(), "setup.cfg")
+    print(text)
+    assert text == expected_fix_setup_requires.strip()
+
+
+# ----
+
+
+def test_empty():
+    translator = Translator(extensions=[activate])
+    text = translator.translate("", "setup.cfg")
+    doc = loads(text)
+    assert "build-system" in doc

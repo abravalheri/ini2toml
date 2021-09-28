@@ -5,6 +5,7 @@ from itertools import chain
 from typing import Dict, List, Tuple, TypeVar, Union
 
 from configupdater import ConfigUpdater
+from packaging.requirements import Requirement
 
 from ..processing import (
     Transformation,
@@ -13,6 +14,7 @@ from ..processing import (
     coerce_bool,
     get_nested,
     kebab_case,
+    pop_nested,
     set_nested,
     split_comment,
     split_kv_pairs,
@@ -272,6 +274,19 @@ def fix_packages(_orig: Mapping, out: M) -> M:
     return out
 
 
+def fix_setup_requires(_orig: Mapping, out: M) -> M:
+    req = out.get("tool", {}).get("setuptools", {}).pop("setup-requires", [])
+    build_req = out.setdefault("build-system", {}).setdefault("requires", [])
+    existing = {Requirement(r).name: r for r in build_req}
+    new = [(Requirement(r).name, r) for r in req]
+    # Deduplication
+    for name, dep in reversed(new):
+        if name in existing:
+            build_req.remove(existing[name])
+        build_req.insert(0, dep)
+    return out
+
+
 def ensure_pep518(_orig: Mapping, out: M) -> M:
     """PEP 518 specifies that any other tool adding configuration under
     ``pyproject.toml`` should use the ``tool`` table. This means that the only
@@ -289,6 +304,19 @@ def ensure_pep518(_orig: Mapping, out: M) -> M:
     return out
 
 
+def cleanup(_orig: Mapping, out: M) -> M:
+    possible_removals = [
+        ("project",),
+        ("tool", "setuptools", "packages"),
+        ("tool", "setuptools"),
+        ("tool",),
+    ]
+    for keys in possible_removals:
+        if not get_nested(out, keys):
+            pop_nested(out, keys)
+    return out
+
+
 def pep621_transform(orig: Mapping, out: M) -> M:
     transformations = [
         convert_directives,
@@ -298,8 +326,9 @@ def pep621_transform(orig: Mapping, out: M) -> M:
         fix_license,
         fix_dynamic,
         fix_packages,
-        # TODO: fix_setup_requires,
+        fix_setup_requires,
         ensure_pep518,
+        cleanup,
     ]
     return reduce(lambda acc, fn: fn(orig, acc), transformations, out)
 
@@ -320,6 +349,8 @@ def normalise_keys(cfg: ConfigUpdater) -> ConfigUpdater:
         for option in section.iter_options():
             option.key = kebab_case(option.key)
     # Normalise aliases
+    if "metadata" not in cfg:
+        return cfg
     for alias, cannonic in setupcfg_aliases().items():
         option = cfg.get("metadata", alias, None)
         if option:
