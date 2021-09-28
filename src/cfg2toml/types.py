@@ -15,21 +15,25 @@ else:  # pragma: no cover
 
 M = TypeVar("M", bound=MutableMapping)
 
+TextProcessor = Callable[[str], str]
+
 # Specific, using ConfigUpdater and TOMLDocument objects
-PreProcessorCFG = Callable[[ConfigUpdater], ConfigUpdater]
-PostProcessorTOML = Callable[[ConfigUpdater, TOMLDocument], TOMLDocument]
+CFGProcessor_ = Callable[[ConfigUpdater], ConfigUpdater]
+TOMLProcessor_ = Callable[[ConfigUpdater, TOMLDocument], TOMLDocument]
 
 # Generic, using MutableMapping
-PreProcessorM = Callable[[M], M]
-PostProcessorM = Callable[[Mapping, M], M]
+CFGProcessorM = Callable[[M], M]
+TOMLProcessorM = Callable[[Mapping, M], M]
 
-PreProcessor = Union[PreProcessorCFG, PreProcessorM]
-PostProcessor = Union[PostProcessorTOML, PostProcessorM]
+CFGProcessor = Union[CFGProcessor_, CFGProcessorM]
+TOMLProcessor = Union[TOMLProcessor_, TOMLProcessorM]
 
 
 class Profile(Protocol):
-    pre_processors: List[PreProcessor]
-    post_processors: List[PostProcessor]
+    pre_processors: List[TextProcessor]
+    cfg_processors: List[CFGProcessor]
+    toml_processors: List[TOMLProcessor]
+    post_processors: List[TextProcessor]
     cfg_parser_opts: dict
     toml_template: str
 

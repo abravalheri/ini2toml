@@ -44,8 +44,8 @@ build-backend = "setuptools.build_meta"
 
 def activate(translator: Translator):
     profile = translator["setup.cfg"]
-    profile.pre_processors.insert(0, pre_process)
-    profile.post_processors.insert(0, post_process)
+    profile.cfg_processors.insert(0, normalise_keys)
+    profile.toml_processors.insert(0, pep621_transform)
     profile.toml_template = TOML_TEMPLATE
 
 
@@ -282,7 +282,7 @@ def ensure_pep518(_orig: Mapping, out: M) -> M:
     return out
 
 
-def post_process(orig: Mapping, out: M) -> M:
+def pep621_transform(orig: Mapping, out: M) -> M:
     transformations = [
         convert_directives,
         separate_subtables,
@@ -291,13 +291,13 @@ def post_process(orig: Mapping, out: M) -> M:
         fix_license,
         fix_dynamic,
         fix_packages,
-        # fix_setup_requires,
+        # TODO: fix_setup_requires,
         ensure_pep518,
     ]
     return reduce(lambda acc, fn: fn(orig, acc), transformations, out)
 
 
-def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
+def normalise_keys(cfg: ConfigUpdater) -> ConfigUpdater:
     """Normalise keys in ``setup.cfg``, by replacing aliases with cannonic names
     and replacing the snake case with kebab case.
 

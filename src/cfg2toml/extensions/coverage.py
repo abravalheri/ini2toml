@@ -26,12 +26,12 @@ LIST_VALUES = (
 
 def activate(translator: Translator):
     profile = translator[".coveragerc"]
-    profile.post_processors.append(partial(process_values, AFFECTED_SECTIONS))
+    profile.toml_processors.append(partial(process_values, AFFECTED_SECTIONS))
 
     prefixed_sections = [f"{PREFIX}{s}" for s in AFFECTED_SECTIONS]
     for file in ("setup.cfg", "tox.ini"):
         profile = translator[file]
-        profile.post_processors.append(partial(process_values, prefixed_sections))
+        profile.toml_processors.append(partial(process_values, prefixed_sections))
 
 
 def process_values(sections: Sequence[str], _orig: Mapping, doc: M) -> M:

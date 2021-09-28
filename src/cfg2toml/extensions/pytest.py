@@ -29,7 +29,7 @@ split_markers = partial(split_list, sep="\n")
 def activate(translator: Translator):
     for file in ("setup.cfg", "tox.ini", "pytest.ini"):
         profile = translator[file]
-        profile.post_processors.append(process_values)
+        profile.toml_processors.append(process_values)
 
 
 def process_values(_orig: Mapping, doc: M) -> M:

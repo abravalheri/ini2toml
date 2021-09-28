@@ -6,7 +6,7 @@ from cfg2toml.extensions.setuptools_pep621 import (
     convert_directives,
     fix_license,
     fix_packages,
-    pre_process,
+    normalise_keys,
     separate_subtables,
 )
 from cfg2toml.toml_adapter import dumps, loads
@@ -25,7 +25,7 @@ def cfg2tomlobj(translate):
     return lambda text: loads(translate(text))
 
 
-example_pre_process = """\
+example_normalise_keys = """\
 [metadata]
 summary = Automatically translates .cfg/.ini files into TOML
 author_email = example@example
@@ -35,7 +35,7 @@ home_page = https://github.com/abravalheri/cfg2toml/
 classifier = Development Status :: 4 - Beta
 platform = any
 """
-expected_pre_process = """\
+expected_normalise_keys = """\
 [metadata]
 description = Automatically translates .cfg/.ini files into TOML
 author-email = example@example
@@ -47,10 +47,10 @@ platforms = any
 """
 
 
-def test_pre_process():
-    cfg = ConfigUpdater().read_string(example_pre_process)
-    cfg = pre_process(cfg)
-    assert str(cfg) == expected_pre_process
+def test_normalise_keys():
+    cfg = ConfigUpdater().read_string(example_normalise_keys)
+    cfg = normalise_keys(cfg)
+    assert str(cfg) == expected_normalise_keys
 
 
 # ----

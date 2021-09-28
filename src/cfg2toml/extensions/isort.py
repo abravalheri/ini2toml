@@ -10,10 +10,10 @@ M = TypeVar("M", bound=MutableMapping)
 
 def activate(translator: Translator):
     profile = translator[".isort.cfg"]
-    profile.post_processors.append(partial(process_values, "settings"))
+    profile.toml_processors.append(partial(process_values, "settings"))
     for file in ("setup.cfg", "tox.ini"):
         profile = translator[file]
-        profile.post_processors.append(partial(process_values, "isort"))
+        profile.toml_processors.append(partial(process_values, "isort"))
 
 
 def find_list_options(section: Mapping) -> Set[str]:

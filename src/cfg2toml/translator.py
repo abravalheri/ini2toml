@@ -41,14 +41,17 @@ class Translator:
             raise UndefinedProfile(profile_name)
 
         profile = self[profile_name]
+        cfg = reduce(lambda acc, fn: fn(acc), profile.pre_processors, cfg)
         updater = ConfigUpdater(**profile.cfg_parser_opts).read_string(cfg)
-        updater = reduce(lambda acc, fn: fn(acc), profile.pre_processors, updater)
+        updater = reduce(lambda acc, fn: fn(acc), profile.cfg_processors, updater)
         doc = loads(profile.toml_template)
         translate_cfg(doc, updater)
-        doc = reduce(lambda acc, fn: fn(updater, acc), profile.post_processors, doc)
-        return dumps(doc).strip()
-        # TODO: tomlkit is always appending a newline at the end of the document when
-        #       a section is replaced (even if it exists before), so we need to strip()
+        doc = reduce(lambda acc, fn: fn(updater, acc), profile.toml_processors, doc)
+        toml = dumps(doc).strip()
+        # TODO: atoml/tomlkit is always appending a newline at the end of the document
+        #       when a section is replaced (even if it exists before), so we need to
+        #       strip()
+        return reduce(lambda acc, fn: fn(acc), profile.post_processors, toml)
 
 
 def translate_cfg(out: TOMLDocument, cfg: ConfigUpdater):

@@ -14,7 +14,7 @@ KEY_SEP = "="
 
 def activate(translator: Translator):
     profile = translator["best_effort"]
-    profile.post_processors.append(process_values)
+    profile.toml_processors.append(process_values)
 
 
 def process_values(_orig: Mapping, doc: M) -> M:

@@ -23,7 +23,7 @@ list_comma = partial(split_list, sep=",")
 def activate(translator: Translator):
     for file in ("setup.cfg", "mypy.ini", ".mypy.ini"):
         profile = translator[file]
-        profile.post_processors.append(process_values)
+        profile.toml_processors.append(process_values)
 
 
 def process_values(orig: Mapping, doc: M) -> M:
