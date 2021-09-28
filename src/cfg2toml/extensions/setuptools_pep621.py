@@ -44,8 +44,8 @@ build-backend = "setuptools.build_meta"
 
 def activate(translator: Translator):
     profile = translator["setup.cfg"]
-    profile.pre_processors.append(pre_process)
-    profile.post_processors.append(post_process)
+    profile.pre_processors.insert(0, pre_process)
+    profile.post_processors.insert(0, post_process)
     profile.toml_template = TOML_TEMPLATE
 
 

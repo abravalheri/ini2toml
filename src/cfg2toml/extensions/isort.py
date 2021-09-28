@@ -55,5 +55,6 @@ def process_values(section_name: str, _orig: Mapping, doc: M) -> M:
         else:
             apply(isort, field, coerce_scalar)
 
-    doc.setdefault("tool", {})["isort"] = isort
+    if isort:
+        doc.setdefault("tool", {})["isort"] = isort
     return doc

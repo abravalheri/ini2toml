@@ -36,7 +36,9 @@ def activate(translator: Translator):
 
 def process_values(sections: Sequence[str], _orig: Mapping, doc: M) -> M:
     for section in sections:
-        sec = doc.pop(section, doc.get("tool", {}).pop(section, {}))
+        raw_section = section.replace(PREFIX.rstrip(":."), "").lstrip(":.")
+        sec = doc.get("tool", {}).get("coverage", {}).pop(raw_section, {})
+        sec = doc.pop(section, doc.get("tool", {}).pop(section, sec))
         for field in sec:
             if field in LIST_VALUES:
                 apply(sec, field, split_list)
