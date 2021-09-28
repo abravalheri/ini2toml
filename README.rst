@@ -39,6 +39,8 @@ Automatically translates |cfg_ini|_ files into TOML_
 .. warning:: This project is under development and currently under the "design
    stage", which means that the contents of this document should be taken
    simply as a wish-list_, and as a project description.
+   Bugs are likely to be found (specially regarding the underlying style
+   preserving TOML libraries).
 
 
 Description
@@ -100,12 +102,14 @@ be stripped out of the resulting TOML file and lost.
 
 The AST translation works as a 5-stage data pipeline:
 
-1. ``cfg2toml`` parses the |cfg_ini| file contents using |ConfigUpdater|_.
-2. The resulting object is ref:`pre-processed <pre-processing>`
-3. ``cfg2toml`` automatically converts the `ConfigUpdater's AST`_ into TOML AST
+1. The original |cfg_ini| text file is :ref:`pre-processed <text-processing>`.
+2. ``cfg2toml`` parses the |cfg_ini| file contents using |ConfigUpdater|_.
+3. The resulting object is ref:`cfg-processed <cfg-processing>`.
+4. ``cfg2toml`` automatically converts the `ConfigUpdater's AST`_ into TOML AST
    using atoml_/tomlkit_
-4. The resulting object is ref:`post-processed <post-processing>`
-5. ``cfg2toml`` convert the TOML object into a string that uses TOML syntax.
+5. The resulting object is ref:`toml-processed <toml-processing>`.
+6. ``cfg2toml`` convert the TOML object into a string that uses TOML syntax.
+7. The resulting TOML text file is :ref:`post-processed <text-processing>`.
 
 
 Core Concepts
@@ -130,11 +134,11 @@ and allowing third-party :ref:`extensions`, as documented in the next sections.
 Profiles
 --------
 
-A profile is a simple collection of :ref:`pre-processing` and
-:ref:`post-processing` transformations, responsible for adjusting or correcting
-any non-trivial translation between the original |cfg_ini| file format and the
-resulting TOML (such as coercing values to specific data types or changing
-field names or configuration keys).
+A profile is a simple collection of :ref:`text-processing`,
+:ref:`cfg-processing` and :ref:`toml-processing` transformations, responsible
+for adjusting or correcting any non-trivial translation between the original
+|cfg_ini| file format and the resulting TOML (such as coercing values to
+specific data types or changing field names or configuration keys).
 
 This collection of transformations is identified by a string (the profile
 name), which *in general* corresponds to a file naming convention.
@@ -149,57 +153,76 @@ When using the ``cfg2toml`` command line tool without explicitly specifying a
 profile, the |basename|_ of the input file will be used if it is implemented,
 falling back to ``"setup.cfg"``.
 
-Pre-processing
---------------
 
-Pre-processing consists in altering the CFG syntax AST (here represented as a
-|ConfigUpdater| Document object) into a modified version of itself.
-This is useful when simple changes are required (e.g. changing the name of a
-section or option).
+.. _text-processing:
 
-Each pre-processor is a simple Python function with the following signature:
+Pre-processing and Post-processing
+----------------------------------
+
+Pre-processing and post-processing are simple text-processing transformations
+(i.e. the text contents are transformed from a string object to another string
+object). The difference is that pre-processors will receive as input a text
+following the CFG syntax, while post-processors will receive as input a text
+with the converted result, following the TOML syntax.
+
+Each text-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   def pre_process(cfg: ConfigUpdater) -> ConfigUpdater:
+   def text_process(file_contents: str) -> str:
        ...
 
-Pre-processors are called in sequence, so the output of one pre-processor is
-the input of the following (also working as a pipeline).
-Ideally pre-processor implementations should be idempotent_.
 
-Post-processing
+CFG-processing
+--------------
+
+CFG-processing consists in altering the CFG syntax AST (here represented as a
+|ConfigUpdater| Document object) into a modified version of itself.
+This is useful when simple changes are required and are better implemented with
+the support of |ConfigUpdater| (e.g. changing the name of a section or option
+while maintaining the original order).
+
+Each cfg-processor is a simple Python function with the following signature:
+
+.. code-block:: python
+
+   def cfg_process(cfg: ConfigUpdater) -> ConfigUpdater:
+       ...
+
+TOML-processing
 ---------------
 
-Post-processing allows more powerful transformations, including coercing stored
+TOML-processing allows more powerful transformations, including coercing stored
 values to specific types (e.g. a CFG string value to a TOML list) or combining
 several CFG options into a nested TOML table.
 
-Each post-processor is a simple Python function with the following signature:
+Each toml-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   def post_process(cfg: ConfigUpdater, toml: TOMLDocument) -> TOMLDocument:
+   def toml_process(cfg: ConfigUpdater, toml: TOMLDocument) -> TOMLDocument:
        ...
 
 Please notice your function **SHOULD NOT** modify the ``cfg`` parameter. This
-parameter corresponds to the original |dos_ini| document, as originally parsed by
-``cfg2toml``.
+parameter corresponds to the |dos_ini| document, in the same state as obtained
+after :ref:`cfg-processing`.
 
-Post-processors also work as a pipeline and (ideally) implemented in an
-idempotent_ fashion.
+
+.. important:: All processors (text, CFG, TOML)
+   are called in sequence, so the output of one is
+   the input of the following (also working as a pipeline).
+   Ideally processor implementations should be idempotent_.
+
 
 Extensions
 ----------
 
 Extensions are a way of augmenting the built-in ``cfg2toml`` functionality, by
-adding pre/post-processors to specific profiles using the Python programming
-language.
+adding processors to specific profiles using the Python programming language.
 
 The implementation requirement for a ``cfg2toml`` extension is to implement a
 function that accepts a ``Translator`` object. Using this object, this function
-can register new pre/post-processors for different profiles, as shown in the
-example bellow.
+can register new processors for different profiles, as shown in the example bellow.
 
 
 .. code-block:: python
@@ -209,6 +232,8 @@ example bellow.
    def activate(translator: Translator):
        profile = translator["setup.cfg"]
        profile.pre_processing += my_pre_processor
+       profile.cfg_processing += my_cfg_processor
+       profile.toml_processing += my_toml_processor
        profile.post_processing += my_post_processor
 
 
@@ -242,8 +267,8 @@ publicly shared are distributed via PyPI_ under a name that adheres to the follo
 with ``<your specific name>`` being the same string identifier used as entry-point.
 
 Please notice extensions are activated in a specific order, which can interfere
-with the order that the pre/post-processors run. They are sorted using Python's
-built-in ``sorted`` function.
+with the order that the processors run. They are sorted using Python's built-in
+``sorted`` function.
 
 When writing your own extension, please have a look on `our library of helper
 functions`_ that implement common operations.
