@@ -32,7 +32,17 @@ split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 chain_iter = chain.from_iterable
 
 SECTION_SPLITTER = re.compile(r"\.|:")
-SETUPTOOLS_SECTIONS = ("metadata", "options", "bdist", "sdist")
+SETUPTOOLS_COMMAND_SECTIONS = (
+    "alias",
+    "bdist",
+    "sdist",
+    "build",
+    "install",
+    "develop",
+    "dist_info",
+    "egg_info",
+)
+SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
 
 
 TOML_TEMPLATE = """\
@@ -185,8 +195,13 @@ def pep621_renaming(_orig: Mapping, doc: M) -> M:
     options.update({k: metadata.pop(k) for k in specific if k in metadata})
 
     # ---- distutils/setuptools command specifics outside of "options" ----
-    it = list(doc.keys())
-    extras = {k: doc.pop(k) for k in it for p in ("bdist", "sdist") if k.startswith(p)}
+    sections = list(doc.keys())
+    extras = {
+        k: doc.pop(k)
+        for k in sections
+        for p in SETUPTOOLS_COMMAND_SECTIONS
+        if k.startswith(p) and k != "build-system"
+    }
     options.update(extras)
 
     # ----
