@@ -3,7 +3,8 @@ from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import TypeVar
 
-from ..processing import apply, set_nested, split_kv_pairs, split_list, split_scalar
+from ..access import set_nested
+from ..processing import apply, split_kv_pairs, split_list, split_scalar
 from ..translator import Translator
 
 M = TypeVar("M", bound=MutableMapping)

@@ -7,15 +7,13 @@ from typing import Dict, List, Tuple, TypeVar, Union
 from configupdater import ConfigUpdater
 from packaging.requirements import Requirement
 
+from ..access import get_nested, pop_nested, set_nested
 from ..processing import (
     Transformation,
     apply,
     apply_nested,
     coerce_bool,
-    get_nested,
     kebab_case,
-    pop_nested,
-    set_nested,
     split_comment,
     split_kv_pairs,
     split_list,

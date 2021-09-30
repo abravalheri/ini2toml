@@ -1,9 +1,8 @@
 """Reusable post-processing and type casting operations"""
 import logging
 from collections import UserList
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -17,6 +16,7 @@ from typing import (
     overload,
 )
 
+from .access import NOT_GIVEN, NotGiven, get_nested
 from .toml_adapter import (
     Array,
     InlineTable,
@@ -28,9 +28,6 @@ from .toml_adapter import (
     item,
     table,
 )
-
-NotGiven = Enum("NotGiven", "NOT_GIVEN")
-NOT_GIVEN = NotGiven.NOT_GIVEN
 
 CP = "#;"
 """Default Comment Prefixes"""
@@ -378,48 +375,6 @@ def split_kv_pairs(
 
 
 # ---- Access Helpers ----
-
-
-def get_nested(m: Mapping, keys: Sequence[str], default: Any = None) -> Any:
-    """Nested version of Mapping.get"""
-    value = m
-    for k in keys:
-        if k not in value:
-            return default
-        value = value[k]
-    return value
-
-
-def pop_nested(m: MutableMapping, keys: Sequence[str], default: Any = None) -> Any:
-    """Nested version of Mapping.get"""
-    *path, last = keys
-    parent = get_nested(m, path, NOT_GIVEN)
-    if parent is NOT_GIVEN:
-        return default
-    return parent.pop(last, default)
-
-
-def set_nested(m: M, keys: Sequence[str], value) -> M:
-    last = keys[-1]
-    parent = setdefault(m, keys[:-1], {})
-    parent[last] = value
-    if hasattr(value, "display_name"):
-        # Temporary workaround for tomlkit#144 and atoml#24
-        j = next((i for i, k in enumerate(keys) if isinstance(k, int)), 0)
-        value.display_name = ".".join(keys[j:])
-    return m
-
-
-def setdefault(m: MutableMapping, keys: Sequence[str], default: Any = None) -> Any:
-    """Nested version of MutableMapping.setdefault"""
-    if len(keys) < 1:
-        return m
-    if len(keys) == 1:
-        return m.setdefault(keys[0], default)
-    value = m
-    for k in keys[:-1]:
-        value = value.setdefault(k, {})
-    return value.setdefault(keys[-1], default)
 
 
 # ---- Public Helpers ----
