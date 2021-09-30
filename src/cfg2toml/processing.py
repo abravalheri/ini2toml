@@ -1,7 +1,7 @@
 """Reusable post-processing and type casting operations"""
 import logging
 from collections import UserList
-from collections.abc import MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
@@ -46,11 +46,10 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 _logger = logging.getLogger(__name__)
 
 
-def create_item(value, comment):
-    obj = item(value)
-    if comment is not None:
-        obj.comment(comment)
-    return obj
+# ---- Intermediate representations ----
+# These objects hold information about the processed values + comments
+# in such a way that we can later convert them to TOML while still preserving
+# the comments (if we want to).
 
 
 @dataclass
@@ -127,7 +126,10 @@ class CommentedKV(Generic[T], UserList):
         return out
 
 
-# ---- High level function ----
+# ---- "Appliers" ----
+# These functions are able to use transformations to modify the TOML object
+# Internally, they know how to convert intermediate representations (Commented,
+# CommentedKV, CommentedList, ...) into TOML values.
 
 
 def apply(container: M, field: str, fn: Transformation) -> M:
@@ -158,7 +160,8 @@ def apply_nested(container: M, path: Sequence, fn: Transformation) -> M:
     return container
 
 
-# ---- Value processors ----
+# ---- Simple value processors ----
+# These functions return plain objects, that can be directly added to the TOML document
 
 
 def noop(x: T) -> T:
@@ -208,6 +211,11 @@ def coerce_scalar(value: str) -> Scalar:
 
 def kebab_case(field: str) -> str:
     return field.lower().replace("_", "-")
+
+
+# ---- Complex value processors ----
+# These functions return an intermediate representation of the value,
+# that need `apply` to be added to a container
 
 
 @overload
@@ -372,7 +380,7 @@ def split_kv_pairs(
 # ---- Access Helpers ----
 
 
-def get_nested(m, keys, default=None):
+def get_nested(m: Mapping, keys: Sequence[str], default: Any = None) -> Any:
     """Nested version of Mapping.get"""
     value = m
     for k in keys:
@@ -382,7 +390,7 @@ def get_nested(m, keys, default=None):
     return value
 
 
-def pop_nested(m, keys, default=None):
+def pop_nested(m: MutableMapping, keys: Sequence[str], default: Any = None) -> Any:
     """Nested version of Mapping.get"""
     *path, last = keys
     parent = get_nested(m, path, NOT_GIVEN)
@@ -391,7 +399,7 @@ def pop_nested(m, keys, default=None):
     return parent.pop(last, default)
 
 
-def set_nested(m, keys, value):
+def set_nested(m: M, keys: Sequence[str], value) -> M:
     last = keys[-1]
     parent = setdefault(m, keys[:-1], {})
     parent[last] = value
@@ -402,7 +410,7 @@ def set_nested(m, keys, value):
     return m
 
 
-def setdefault(m, keys, default=None):
+def setdefault(m: MutableMapping, keys: Sequence[str], default: Any = None) -> Any:
     """Nested version of MutableMapping.setdefault"""
     if len(keys) < 1:
         return m
@@ -412,6 +420,16 @@ def setdefault(m, keys, default=None):
     for k in keys[:-1]:
         value = value.setdefault(k, {})
     return value.setdefault(keys[-1], default)
+
+
+# ---- Public Helpers ----
+
+
+def create_item(value, comment):
+    obj = item(value)
+    if comment is not None:
+        obj.comment(comment)
+    return obj
 
 
 # ---- Private Helpers ----
