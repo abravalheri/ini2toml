@@ -144,7 +144,7 @@ def pep621_renaming(_orig: Mapping, doc: M) -> M:
     #  project-urls => urls
     urls = {
         dest: metadata.pop(orig)
-        for orig, dest in [("url", "homepage"), ("download-url", "download")]
+        for orig, dest in [("url", "Homepage"), ("download-url", "Download")]
         if orig in metadata
     }
     urls = {**metadata.pop("project-urls", {}), **urls}
