@@ -249,9 +249,7 @@ def apply_value_processing(_orig: Mapping, out: M) -> M:
         **processing_rules(),
         **dynamic_processing_rules(out),
     }
-    for path, fn in transformations.items():
-        out = apply_nested(out, path, fn)
-    return out
+    return reduce(lambda acc, x: apply_nested(acc, *x), transformations.items(), out)
 
 
 def fix_license(_orig: Mapping, out: M) -> M:
