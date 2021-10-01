@@ -1,22 +1,10 @@
 """Reusable post-processing and type casting operations"""
 import logging
-from collections import UserList
 from collections.abc import MutableMapping, Sequence
-from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    List,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from functools import singledispatch
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, cast, overload
 
-from .access import NOT_GIVEN, NotGiven, get_nested
+from .access import get_nested
 from .toml_adapter import (
     Array,
     InlineTable,
@@ -28,6 +16,7 @@ from .toml_adapter import (
     item,
     table,
 )
+from .types import NOT_GIVEN, Commented, CommentedKV, CommentedList
 
 CP = "#;"
 """Default Comment Prefixes"""
@@ -43,90 +32,20 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 _logger = logging.getLogger(__name__)
 
 
-# ---- Intermediate representations ----
-# These objects hold information about the processed values + comments
-# in such a way that we can later convert them to TOML while still preserving
-# the comments (if we want to).
-
-
-@dataclass
-class Commented(Generic[T]):
-    value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
-    comment: Optional[str] = field(default_factory=lambda: None)
-
-    def comment_only(self):
-        return self.value is NOT_GIVEN
-
-    def has_comment(self):
-        return bool(self.comment)
-
-    def value_or(self, fallback: S) -> Union[T, S]:
-        return fallback if self.value is NOT_GIVEN else self.value
-
-    def as_toml_obj(self, default_value="") -> Item:
-        return create_item(self.value_or(default_value), self.comment)
-
-
-class CommentedList(Generic[T], UserList):
-    def __init__(self, data: List[Commented[List[T]]]):
-        super().__init__(data)
-        self.comment: Optional[str] = None  # TODO: remove this workaround
-
-    def as_toml_obj(self) -> Array:
-        out = array()
-        multiline = len(self) > 1
-        out.multiline(multiline)
-
-        for entry in self.data:
-            values = entry.value_or([])
-            for value in values:
-                cast(list, out).append(value)
-            if not entry.has_comment():
-                continue
-            if not multiline:
-                self.comment = entry.comment
-                cast(Item, out).comment(entry.comment)
-                return out
-            if len(values) > 0:
-                _add_comment_array_last_item(out, entry.comment)
-            else:
-                _add_comment_array_entire_line(out, entry.comment)
-
-        return out
-
-
-class CommentedKV(Generic[T], UserList):
-    def __init__(self, data: List[Commented[List[KV[T]]]]):
-        super().__init__(data)
-        self.comment: Optional[str] = None  # TODO: remove this workaround
-
-    def as_toml_obj(self) -> Union[Table, InlineTable]:
-        multiline = len(self) > 1
-        out: Union[Table, InlineTable] = table() if multiline else inline_table()
-
-        for entry in self.data:
-            values = (v for v in entry.value_or([cast(KV, ())]) if v)
-            k: Optional[str] = None
-            for value in values:
-                k, v = value
-                out[k] = v  # type: ignore
-            if not entry.has_comment():
-                continue
-            if not multiline:
-                out.comment(entry.comment)  # type: ignore
-                self.comment = entry.comment
-                return out
-            if k:
-                out[k].comment(entry.comment)
-            else:
-                out.append(None, comment(entry.comment))  # type: ignore
-        return out
-
-
 # ---- "Appliers" ----
 # These functions are able to use transformations to modify the TOML object
 # Internally, they know how to convert intermediate representations (Commented,
 # CommentedKV, CommentedList, ...) into TOML values.
+
+
+def collapse(obj):
+    """Convert ``obj`` as a result of a transformation function -
+    that can be a built-in value (such as ``int``, ``bool``, etc) or an internal value
+    representation that preserves comments (``Commented``, ``CommentedList``,
+    ``CommentedKV``) - into a value that can be directly added to a container serving as
+    basis for the TOML document.
+    """
+    return _collapse(obj)
 
 
 def apply(container: M, field: str, fn: Transformation) -> M:
@@ -198,7 +117,7 @@ def coerce_scalar(value: str) -> Scalar:
         return True
     elif is_false(value):
         return False
-    # Do we need this? Or is there a better way?
+    # Do we need this? Or is there a better way? How about time objects
     # > try:
     # >     return datetime.fromisoformat(value)
     # > except ValueError:
@@ -374,9 +293,6 @@ def split_kv_pairs(
     return CommentedKV([split_comment(v, _split_kv, comment_prefixes) for v in values])
 
 
-# ---- Access Helpers ----
-
-
 # ---- Public Helpers ----
 
 
@@ -425,17 +341,74 @@ def _add_comment_array_entire_line(toml_array: Array, cmt_msg: str):
 
 def _add_to_container(container: M, field: str, value: Any) -> M:
     # Add a value to a TOML container
-    if not hasattr(value, "as_toml_obj"):
-        container[field] = value
-        return container
-
-    obj: Item = value.as_toml_obj()
+    obj = collapse(value)
     container[field] = obj
     if (
         hasattr(value, "comment")
-        and value.comment is not None
+        and isinstance(value.comment, str)
+        and value.comment
         and hasattr(obj, "comment")
     ):
         # BUG: we should not need to repeat the comment
         obj.comment(value.comment)
+
     return container
+
+
+@singledispatch
+def _collapse(obj):
+    # Catch all
+    return obj
+
+
+@_collapse.register(Commented)
+def _collapse_scalar(obj: Commented) -> Item:
+    return create_item(obj.value_or(None), obj.comment)
+
+
+@_collapse.register(CommentedList)
+def _collapse_list(obj: CommentedList) -> Array:
+    out = array()
+    multiline = len(obj) > 1
+    out.multiline(multiline)
+
+    for entry in obj.data:
+        values = entry.value_or([])
+        for value in values:
+            cast(list, out).append(value)
+        if not entry.has_comment():
+            continue
+        if not multiline:
+            obj.comment = entry.comment
+            cast(Item, out).comment(entry.comment)
+            return out
+        if len(values) > 0:
+            _add_comment_array_last_item(out, entry.comment)
+        else:
+            _add_comment_array_entire_line(out, entry.comment)
+
+    return out
+
+
+@_collapse.register(CommentedKV)
+def _collapse_dict(obj: CommentedKV) -> Union[Table, InlineTable]:
+    multiline = len(obj) > 1
+    out: Union[Table, InlineTable] = table() if multiline else inline_table()
+
+    for entry in obj.data:
+        values = (v for v in entry.value_or([cast(KV, ())]) if v)
+        k: Optional[str] = None
+        for value in values:
+            k, v = value
+            out[k] = v  # type: ignore
+        if not entry.has_comment():
+            continue
+        if not multiline:
+            out.comment(entry.comment)  # type: ignore
+            obj.comment = entry.comment
+            return out
+        if k:
+            out[k].comment(entry.comment)
+        else:
+            out.append(None, comment(entry.comment))  # type: ignore
+    return out

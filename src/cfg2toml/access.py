@@ -1,9 +1,7 @@
 """Functions for item access/manipulation in nested mapping/mutable mapping objects."""
-from enum import Enum
 from typing import TYPE_CHECKING, Any, TypeVar
 
-NotGiven = Enum("NotGiven", "NOT_GIVEN")
-NOT_GIVEN = NotGiven.NOT_GIVEN
+from .types import NOT_GIVEN
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, Sequence

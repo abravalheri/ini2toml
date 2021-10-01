@@ -1,6 +1,9 @@
 import sys
+from collections import UserList
 from collections.abc import Mapping, MutableMapping
-from typing import Callable, List, TypeVar, Union
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
 from configupdater import ConfigUpdater
 
@@ -13,6 +16,8 @@ else:  # pragma: no cover
     from typing import Protocol
 
 
+T = TypeVar("T")
+S = TypeVar("S")
 M = TypeVar("M", bound=MutableMapping)
 
 TextProcessor = Callable[[str], str]
@@ -44,3 +49,46 @@ class Translator(Protocol):
 
 
 Extension = Callable[[Translator], None]
+
+
+# ---- Transformations and Intermediate representations ----
+
+
+KV = Tuple[str, T]
+Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime
+CoerceFn = Callable[[str], T]
+Transformation = Union[Callable[[str], Any], Callable[[M], M]]
+
+NotGiven = Enum("NotGiven", "NOT_GIVEN")
+NOT_GIVEN = NotGiven.NOT_GIVEN
+
+# These objects hold information about the processed values + comments
+# in such a way that we can later convert them to TOML while still preserving
+# the comments (if we want to).
+
+
+@dataclass
+class Commented(Generic[T]):
+    value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
+    comment: Optional[str] = field(default_factory=lambda: None)
+
+    def comment_only(self):
+        return self.value is NOT_GIVEN
+
+    def has_comment(self):
+        return bool(self.comment)
+
+    def value_or(self, fallback: S) -> Union[T, S]:
+        return fallback if self.value is NOT_GIVEN else self.value
+
+
+class CommentedList(Generic[T], UserList):
+    def __init__(self, data: List[Commented[List[T]]]):
+        super().__init__(data)
+        self.comment: Optional[str] = None  # TODO: remove this workaround
+
+
+class CommentedKV(Generic[T], UserList):
+    def __init__(self, data: List[Commented[List[KV[T]]]]):
+        super().__init__(data)
+        self.comment: Optional[str] = None  # TODO: remove this workaround
