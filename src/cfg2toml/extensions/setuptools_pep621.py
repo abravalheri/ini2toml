@@ -25,9 +25,12 @@ M = TypeVar("M", bound=MutableMapping)
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 ProcessingRules = Dict[Tuple[str, ...], Transformation]
 
+# Functions that split values from comments and parse those values
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 chain_iter = chain.from_iterable
+split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
+split_bool = partial(split_comment, coerce_fn=coerce_bool)
 
 SECTION_SPLITTER = re.compile(r"\.|:")
 SETUPTOOLS_COMMAND_SECTIONS = (
@@ -98,14 +101,15 @@ def processing_rules() -> ProcessingRules:
         ("metadata", "provides"): split_list_comma,
         ("metadata", "requires"): split_list_comma,
         ("metadata", "obsoletes"): split_list_comma,
-        ("options", "zip-safe"): coerce_bool,
+        ("metadata", "long-description-content-type"): split_hash_comment,
+        ("options", "zip-safe"): split_bool,
         ("options", "setup-requires"): split_list_semi,
         ("options", "install-requires"): split_list_semi,
         ("options", "tests-require"): split_list_semi,
         ("options", "scripts"): split_list_comma,
         ("options", "eager-resources"): split_list_comma,
         ("options", "dependency-links"): split_list_comma,
-        ("options", "include-package-data"): coerce_bool,
+        ("options", "include-package-data"): split_bool,
         ("options", "packages"): split_list_comma,
         ("options", "package-dir"): split_kv_pairs,
         ("options", "namespace-packages"): split_list_comma,

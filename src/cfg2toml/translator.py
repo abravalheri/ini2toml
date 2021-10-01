@@ -89,18 +89,7 @@ def translate_section(doc: TOMLDocument, item: Section, parser_opts: dict):
 
 
 def translate_option(container: Table, item: Option, parser_opts: dict):
-    value = item.value
-    prefixes = [p for p in parser_opts.get("comment_prefixes", "#;") if p in value]
-
-    # We just process inline comments for single line options
-    if not prefixes or len(value.splitlines()) > 1:
-        container[item.key] = item.value
-        return
-
-    prefix = prefixes[0]  # We can only analyse one...
-    value, cmt = (p.strip() for p in value.split(prefix, maxsplit=1))
-    container[item.key] = value
-    container[item.key].comment(cmt.strip().lstrip(prefix).strip())
+    container[item.key] = item.value
 
 
 def translate_comment(container: TOMLContainer, item: Comment, parser_opts: dict):

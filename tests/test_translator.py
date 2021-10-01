@@ -11,7 +11,7 @@ def test_simple_example():
 
     [section1]
     option1 = value
-    option2 = value # with comment
+    option2 = value # option comments are considered part of the value
 
     # comment
     [section2] # inline comment
@@ -26,7 +26,7 @@ def test_simple_example():
 
     [section1]
     option1 = "value"
-    option2 = "value" # with comment
+    option2 = "value # option comments are considered part of the value"
 
     # comment
 
@@ -50,7 +50,7 @@ def test_parser_opts():
 
     [section1]
     option1 - value
-    option2 - value : with comment
+    option2 - value : option comments are considered part of the value
 
     : comment
     [section2] : inline comment
@@ -65,7 +65,7 @@ def test_parser_opts():
 
     [section1]
     option1 = "value"
-    option2 = "value" # with comment
+    option2 = "value : option comments are considered part of the value"
 
     # comment
 
