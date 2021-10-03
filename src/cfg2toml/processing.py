@@ -26,56 +26,85 @@ T = TypeVar("T")
 S = TypeVar("S")
 M = TypeVar("M", bound="MutableMapping")
 KV = Tuple[str, T]
+
 Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime
+"""Simple data types with TOML correspondence"""
+
 CoerceFn = Callable[[str], T]
+"""Functions that know how to parser/coerce string values into different types"""
+
 Transformation = Union[Callable[[str], Any], Callable[[M], M]]
+"""There are 2 main types of transformation:
+- The first one is a simple transformation that processes a string value (coming from an
+  option in the original CFG/INI file) into a value with an equivalent TOML data type.
+  For example: transforming ``"2"`` (string) into ``2`` (integer).
+- The second one tries to preserve metadata (such as comments) from the original CFG/INI
+  file. This kind of transformation processes a string value into an intermediary
+  representation (e.g. :obj:`Commented`, :obj:`CommentedList`, obj:`CommentedKV`)
+  that needs to be properly handled before adding to the TOML document.
+
+In a higher level we can also consider an ensemble of transformations that transform an
+entire table of the TOML document.
+"""
 
 _logger = logging.getLogger(__name__)
 
 
-# ---- "Appliers" ----
-# These functions are able to use transformations to modify the TOML object
-# Internally, they know how to convert intermediate representations (Commented,
-# CommentedKV, CommentedList, ...) into TOML values.
+class Transformer:
+    """A transformer is an object that can :meth:`apply` a transformation to a TOML
+    object representation modifying it in a way that the result is an equally valid TOML
+    object representation.
 
+    Since transformations can result in intermediary forms (such as :obj:`Commented`,
+    :obj:`CommentedKV` and :obj:`CommentedList`) in addition to data types supported by
+    TOML, :obj:`Transformer` objects know how to internally :meth:`collapse` these
+    intermediary forms into valid objects.
 
-def collapse(obj):
-    """Convert ``obj`` as a result of a transformation function -
-    that can be a built-in value (such as ``int``, ``bool``, etc) or an internal value
-    representation that preserves comments (``Commented``, ``CommentedList``,
-    ``CommentedKV``) - into a value that can be directly added to a container serving as
-    basis for the TOML document.
+    Despite not originally intended to hold any state, :obj:`Transformer` is implemented
+    as a class to allow polymorphism, since Python does not offer other strategies like
+    parametric modules.
+
+    A nice aspect of this choice is that different transformers can re-use the same
+    transformations but with different outcomes. For example, a first transformer can
+    remove all comments coming from the CFG/INI file, while a second can turn them into
+    TOML comments.
     """
-    return _collapse(obj)
 
+    def collapse(self, obj):
+        """Convert ``obj`` as a result of a transformation function -
+        that can be a built-in value (such as ``int``, ``bool``, etc) or an internal
+        value representation that preserves comments (``Commented``, ``CommentedList``,
+        ``CommentedKV``) - into a value that can be directly added to a container
+        serving as basis for the TOML document.
+        """
+        return _collapse(obj)
 
-def apply(container: M, field: str, fn: Transformation) -> M:
-    """Modify the TOML container by applying the transformation ``fn`` to the value
-    stored under the ``field`` key.
-    """
-    value = container[field]
-    try:
-        processed = fn(value)
-    except Exception:
-        msg = f"Impossible to transform: {value} <{value.__class__.__name__}>"
-        _logger.warning(msg)
-        _logger.debug("Please check the following details", exc_info=True)
+    def apply(self, container: M, field: str, fn: Transformation) -> M:
+        """Modify the TOML container by applying the transformation ``fn`` to the value
+        stored under the ``field`` key.
+        """
+        value = container[field]
+        try:
+            processed = fn(value)
+        except Exception:
+            msg = f"Impossible to transform: {value} <{value.__class__.__name__}>"
+            _logger.warning(msg)
+            _logger.debug("Please check the following details", exc_info=True)
+            return container
+        container[field] = self.collapse(processed)
         return container
-    container[field] = collapse(processed)
-    return container
 
-
-def apply_nested(container: M, path: Sequence, fn: Transformation) -> M:
-    *parent, last = path
-    nested = get_nested(container, parent, None)
-    if not nested:
+    def apply_nested(self, container: M, path: Sequence, fn: Transformation) -> M:
+        *parent, last = path
+        nested = get_nested(container, parent, None)
+        if not nested:
+            return container
+        if not isinstance(nested, MutableMapping):
+            msg = "Cannot apply transformations to "
+            raise ValueError(msg + f"{nested} ({nested.__class__.__name__})")
+        if last in nested:
+            self.apply(nested, last, fn)
         return container
-    if not isinstance(nested, MutableMapping):
-        msg = f"Cannot apply transformations to {nested} ({nested.__class__.__name__})"
-        raise ValueError(msg)
-    if last in nested:
-        apply(nested, last, fn)
-    return container
 
 
 # ---- Simple value processors ----

@@ -4,7 +4,7 @@ from cfg2toml.extensions import coverage
 from cfg2toml.translator import Translator
 
 
-def test_isort():
+def test_coverage():
     example = """\
     # .coveragerc to control coverage.py
     [run]

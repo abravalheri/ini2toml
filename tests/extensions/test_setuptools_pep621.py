@@ -1,17 +1,15 @@
 import pytest
 from configupdater import ConfigUpdater
 
-from cfg2toml.extensions.setuptools_pep621 import (
-    activate,
-    apply_value_processing,
-    convert_directives,
-    fix_license,
-    fix_packages,
-    normalise_keys,
-    separate_subtables,
-)
+from cfg2toml.extensions.setuptools_pep621 import SetuptoolsPEP621, activate
+from cfg2toml.processing import Transformer
 from cfg2toml.toml_adapter import dumps, loads
 from cfg2toml.translator import Translator
+
+
+@pytest.fixture
+def extension():
+    return SetuptoolsPEP621(Transformer())
 
 
 @pytest.fixture
@@ -48,9 +46,9 @@ platforms = any
 """
 
 
-def test_normalise_keys():
+def test_normalise_keys(extension):
     cfg = ConfigUpdater().read_string(example_normalise_keys)
-    cfg = normalise_keys(cfg)
+    cfg = extension.normalise_keys(cfg)
     assert str(cfg) == expected_normalise_keys
 
 
@@ -77,9 +75,9 @@ packages = {find_namespace = ""}
 """
 
 
-def test_convert_directives():
+def test_convert_directives(extension):
     doc = loads(example_convert_directives)
-    doc = convert_directives(ConfigUpdater(), doc)
+    doc = extension.convert_directives(ConfigUpdater(), doc)
     assert dumps(doc) == expected_convert_directives
 
 
@@ -133,11 +131,11 @@ awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
 """
 
 
-def test_apply_value_processing(cfg2tomlobj):
+def test_apply_value_processing(cfg2tomlobj, extension):
     cfg = ConfigUpdater().read_string(example_apply_value_processing)
     doc = cfg2tomlobj(example_apply_value_processing)
-    doc = separate_subtables(cfg, doc)
-    doc = apply_value_processing(cfg, doc)
+    doc = extension.separate_subtables(cfg, doc)
+    doc = extension.apply_value_processing(cfg, doc)
     assert dumps(doc).strip() == expected_apply_value_processing.strip()
 
 
@@ -163,10 +161,10 @@ where = "src"
 """  # TODO: unnecessary double newline
 
 
-def test_separate_subtables(cfg2tomlobj):
+def test_separate_subtables(cfg2tomlobj, extension):
     cfg = ConfigUpdater().read_string(example_separate_subtables.strip())
     doc = cfg2tomlobj(example_separate_subtables)
-    doc = separate_subtables(cfg, doc)
+    doc = extension.separate_subtables(cfg, doc)
     assert dumps(doc).strip() == expected_separate_subtables.strip()
 
 
@@ -184,9 +182,9 @@ license = { file = "LICENSE.txt",  }
 """  # TODO: unnecessary comma/space
 
 
-def test_fix_license():
+def test_fix_license(extension):
     doc = loads(example_fix_license.strip())
-    doc = fix_license({}, doc)
+    doc = extension.fix_license({}, doc)
     assert dumps(doc).strip() == expected_fix_license.strip()
 
 
@@ -210,9 +208,9 @@ exclude = ["tests"]
 """
 
 
-def test_fix_packages():
+def test_fix_packages(extension):
     doc = loads(example_fix_packages.strip())
-    doc = fix_packages({}, doc)
+    doc = extension.fix_packages({}, doc)
     assert dumps(doc).strip() == expected_fix_packages.strip()
 
 

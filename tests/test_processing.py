@@ -80,31 +80,33 @@ def test_apply():
     option10 = "\\n   a=1\\n   b=2, c=3\\n"
     """
 
+    tr = lib.Transformer()
+
     doc = loads(dedent(example))
     split_int = partial(lib.split_list, coerce_fn=int)
     split_kv_int = partial(lib.split_kv_pairs, coerce_fn=int)
     dangling_list_no_subsplit = partial(lib.split_list, subsplit_dangling=False)
     dangling_kv_no_subsplit = partial(lib.split_kv_pairs, subsplit_dangling=False)
 
-    doc["table"] = lib.apply(doc["table"], "option1", int)
+    doc["table"] = tr.apply(doc["table"], "option1", int)
     expected = "option1 = 1"
     assert expected in dumps(doc)
 
     # assert len(_trailing_nl()) == 1
 
-    doc["table"] = lib.apply(doc["table"], "option2", lib.split_comment)
+    doc["table"] = tr.apply(doc["table"], "option2", lib.split_comment)
     expected = 'option2 = "value" # comment'
     assert expected in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option3", split_int)
+    doc["table"] = tr.apply(doc["table"], "option3", split_int)
     expected = "option3 = [1, 2, 3] # comment"
     assert expected in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option4", split_kv_int)
+    doc["table"] = tr.apply(doc["table"], "option4", split_kv_int)
     expected = "option4 = {a = 1, b = 2, c = 3} # comment"
     assert expected in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option5", split_kv_int)
+    doc["table"] = tr.apply(doc["table"], "option5", split_kv_int)
     expected = """\
     [table.option5]
     a = 1 # comment
@@ -113,7 +115,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option5.1", split_kv_int)
+    doc["table"] = tr.apply(doc["table"], "option5.1", split_kv_int)
     expected = """\
     [table."option5.1"]
     # header comment
@@ -122,7 +124,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option6", split_int)
+    doc["table"] = tr.apply(doc["table"], "option6", split_int)
     expected = """\
     option6 = [
         1,
@@ -132,7 +134,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option7", split_int)
+    doc["table"] = tr.apply(doc["table"], "option7", split_int)
     expected = """\
     option7 = [
         # comment
@@ -142,7 +144,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option8", dangling_list_no_subsplit)
+    doc["table"] = tr.apply(doc["table"], "option8", dangling_list_no_subsplit)
     expected = """\
     option8 = [
         "1, 2",
@@ -151,7 +153,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option9", split_int)
+    doc["table"] = tr.apply(doc["table"], "option9", split_int)
     expected = """\
     option9 = [
         1, 2,
@@ -160,7 +162,7 @@ def test_apply():
     """
     assert dedent(expected) in dumps(doc)
 
-    doc["table"] = lib.apply(doc["table"], "option10", dangling_kv_no_subsplit)
+    doc["table"] = tr.apply(doc["table"], "option10", dangling_kv_no_subsplit)
     expected = """\
     [table.option10]
     a = "1"
