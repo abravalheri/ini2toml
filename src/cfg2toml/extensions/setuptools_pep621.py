@@ -10,7 +10,6 @@ from packaging.requirements import Requirement
 
 from ..access import get_nested, pop_nested, set_nested
 from ..processing import (
-    Transformation,
     Transformer,
     coerce_bool,
     kebab_case,
@@ -19,7 +18,7 @@ from ..processing import (
     split_list,
 )
 from ..translator import Translator
-from ..types import Profile
+from ..types import Profile, Transformation
 
 M = TypeVar("M", bound=MutableMapping)
 
@@ -337,7 +336,7 @@ class SetuptoolsPEP621:
         return out
 
     def pep621_transform(self, orig: Mapping, out: M) -> M:
-        transformations = [
+        fns = [
             self.convert_directives,
             self.separate_subtables,
             self.apply_value_processing,
@@ -349,7 +348,7 @@ class SetuptoolsPEP621:
             self.ensure_pep518,
             self.cleanup,
         ]
-        return reduce(lambda acc, fn: fn(orig, acc), transformations, out)
+        return reduce(lambda acc, fn: fn(orig, acc), fns, out)  # type: ignore
 
     def normalise_keys(self, cfg: ConfigUpdater) -> ConfigUpdater:
         """Normalise keys in ``setup.cfg``, by replacing aliases with cannonic names

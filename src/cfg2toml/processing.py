@@ -370,16 +370,16 @@ def _collapse_list(obj: CommentedList) -> Array:
     for entry in obj.data:
         values = entry.value_or([])
         if multiline:
-            out.append(Whitespace("\n" + 4 * " "))
+            cast(list, out).append(Whitespace("\n" + 4 * " "))
         for value in values:
-            out.append(value)
+            cast(list, out).append(value)
         if entry.has_comment():
             if multiline:
-                out.append(_no_trail_comment(entry.comment))
+                cast(list, out).append(_no_trail_comment(entry.comment))
             else:
-                out.comment(entry.comment)
+                cast(Item, out).comment(entry.comment)
     if multiline:
-        out.append(Whitespace("\n"))
+        cast(list, out).append(Whitespace("\n"))
         values = out._value
         L = len(values)
         for i, v in enumerate(out._value):
