@@ -69,6 +69,7 @@ class SetuptoolsPEP621:
         profile.cfg_processors.insert(0, self.normalise_keys)
         profile.toml_processors.insert(0, self.pep621_transform)
         profile.toml_template = dedent(self.TOML_TEMPLATE)
+        profile.post_processors += (normalise_newlines, remove_empty_tables)
 
     def setupcfg_aliases(self):
         """``setup.cfg`` aliases as defined in:
@@ -376,6 +377,20 @@ class SetuptoolsPEP621:
 
 
 # ---- Helpers ----
+
+
+NEWLINES = re.compile(r"\n+", re.M)
+TABLE_START = re.compile(r"^\[(.*)\]", re.M)
+EMPTY_TABLES = re.compile(r"^\[.*\]\n+\[(.*)\]", re.M)
+
+
+def normalise_newlines(text: str):
+    text = NEWLINES.sub(r"\n", text)
+    return TABLE_START.sub(r"\n[\1]", text)
+
+
+def remove_empty_tables(text: str):
+    return EMPTY_TABLES.sub(r"[\1]", text)
 
 
 def isdirective(value, valid=("file", "attr")) -> bool:

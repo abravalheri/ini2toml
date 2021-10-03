@@ -51,7 +51,7 @@ class Translator:
         # TODO: atoml/tomlkit is always appending a newline at the end of the document
         #       when a section is replaced (even if it exists before), so we need to
         #       strip()
-        return reduce(lambda acc, fn: fn(acc), profile.post_processors, toml)
+        return reduce(lambda acc, fn: fn(acc), profile.post_processors, toml).strip()
 
 
 def translate_cfg(out: TOMLDocument, cfg: ConfigUpdater):
