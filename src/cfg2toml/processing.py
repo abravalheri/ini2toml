@@ -70,15 +70,6 @@ class Transformer:
     TOML comments.
     """
 
-    def collapse(self, obj):
-        """Convert ``obj`` as a result of a transformation function -
-        that can be a built-in value (such as ``int``, ``bool``, etc) or an internal
-        value representation that preserves comments (``Commented``, ``CommentedList``,
-        ``CommentedKV``) - into a value that can be directly added to a container
-        serving as basis for the TOML document.
-        """
-        return _collapse(obj)
-
     def apply(self, container: M, field: str, fn: Transformation) -> M:
         """Modify the TOML container by applying the transformation ``fn`` to the value
         stored under the ``field`` key.
@@ -105,6 +96,15 @@ class Transformer:
         if last in nested:
             self.apply(nested, last, fn)
         return container
+
+    def collapse(self, obj):
+        """Convert ``obj`` as a result of a transformation function -
+        that can be a built-in value (such as ``int``, ``bool``, etc) or an internal
+        value representation that preserves comments (``Commented``, ``CommentedList``,
+        ``CommentedKV``) - into a value that can be directly added to a container
+        serving as basis for the TOML document.
+        """
+        return _collapse(obj)
 
 
 # ---- Simple value processors ----
