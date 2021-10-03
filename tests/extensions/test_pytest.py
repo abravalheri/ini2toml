@@ -4,7 +4,7 @@ from cfg2toml.extensions import pytest
 from cfg2toml.translator import Translator
 
 
-def test_isort():
+def test_pytest():
     example = """\
     [pytest]
     minversion = 6.0

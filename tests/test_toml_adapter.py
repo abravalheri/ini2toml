@@ -50,9 +50,9 @@ class TestUnderstandTomlLib:
         try:
             assert text.strip() == '"" = "src"'
             assert loads(text) == {"": "src"}
-            pytest.fail("Error fixed in upstream library, please update the code")
         except Exception as ex:
-            pytest.skip(f"Known error with upstream library: {ex}")
+            print(f"Known error with upstream library: {ex}")
+            raise
 
     def test_renaming_table(self):
         example = """\
@@ -66,9 +66,9 @@ class TestUnderstandTomlLib:
             text = dumps(doc)
             assert "[y]" in text
             assert "[x]" not in text
-            pytest.fail("Error fixed in upstream library, please update the code")
         except Exception as ex:
-            pytest.skip(f"Known error with upstream library: {ex}")
+            print(f"Known error with upstream library: {ex}")
+            raise
 
     def test_replacing_simple_item_with_table(self):
         example = """\
@@ -85,9 +85,9 @@ class TestUnderstandTomlLib:
             assert "y" in changeddoc["a"]
             assert "nested" in changeddoc["a"]["y"]
             assert "z" in changeddoc["a"]
-            pytest.fail("Error fixed in upstream library, please update the code")
         except Exception as ex:
-            pytest.skip(f"Known error with upstream library: {ex}")
+            print(f"Known error with upstream library: {ex}")
+            raise
 
     def test_multiline_array_of_objects(self):
         example = """\

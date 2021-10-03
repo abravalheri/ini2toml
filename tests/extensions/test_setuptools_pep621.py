@@ -123,9 +123,9 @@ install-requires = [
     "importlib-metadata; python_version<\\"3.8\\"",
     "configupdater>=3,<=4",
 ]
-
 [options.entry-points]
 # For example:
+
 [options.entry-points."pyscaffold.cli"]
 # comment
 fibonacci = "cfg2toml.skeleton:run" # comment

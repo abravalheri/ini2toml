@@ -23,7 +23,6 @@ def test_simple_example():
     expected = """\
     # comment
 
-
     [section1]
     option1 = "value"
     option2 = "value # option comments are considered part of the value"
@@ -61,7 +60,6 @@ def test_parser_opts():
     # Obs: TOML always add a space before a new section
     expected = """\
     # comment
-
 
     [section1]
     option1 = "value"

@@ -15,7 +15,7 @@ from atoml import (
     nl,
     table,
 )
-from atoml.items import Array, InlineTable, Item, Table
+from atoml.items import Array, InlineTable, Item, Table, Whitespace
 from atoml.toml_document import TOMLDocument
 
 __all__ = [
@@ -34,4 +34,5 @@ __all__ = [
     "table",
     "Table",
     "TOMLDocument",
+    "Whitespace",
 ]

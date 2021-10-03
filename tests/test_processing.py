@@ -126,22 +126,20 @@ def test_apply():
     expected = """\
     option6 = [
         1,
-        2, # comment,
+        2, # comment
         3,
     ]
     """
-    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
     assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option7", split_int)
     expected = """\
     option7 = [
-        # comment,
+        # comment
         1,
         2,
     ]
     """
-    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
     assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option8", dangling_list_no_subsplit)
@@ -151,18 +149,15 @@ def test_apply():
         "3",
     ]
     """
-    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
     assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option9", split_int)
     expected = """\
     option9 = [
-        1,
-        2,
+        1, 2,
         3,
     ]
     """
-    # TODO: the comma after `comment` is a workaround remove when tomlkit is fixed
     assert dedent(expected) in dumps(doc)
 
     doc["table"] = lib.apply(doc["table"], "option10", dangling_kv_no_subsplit)

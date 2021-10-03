@@ -10,6 +10,7 @@ from .toml_adapter import (
     InlineTable,
     Item,
     Table,
+    Whitespace,
     array,
     comment,
     inline_table,
@@ -60,7 +61,8 @@ def apply(container: M, field: str, fn: Transformation) -> M:
         _logger.warning(msg)
         _logger.debug("Please check the following details", exc_info=True)
         return container
-    return _add_to_container(container, field, processed)
+    container[field] = collapse(processed)
+    return container
 
 
 def apply_nested(container: M, path: Sequence, fn: Transformation) -> M:
@@ -319,42 +321,6 @@ def _strip_comment(msg: Optional[str], prefixes: str = CP) -> Optional[str]:
     return msg.strip().lstrip(prefixes).strip()
 
 
-def _add_comment_array_last_item(toml_array: Array, cmt: str):
-    # Workaround for bug in tomlkit, it should be: toml_array[-1].comment(cmt)
-    # TODO: Remove when tomlkit fixes it
-    last = toml_array[-1]
-    last.comment(cmt)
-    trivia = last.trivia
-    # begin workaround -->
-    _before_patch = last.as_string
-    last.as_string = lambda: _before_patch() + "," + trivia.comment_ws + trivia.comment
-
-
-def _add_comment_array_entire_line(toml_array: Array, cmt_msg: str):
-    # Workaround for bug in tomlkit, it should be: toml_array.append(comment(cmt))
-    # TODO: Remove when tomlkit fixes it
-    cmt = comment(cmt_msg)
-    cmt.trivia.trail = ""
-    cmt.__dict__["value"] = cmt.as_string()
-    cast(list, toml_array).append(cmt)
-
-
-def _add_to_container(container: M, field: str, value: Any) -> M:
-    # Add a value to a TOML container
-    obj = collapse(value)
-    container[field] = obj
-    if (
-        hasattr(value, "comment")
-        and isinstance(value.comment, str)
-        and value.comment
-        and hasattr(obj, "comment")
-    ):
-        # BUG: we should not need to repeat the comment
-        obj.comment(value.comment)
-
-    return container
-
-
 @singledispatch
 def _collapse(obj):
     # Catch all
@@ -369,23 +335,33 @@ def _collapse_scalar(obj: Commented) -> Item:
 @_collapse.register(CommentedList)
 def _collapse_list(obj: CommentedList) -> Array:
     out = array()
+    out.multiline(False)  # Let's manually control the whitespace
     multiline = len(obj) > 1
-    out.multiline(multiline)
 
     for entry in obj.data:
         values = entry.value_or([])
+        if multiline:
+            out.append(Whitespace("\n" + 4 * " "))
         for value in values:
-            cast(list, out).append(value)
-        if not entry.has_comment():
-            continue
-        if not multiline:
-            obj.comment = entry.comment
-            cast(Item, out).comment(entry.comment)
-            return out
-        if len(values) > 0:
-            _add_comment_array_last_item(out, entry.comment)
-        else:
-            _add_comment_array_entire_line(out, entry.comment)
+            out.append(value)
+        if entry.has_comment():
+            if multiline:
+                out.append(_no_trail_comment(entry.comment))
+            else:
+                out.comment(entry.comment)
+    if multiline:
+        out.append(Whitespace("\n"))
+        values = out._value
+        L = len(values)
+        for i, v in enumerate(out._value):
+            # Workaround to remove trailing space
+            if (
+                isinstance(v, Whitespace)
+                and i + 1 < L
+                and isinstance(values[i + 1], Whitespace)
+                and "\n" in values[i + 1].s
+            ):
+                v._s = v._s.strip()
 
     return out
 
@@ -412,3 +388,9 @@ def _collapse_dict(obj: CommentedKV) -> Union[Table, InlineTable]:
         else:
             out.append(None, comment(entry.comment))  # type: ignore
     return out
+
+
+def _no_trail_comment(msg: str):
+    cmt = comment(msg)
+    cmt.trivia.trail = ""
+    return cmt

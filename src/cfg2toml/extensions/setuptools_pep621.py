@@ -25,12 +25,14 @@ M = TypeVar("M", bound=MutableMapping)
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 ProcessingRules = Dict[Tuple[str, ...], Transformation]
 
+chain_iter = chain.from_iterable
+
 # Functions that split values from comments and parse those values
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
-chain_iter = chain.from_iterable
 split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
 split_bool = partial(split_comment, coerce_fn=coerce_bool)
+split_kv_nocomments = partial(split_kv_pairs, comment_prefixes="")
 
 SECTION_SPLITTER = re.compile(r"\.|:")
 SETUPTOOLS_COMMAND_SECTIONS = (
@@ -97,7 +99,7 @@ def processing_rules() -> ProcessingRules:
         ("metadata", "classifiers"): split_list_comma,
         # ("metadata", "license_files",): split_list_comma,  # PEP621 => single file
         ("metadata", "keywords"): split_list_comma,
-        ("metadata", "project-urls"): split_kv_pairs,
+        ("metadata", "project-urls"): split_kv_nocomments,
         ("metadata", "provides"): split_list_comma,
         ("metadata", "requires"): split_list_comma,
         ("metadata", "obsoletes"): split_list_comma,
