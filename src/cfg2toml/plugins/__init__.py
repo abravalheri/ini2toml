@@ -4,7 +4,7 @@
 import sys
 from typing import Callable, Iterable, List, Optional, cast
 
-from ..meta import __version__
+from .. import __version__
 from ..types import Plugin
 
 if sys.version_info[:2] >= (3, 8):  # pragma: no cover

@@ -7,7 +7,7 @@ from pathlib import Path
 from textwrap import dedent, wrap
 from typing import Dict, List, Optional, Sequence
 
-from .meta import __version__
+from . import __version__
 from .translator import Translator
 from .types import Profile, ProfileAugmentation
 

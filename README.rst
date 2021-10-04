@@ -77,7 +77,7 @@ You can also use ``cfg2toml`` in your Python scripts or projects:
 .. code-block:: python
 
     # in your python code
-    from cfg2toml import Translator
+    from cfg2toml.api import Translator
 
     toml_str = Translator().translate(original_contents_str, profile="setup.cfg")
 
