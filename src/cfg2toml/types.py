@@ -35,6 +35,7 @@ TOMLProcessor = Union[TOMLProcessor_, TOMLProcessorM]
 
 
 class Profile(Protocol):
+    name: str
     pre_processors: List[TextProcessor]
     cfg_processors: List[CFGProcessor]
     toml_processors: List[TOMLProcessor]

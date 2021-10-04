@@ -224,18 +224,57 @@ The implementation requirement for a ``cfg2toml`` extension is to implement a
 function that accepts a ``Translator`` object. Using this object, this function
 can register new processors for different profiles, as shown in the example bellow.
 
-
 .. code-block:: python
    from cfg2toml import Translator
 
 
    def activate(translator: Translator):
-       profile = translator["setup.cfg"]
+       profile = translator["setup.cfg"]  # profile.name will be ``setup.cfg``
+       desc = "Convert 'setup.cfg' files to 'pyproject.toml' based on PEP 621"
+       profile.description = desc
        profile.pre_processing += my_pre_processor
        profile.cfg_processing += my_cfg_processor
        profile.toml_processing += my_toml_processor
        profile.post_processing += my_post_processor
 
+.. _profile augmentation:
+It is also possible to augment/modify all existing profiles with extensions
+via the ``Translator.augment_profiles`` function.
+This is specially useful to perform generic tasks that do not depend on the
+nature/focus of the file being converted (e.g. fixing spaces, blank lines,
+etc). An example of these - here called **"profile augmentations"** - is shown
+in the following example:
+
+.. code-block:: python
+   from cfg2toml import Translator, Profile
+
+
+   def activate(translator: Translator):
+       translator.augment_profiles(extra_processing, active_by_default=True)
+
+
+   def strip_trailing_spaces(profile: Profile):
+       """Remove trailing spaces from the generated TOML file"""
+       profile.post_processing += function_that_removes_trailing_spaces
+
+
+Customising the CLI help text
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``cfg2toml`` will try to automatically generate a *help text* to be displayed
+in the CLI for the registered profiles based on the ``name`` and
+``help_text`` properties of the ``Profile`` objects.
+
+Similarly, each ":ref:`profile augmentation`" will correspond to a "on/off"-style
+CLI option flag (depending on the ``active_by_default`` value).
+By default, the name and docstring of the function registered with
+``Translator.augment_profiles`` will be used to create the CLI help text, but
+this can also be customised via optional keyword arguments ``name`` and
+``help_text``.
+
+
+Distributing Extensions
+~~~~~~~~~~~~~~~~~~~~~~~
 
 To distribute ``cfg2toml`` extensions, it is necessary to create a `Python package`_ with
 a ``cfg2toml.processing`` entry-point_.
