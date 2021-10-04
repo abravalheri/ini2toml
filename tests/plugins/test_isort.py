@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from cfg2toml.extensions import isort
+from cfg2toml.plugins import isort
 from cfg2toml.translator import Translator
 
 
@@ -28,7 +28,7 @@ def test_isort():
     line_length = 79
     multi_line_output = 5
     """
-    translator = Translator(extensions=[isort.activate])
+    translator = Translator(plugins=[isort.activate])
     expected = dedent(expected).strip()
     for file, section in [(".isort.cfg", "settings"), ("setup.cfg", "isort")]:
         out = translator.translate(f"[{section}]\n{dedent(example)}", file).strip()

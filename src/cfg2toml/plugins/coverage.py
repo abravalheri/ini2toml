@@ -25,13 +25,13 @@ LIST_VALUES = (
 
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    extension = Coverage(transformer or Transformer())
+    plugin = Coverage(transformer or Transformer())
     profile = translator[".coveragerc"]
-    extension.attach_to(profile, prefix="")
-    profile.help_text = extension.__doc__ or ""
+    plugin.attach_to(profile, prefix="")
+    profile.help_text = plugin.__doc__ or ""
 
     for file in ("setup.cfg", "tox.ini"):
-        extension.attach_to(translator[file], prefix=PREFIX)
+        plugin.attach_to(translator[file], prefix=PREFIX)
 
 
 class Coverage:

@@ -21,11 +21,11 @@ list_comma = partial(split_list, sep=",")
 
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    extension = Mypy(transformer or Transformer())
+    plugin = Mypy(transformer or Transformer())
     for file in ("setup.cfg", "mypy.ini", ".mypy.ini"):
-        extension.attach_to(translator[file])
+        plugin.attach_to(translator[file])
 
-    translator["mypy.ini"].help_text = extension.__doc__ or ""
+    translator["mypy.ini"].help_text = plugin.__doc__ or ""
 
 
 class Mypy:

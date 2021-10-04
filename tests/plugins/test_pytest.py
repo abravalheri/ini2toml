@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from cfg2toml.extensions import pytest
+from cfg2toml.plugins import pytest
 from cfg2toml.translator import Translator
 
 
@@ -32,7 +32,7 @@ def test_pytest():
         ".tox", 
     ]
     """  # noqa
-    translator = Translator(extensions=[pytest.activate])
+    translator = Translator(plugins=[pytest.activate])
     out = translator.translate(dedent(example), "pytest.ini").strip()
     expected = dedent(expected).strip()
     print("expected=\n" + expected + "\n***")

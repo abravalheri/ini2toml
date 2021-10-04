@@ -1,20 +1,20 @@
 import pytest
 from configupdater import ConfigUpdater
 
-from cfg2toml.extensions.setuptools_pep621 import SetuptoolsPEP621, activate
+from cfg2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
 from cfg2toml.processing import Transformer
 from cfg2toml.toml_adapter import dumps, loads
 from cfg2toml.translator import Translator
 
 
 @pytest.fixture
-def extension():
+def plugin():
     return SetuptoolsPEP621(Transformer())
 
 
 @pytest.fixture
 def translate():
-    translator = Translator(extensions=[])
+    translator = Translator(plugins=[])
     translator["simple"]  # ensure profile exists
     return lambda text: translator.translate(text, "simple")
 
@@ -46,9 +46,9 @@ platforms = any
 """
 
 
-def test_normalise_keys(extension):
+def test_normalise_keys(plugin):
     cfg = ConfigUpdater().read_string(example_normalise_keys)
-    cfg = extension.normalise_keys(cfg)
+    cfg = plugin.normalise_keys(cfg)
     assert str(cfg) == expected_normalise_keys
 
 
@@ -75,9 +75,9 @@ packages = {find_namespace = ""}
 """
 
 
-def test_convert_directives(extension):
+def test_convert_directives(plugin):
     doc = loads(example_convert_directives)
-    doc = extension.convert_directives(ConfigUpdater(), doc)
+    doc = plugin.convert_directives(ConfigUpdater(), doc)
     assert dumps(doc) == expected_convert_directives
 
 
@@ -131,11 +131,11 @@ awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
 """
 
 
-def test_apply_value_processing(cfg2tomlobj, extension):
+def test_apply_value_processing(cfg2tomlobj, plugin):
     cfg = ConfigUpdater().read_string(example_apply_value_processing)
     doc = cfg2tomlobj(example_apply_value_processing)
-    doc = extension.separate_subtables(cfg, doc)
-    doc = extension.apply_value_processing(cfg, doc)
+    doc = plugin.separate_subtables(cfg, doc)
+    doc = plugin.apply_value_processing(cfg, doc)
     assert dumps(doc).strip() == expected_apply_value_processing.strip()
 
 
@@ -161,10 +161,10 @@ where = "src"
 """  # TODO: unnecessary double newline
 
 
-def test_separate_subtables(cfg2tomlobj, extension):
+def test_separate_subtables(cfg2tomlobj, plugin):
     cfg = ConfigUpdater().read_string(example_separate_subtables.strip())
     doc = cfg2tomlobj(example_separate_subtables)
-    doc = extension.separate_subtables(cfg, doc)
+    doc = plugin.separate_subtables(cfg, doc)
     assert dumps(doc).strip() == expected_separate_subtables.strip()
 
 
@@ -182,9 +182,9 @@ license = { file = "LICENSE.txt",  }
 """  # TODO: unnecessary comma/space
 
 
-def test_fix_license(extension):
+def test_fix_license(plugin):
     doc = loads(example_fix_license.strip())
-    doc = extension.fix_license({}, doc)
+    doc = plugin.fix_license({}, doc)
     assert dumps(doc).strip() == expected_fix_license.strip()
 
 
@@ -208,9 +208,9 @@ exclude = ["tests"]
 """
 
 
-def test_fix_packages(extension):
+def test_fix_packages(plugin):
     doc = loads(example_fix_packages.strip())
-    doc = extension.fix_packages({}, doc)
+    doc = plugin.fix_packages({}, doc)
     assert dumps(doc).strip() == expected_fix_packages.strip()
 
 
@@ -232,7 +232,7 @@ build-backend = "setuptools.build_meta"
 
 
 def test_fix_setup_requires():
-    translator = Translator(extensions=[activate])
+    translator = Translator(plugins=[activate])
     text = translator.translate(example_fix_setup_requires.strip(), "setup.cfg")
     print(text)
     assert text == expected_fix_setup_requires.strip()
@@ -242,7 +242,7 @@ def test_fix_setup_requires():
 
 
 def test_empty():
-    translator = Translator(extensions=[activate])
+    translator = Translator(plugins=[activate])
     text = translator.translate("", "setup.cfg")
     doc = loads(text)
     assert "build-system" in doc

@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from cfg2toml.extensions import mypy
+from cfg2toml.plugins import mypy
 from cfg2toml.translator import Translator
 
 
@@ -38,7 +38,7 @@ def test_mypy():
     ignore_missing_imports = true
     module = ["somelibrary", "some_other_library"]
     """
-    translator = Translator(extensions=[mypy.activate])
+    translator = Translator(plugins=[mypy.activate])
     out = translator.translate(dedent(example), "mypy.ini").strip()
     expected = dedent(expected).strip()
     print("expected=\n" + expected + "\n***")

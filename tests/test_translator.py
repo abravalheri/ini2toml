@@ -35,7 +35,7 @@ def test_simple_example():
 
     [section3]
     """
-    translator = Translator(extensions=[])
+    translator = Translator(plugins=[])
     # ensure profile exists
     translator["simple"]
     out = translator.translate(dedent(example), "simple")
@@ -75,7 +75,7 @@ def test_parser_opts():
     """
 
     parser_opts = {"comment_prefixes": (":",), "delimiters": ("-",)}
-    translator = Translator(extensions=[], cfg_parser_opts=parser_opts)
+    translator = Translator(plugins=[], cfg_parser_opts=parser_opts)
     # ensure profile exists
     translator["simple"]
     out = translator.translate(dedent(example), "simple")

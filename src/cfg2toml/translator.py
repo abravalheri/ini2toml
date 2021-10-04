@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Union, cas
 from configupdater import Comment, ConfigUpdater, Option, Section, Space
 
 from . import types  # Structural/Abstract types
-from .extensions import list_from_entry_points as list_all_extensions
+from .plugins import list_from_entry_points as list_all_plugins
 from .profile import Profile, ProfileAugmentation
 from .toml_adapter import Item, Table, TOMLDocument, comment, dumps, loads, nl, table
 
@@ -21,22 +21,22 @@ class Translator:
     """
 
     profiles: Dict[str, types.Profile]
-    extensions: List[types.Extension]
+    plugins: List[types.Plugin]
 
     def __init__(
         self,
         profiles: Optional[Sequence[types.Profile]] = None,
-        extensions: Optional[List[types.Extension]] = None,
+        plugins: Optional[List[types.Plugin]] = None,
         cfg_parser_opts: Optional[dict] = None,
         profile_augmentations: Optional[Sequence[types.ProfileAugmentation]] = None,
     ):
-        self.extensions = list_all_extensions() if extensions is None else extensions
+        self.plugins = list_all_plugins() if plugins is None else plugins
         self.cfg_parser_opts = cfg_parser_opts or {}
         self.profiles = {p.name: p for p in (profiles or ())}
         augmentations = profile_augmentations or ()
         self.augmentations = {(p.name or p.fn.__name__): p for p in augmentations}
 
-        for activate in self.extensions:
+        for activate in self.plugins:
             activate(self)
 
     def __getitem__(self, profile_name: str) -> types.Profile:
@@ -149,7 +149,7 @@ class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
 
 class UndefinedProfile(ValueError):
     """The given profile ('{name}') is not registered with ``cfg2toml``.
-    Are you sure you have the right extensions installed and loaded?
+    Are you sure you have the right plugins installed and loaded?
     """
 
     def __init__(self, name: str, available: Sequence[str]):
@@ -165,7 +165,7 @@ class UndefinedProfile(ValueError):
 class AlreadyRegisteredAugmentation(ValueError):
     """The profile augmentation '{name}' is already registered for '{existing}'.
 
-    Some installed extensions seem to be in conflict with each other,
+    Some installed plugins seem to be in conflict with each other,
     please check '{new}' and '{existing}'.
     If you are the developer behind one of them, please use a different name.
     """

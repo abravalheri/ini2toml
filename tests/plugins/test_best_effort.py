@@ -2,14 +2,14 @@ from textwrap import dedent
 
 import pytest
 
-from cfg2toml.extensions import best_effort
+from cfg2toml.plugins import best_effort
 from cfg2toml.toml_adapter import loads
 from cfg2toml.translator import Translator
 
 
 @pytest.fixture
 def translate():
-    translator = Translator(extensions=[best_effort.activate])
+    translator = Translator(plugins=[best_effort.activate])
     return lambda text: translator.translate(text, "best_effort")
 
 

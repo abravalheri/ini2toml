@@ -47,7 +47,7 @@ Description
 ===========
 
 The original purpose of this project is to help migrating ``setup.cfg`` files
-to `PEP 621`_, but by extension it can also be used to convert any compatible |cfg_ini|_
+to `PEP 621`_, but by plugin it can also be used to convert any compatible |cfg_ini|_
 file to TOML_.
 
 Please notice, the provided |cfg_ini|_ files should follow the same syntax
@@ -132,7 +132,7 @@ it is very hard for a generic conversion tool to get every single document
 right.
 
 ``cfg2toml`` address this challenge by relying on a system of :ref:`profiles`
-and allowing third-party :ref:`extensions`, as documented in the next sections.
+and allowing third-party :ref:`plugins`, as documented in the next sections.
 
 
 Profiles
@@ -220,13 +220,13 @@ after :ref:`cfg-processing`.
    Ideally processor implementations should be idempotent_.
 
 
-Extensions
-----------
+Plugins
+-------
 
-Extensions are a way of extending the built-in ``cfg2toml`` functionality, by
+Plugins are a way of extending the built-in ``cfg2toml`` functionality, by
 adding processors to specific profiles using the Python programming language.
 
-The implementation requirement for a ``cfg2toml`` extension is to implement a
+The implementation requirement for a ``cfg2toml`` plugin is to implement a
 function that accepts a ``Translator`` object. Using this object, this function
 can register new processors for different profiles, as shown in the example bellow.
 
@@ -252,7 +252,7 @@ Profile-independent processing via *profile augmentation*
 Sometimes it might be useful to implement generic processing tasks that do not
 depend on the nature/focus of the file being converted and therefore do not
 belong to a specific profile (e.g. fixing trailing spaces, blank lines, ...).
-The ``Translator.augment_profiles`` mechanism in ``cfg2toml`` allow extensions
+The ``Translator.augment_profiles`` mechanism in ``cfg2toml`` allow plugins
 to include such processing tasks, by enabling them to modify the profile after
 it is selected.
 
@@ -290,10 +290,10 @@ Differently from profiles, these flags will always be visible in the CLI,
 independently of the values of ``help_text``.
 
 
-Distributing Extensions
-~~~~~~~~~~~~~~~~~~~~~~~
+Distributing Plugins
+~~~~~~~~~~~~~~~~~~~~
 
-To distribute ``cfg2toml`` extensions, it is necessary to create a `Python package`_ with
+To distribute ``cfg2toml`` plugins, it is necessary to create a `Python package`_ with
 a ``cfg2toml.processing`` entry-point_.
 
 For the time being, if using setuptools_, this can be achieved by adding the following to your
@@ -304,7 +304,7 @@ For the time being, if using setuptools_, this can be achieved by adding the fol
    # in setup.cfg
    [options.entry_points]
    cfg2toml.processing =
-       your_extension = your_package.your_module:your_activate_function
+       your_plugin = your_package.your_module:your_activate_function
 
 When using a `PEP 621`_-compliant backend, the following can be add to your
 ``pyproject.toml`` file:
@@ -313,20 +313,20 @@ When using a `PEP 621`_-compliant backend, the following can be add to your
 
    # in pyproject.toml
    [project.entry-points]
-   "cfg2toml.processing" = {your_extension = "your_package.your_module:activate"}
+   "cfg2toml.processing" = {your_plugin = "your_package.your_module:activate"}
 
-It is recommended that extensions created by the community and meant to be
+It is recommended that plugins created by the community and meant to be
 publicly shared are distributed via PyPI_ under a name that adheres to the following convention::
 
     cfg2tomlext-<your specific name>
 
 with ``<your specific name>`` being the same string identifier used as entry-point.
 
-Please notice extensions are activated in a specific order, which can interfere
+Please notice plugins are activated in a specific order, which can interfere
 with the order that the processors run. They are sorted using Python's built-in
 ``sorted`` function.
 
-When writing your own extension, please have a look on `our library of helper
+When writing your own plugin, please have a look on `our library of helper
 functions`_ that implement common operations.
 
 

@@ -10,13 +10,13 @@ M = TypeVar("M", bound=MutableMapping)
 
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    extension = ISort(transformer or Transformer())
+    plugin = ISort(transformer or Transformer())
     profile = translator[".isort.cfg"]
-    extension.attach_to(profile, "settings")
-    profile.help_text = extension.__doc__ or ""
+    plugin.attach_to(profile, "settings")
+    profile.help_text = plugin.__doc__ or ""
 
     for file in ("setup.cfg", "tox.ini"):
-        extension.attach_to(translator[file], "isort")
+        plugin.attach_to(translator[file], "isort")
 
 
 class ISort:
@@ -46,7 +46,7 @@ class ISort:
             "remove_imports",
         }
 
-        field_ends = ["skip", "glob", "paths", "exclusions", "extensions"]
+        field_ends = ["skip", "glob", "paths", "exclusions", "plugins"]
         field_starts = ["known", "extra"]
         dynamic_fields = (
             field

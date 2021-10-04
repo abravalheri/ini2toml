@@ -28,10 +28,10 @@ split_markers = partial(split_list, sep="\n")
 
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    extension = Pytest(transformer or Transformer())
+    plugin = Pytest(transformer or Transformer())
     for file in ("setup.cfg", "tox.ini", "pytest.ini"):
-        extension.attach_to(translator[file])
-    translator["pytest.ini"].help_text = extension.__doc__ or ""
+        plugin.attach_to(translator[file])
+    translator["pytest.ini"].help_text = plugin.__doc__ or ""
 
 
 class Pytest:

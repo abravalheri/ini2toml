@@ -15,9 +15,9 @@ KEY_SEP = "="
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     profile = translator["best_effort"]
-    extension = BestEffort(transformer or Transformer())
-    extension.attach_to(profile)
-    profile.help_text = extension.__doc__ or ""
+    plugin = BestEffort(transformer or Transformer())
+    plugin.attach_to(profile)
+    profile.help_text = plugin.__doc__ or ""
 
 
 class BestEffort:

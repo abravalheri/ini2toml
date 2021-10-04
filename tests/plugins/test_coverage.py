@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from cfg2toml.extensions import coverage
+from cfg2toml.plugins import coverage
 from cfg2toml.translator import Translator
 
 
@@ -61,7 +61,7 @@ def test_coverage():
         "if __name__ == .__main__.:", 
     ]
     """
-    translator = Translator(extensions=[coverage.activate])
+    translator = Translator(plugins=[coverage.activate])
     out = translator.translate(dedent(example), ".coveragerc").strip()
     expected = dedent(expected).strip()
     print("expected=\n" + expected + "\n***")

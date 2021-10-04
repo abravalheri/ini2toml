@@ -49,9 +49,9 @@ SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     profile = translator["setup.cfg"]
-    extension = SetuptoolsPEP621(transformer or Transformer())
-    extension.attach_to(profile)
-    profile.help_text = extension.__doc__ or ""
+    plugin = SetuptoolsPEP621(transformer or Transformer())
+    plugin.attach_to(profile)
+    profile.help_text = plugin.__doc__ or ""
 
 
 class SetuptoolsPEP621:

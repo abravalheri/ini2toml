@@ -81,7 +81,7 @@ class Translator(Protocol):
         """
 
 
-Extension = Callable[[Translator], None]
+Plugin = Callable[[Translator], None]
 ProfileAugmentationFn = Callable[[Profile], None]
 
 
