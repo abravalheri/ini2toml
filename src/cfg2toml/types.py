@@ -46,10 +46,18 @@ class Profile(Protocol):
 
 
 class ProfileAugmentation(Protocol):
-    fn: "ProfileAugmentationFn"
     active_by_default: bool
     name: str
     help_text: str
+
+    def fn(self, profile: Profile):
+        ...
+
+    def is_active(self, explicitly_active: Optional[bool] = None) -> bool:
+        """``explicitly_active`` is a tree-state variable: ``True`` if the user
+        explicitly asked for the augmentation, ``False`` if the user explicitly denied
+        the augmentation, or ``None`` otherwise.
+        """
 
 
 class Translator(Protocol):

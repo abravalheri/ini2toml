@@ -12,7 +12,7 @@ from .toml_adapter import Item, Table, TOMLDocument, comment, dumps, loads, nl, 
 
 TOMLContainer = Union[TOMLDocument, Table]
 
-EMPTY = MappingProxyType({})
+EMPTY = MappingProxyType({})  # type: ignore
 
 
 class Translator:
@@ -28,7 +28,7 @@ class Translator:
         profiles: Optional[Sequence[types.Profile]] = None,
         extensions: Optional[List[types.Extension]] = None,
         cfg_parser_opts: Optional[dict] = None,
-        profile_augmentations: Optional[Sequence[ProfileAugmentation]] = None,
+        profile_augmentations: Optional[Sequence[types.ProfileAugmentation]] = None,
     ):
         self.extensions = list_all_extensions() if extensions is None else extensions
         self.cfg_parser_opts = cfg_parser_opts or {}
@@ -55,8 +55,8 @@ class Translator:
         help_text: str = "",
     ):
         name = name or fn.__name__
-        if name in self.augmentations:
-            raise AlreadyRegisteredAugmentation(name, fn, self.augmentations[name].fn)
+        InvalidAugmentationName.check(name)
+        AlreadyRegisteredAugmentation.check(name, fn, self.augmentations)
         help_text = help_text or fn.__doc__ or ""
         obj = ProfileAugmentation(fn, active_by_default, name, help_text)
         self.augmentations[name] = obj
@@ -75,9 +75,7 @@ class Translator:
         profile_name: str,
         active_augmentations: Mapping[str, bool] = EMPTY,
     ) -> str:
-        if profile_name not in self.profiles:
-            raise UndefinedProfile(profile_name)
-
+        UndefinedProfile.check(profile_name, list(self.profiles.keys()))
         profile = self._add_augmentations(self[profile_name], active_augmentations)
 
         cfg = reduce(lambda acc, fn: fn(acc), profile.pre_processors, cfg)
@@ -150,9 +148,18 @@ class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
 
 
 class UndefinedProfile(ValueError):
-    """The given profile is not registered with ``cfg2toml``.
+    """The given profile ('{name}') is not registered with ``cfg2toml``.
     Are you sure you have the right extensions installed and loaded?
     """
+
+    def __init__(self, name: str, available: Sequence[str]):
+        msg = self.__class__.__doc__ or ""
+        super().__init__(msg.format(name=name) + f"Available: {', '.join(available)})")
+
+    @classmethod
+    def check(cls, name: str, available: List[str]):
+        if name not in available:
+            raise cls(name, available)
 
 
 class AlreadyRegisteredAugmentation(ValueError):
@@ -168,3 +175,25 @@ class AlreadyRegisteredAugmentation(ValueError):
         new_id = f"{new.__module__}.{new.__qualname__}"
         msg = dedent(self.__class__.__doc__ or "")
         super().__init__(msg.format(name=name, new=new_id, existing=existing_id))
+
+    @classmethod
+    def check(
+        cls, name: str, fn: Callable, registry: Mapping[str, types.ProfileAugmentation]
+    ):
+        if name in registry:
+            raise cls(name, fn, registry[name].fn)
+
+
+class InvalidAugmentationName(ValueError):
+    """Profile augmentations should be valid python identifiers and not starting with
+    'no_'
+    """
+
+    def __init__(self, name: str):
+        msg = self.__class__.__doc__ or ""
+        super().__init__(f"{msg} ('{name}' given)")
+
+    @classmethod
+    def check(cls, name: str):
+        if not name.isidentifier() or name.startswith("no_"):
+            raise cls(name)
