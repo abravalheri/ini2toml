@@ -5,6 +5,7 @@ repos:
   rev: v4.0.1
   hooks:
   - id: trailing-whitespace
+    exclude: '\.py$'
   - id: check-added-large-files
   - id: check-ast
   - id: check-json
