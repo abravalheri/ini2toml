@@ -1,4 +1,4 @@
-# based on https://coverage.readthedocs.io/en/coverage-5.5/config.html
+# based on https://coverage.readthedocs.io/en/stable/config.html
 from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import Optional, Sequence, TypeVar
@@ -27,13 +27,17 @@ LIST_VALUES = (
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     extension = Coverage(transformer or Transformer())
-    extension.attach_to(translator[".coveragerc"], prefix="")
+    profile = translator[".coveragerc"]
+    extension.attach_to(profile, prefix="")
+    profile.help_text = extension.__doc__ or ""
 
     for file in ("setup.cfg", "tox.ini"):
         extension.attach_to(translator[file], prefix=PREFIX)
 
 
 class Coverage:
+    """Convert settings to 'pyproject.toml' equivalent"""
+
     def __init__(self, transformer: Transformer):
         self._tr = transformer
 

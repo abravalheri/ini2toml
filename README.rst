@@ -263,14 +263,17 @@ Customising the CLI help text
 
 ``cfg2toml`` will try to automatically generate a *help text* to be displayed
 in the CLI for the registered profiles based on the ``name`` and
-``help_text`` properties of the ``Profile`` objects.
+``help_text`` properties of the ``Profile`` objects. If ``help_text`` is blank,
+the profile will not be featured in the CLI description (hidden).
 
-Similarly, each ":ref:`profile augmentation`" will correspond to a "on/off"-style
-CLI option flag (depending on the ``active_by_default`` value).
+``cfg2toml`` will also generate a "on/off"-style CLI option flag (depending on
+the ``active_by_default`` value) for each ":ref:`profile augmentation`".
 By default, the name and docstring of the function registered with
 ``Translator.augment_profiles`` will be used to create the CLI help text, but
 this can also be customised via optional keyword arguments ``name`` and
 ``help_text``.
+Differently from profiles, these flags will always be visible in the CLI,
+independently of the values of ``help_text``.
 
 
 Distributing Extensions

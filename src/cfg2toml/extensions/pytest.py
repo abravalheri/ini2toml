@@ -1,4 +1,5 @@
 # https://docs.pytest.org/en/latest/reference/reference.html#configuration-options
+# https://docs.pytest.org/en/latest/reference/customize.html#config-file-formats
 from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import Optional, TypeVar
@@ -31,9 +32,12 @@ def activate(translator: Translator, transformer: Optional[Transformer] = None):
     extension = Pytest(transformer or Transformer())
     for file in ("setup.cfg", "tox.ini", "pytest.ini"):
         extension.attach_to(translator[file])
+    translator["pytest.ini"].help_text = extension.__doc__ or ""
 
 
 class Pytest:
+    """Convert settings to 'pyproject.toml' ('ini_options' table)"""
+
     def __init__(self, trasformer: Transformer):
         self._tr = trasformer
 

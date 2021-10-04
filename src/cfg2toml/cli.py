@@ -2,18 +2,33 @@ import argparse
 import logging
 import sys
 from contextlib import contextmanager
+from itertools import chain
 from pathlib import Path
+from textwrap import dedent, wrap
 from typing import List, Optional, Sequence
 
-from cfg2toml.meta import __version__
-from cfg2toml.translator import Translator
+from .meta import __version__
+from .translator import Translator
+from .types import Profile
 
 _logger = logging.getLogger(__package__)
 
 DEFAULT_PROFILE = "best_effort"
 
 
-def parse_args(args: Sequence[str], profiles: Sequence[str]) -> argparse.Namespace:
+@contextmanager
+def critical_logging():
+    """Make sure the logging level is set even before parsing the CLI args"""
+    try:
+        yield
+    except Exception:
+        if "-vv" in sys.argv or "--very-verbose" in sys.argv:
+            setup_logging(logging.DEBUG)
+        raise
+
+
+@critical_logging()
+def parse_args(args: Sequence[str], profiles: Sequence[Profile]) -> argparse.Namespace:
     """Parse command line parameters
 
     Args:
@@ -22,7 +37,7 @@ def parse_args(args: Sequence[str], profiles: Sequence[str]) -> argparse.Namespa
     Returns: command line parameters namespace
     """
     description = "Automatically converts .cfg/.ini files into TOML"
-    parser = argparse.ArgumentParser(description=description)
+    parser = argparse.ArgumentParser(description=description, formatter_class=Formatter)
     parser.add_argument(
         "-V", "--version", action="version", version=f"{__package__} {__version__}"
     )
@@ -43,8 +58,8 @@ def parse_args(args: Sequence[str], profiles: Sequence[str]) -> argparse.Namespa
         "--profile",
         default=None,
         help=f"a translation profile name, that will instruct {__package__} how "
-        "to perform the most appropriate conversion. Available profiles: "
-        f"{', '.join(repr(p) for p in profiles)}.",
+        "to perform the most appropriate conversion. Available profiles:\n"
+        + _profiles_help_text(profiles),
     )
     parser.add_argument(
         "-v",
@@ -63,12 +78,7 @@ def parse_args(args: Sequence[str], profiles: Sequence[str]) -> argparse.Namespa
         help="set loglevel to DEBUG",
     )
     parser.set_defaults(loglevel=logging.WARNING)
-    try:
-        return parser.parse_args(args)
-    except Exception:
-        if "-vv" in args or "--very-verbose" in args:
-            setup_logging(logging.DEBUG)
-        raise
+    return parser.parse_args(args)
 
 
 def setup_logging(loglevel: int):
@@ -104,11 +114,20 @@ def run(args: Sequence[str] = ()):
     args = args or sys.argv[1:]
     translator = Translator()
     available_profiles = list(translator.profiles.keys())
-    params = parse_args(args, available_profiles)
+    params = parse_args(args, list(translator.profiles.values()))
     setup_logging(params.loglevel)
     profile = _get_profile(params.profile, params.input_file.name, available_profiles)
     out = translator.translate(params.input_file.read(), profile)
     params.output_file.write(out)
+
+
+class Formatter(argparse.RawTextHelpFormatter):
+    # Since the stdlib does not specify what is the signature we need to implement in
+    # order to create our own formatter, we are left no choice other then overwrite a
+    # "private" method considered to be an implementation detail.
+
+    def _split_lines(self, text, width):
+        return list(chain.from_iterable(wrap(x, width) for x in text.splitlines()))
 
 
 def _get_profile(profile: Optional[str], file_name: str, available: List[str]) -> str:
@@ -122,3 +141,15 @@ def _get_profile(profile: Optional[str], file_name: str, available: List[str]) -
             return option
     _logger.warning(f"Profile not explicitly set, using {DEFAULT_PROFILE!r}.")
     return DEFAULT_PROFILE
+
+
+def _profiles_help_text(profiles: Sequence[Profile]):
+    visible = (p for p in profiles if p.help_text.strip())
+    return "\n".join(_format_profile_help(p) for p in visible)
+
+
+def _format_profile_help(profile: Profile):
+    text = " ".join(dedent(profile.help_text).splitlines()).strip()
+    text = text.rstrip(".,;").strip()
+    text = text[0].lower() + text[1:]
+    return f"- {profile.name}: {text}."

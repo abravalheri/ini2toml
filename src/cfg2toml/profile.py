@@ -7,6 +7,7 @@ from .types import CFGProcessor, TextProcessor, TOMLProcessor
 @dataclass
 class Profile:
     name: str
+    help_text: str = ""
     pre_processors: List[TextProcessor] = field(default_factory=list)
     cfg_processors: List[CFGProcessor] = field(default_factory=list)
     toml_processors: List[TOMLProcessor] = field(default_factory=list)

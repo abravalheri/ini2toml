@@ -16,10 +16,14 @@ KEY_SEP = "="
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     profile = translator["best_effort"]
-    BestEffort(transformer or Transformer()).attach_to(profile)
+    extension = BestEffort(transformer or Transformer())
+    extension.attach_to(profile)
+    profile.help_text = extension.__doc__ or ""
 
 
 class BestEffort:
+    """Guess option value conversion based on the string format"""
+
     def __init__(
         self,
         transformer: Transformer,

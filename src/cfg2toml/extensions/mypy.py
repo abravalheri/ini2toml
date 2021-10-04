@@ -26,8 +26,12 @@ def activate(translator: Translator, transformer: Optional[Transformer] = None):
     for file in ("setup.cfg", "mypy.ini", ".mypy.ini"):
         extension.attach_to(translator[file])
 
+    translator["mypy.ini"].help_text = extension.__doc__ or ""
+
 
 class Mypy:
+    """Convert settings to 'pyproject.toml' equivalent"""
+
     def __init__(self, transformer: Transformer):
         self._tr = transformer
 

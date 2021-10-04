@@ -50,10 +50,14 @@ SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     profile = translator["setup.cfg"]
-    SetuptoolsPEP621(transformer or Transformer()).attach_to(profile)
+    extension = SetuptoolsPEP621(transformer or Transformer())
+    extension.attach_to(profile)
+    profile.help_text = extension.__doc__ or ""
 
 
 class SetuptoolsPEP621:
+    """Convert settings to 'pyproject.toml' based on PEP 621"""
+
     TOML_TEMPLATE = """\
     [build-system]
     requires = ["setuptools", "wheel"]

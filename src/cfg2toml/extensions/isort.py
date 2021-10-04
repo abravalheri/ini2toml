@@ -1,3 +1,4 @@
+# https://pycqa.github.io/isort/docs/configuration/config_files
 from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import Optional, Set, TypeVar
@@ -11,12 +12,17 @@ M = TypeVar("M", bound=MutableMapping)
 
 def activate(translator: Translator, transformer: Optional[Transformer] = None):
     extension = ISort(transformer or Transformer())
-    extension.attach_to(translator[".isort.cfg"], "settings")
+    profile = translator[".isort.cfg"]
+    extension.attach_to(profile, "settings")
+    profile.help_text = extension.__doc__ or ""
+
     for file in ("setup.cfg", "tox.ini"):
         extension.attach_to(translator[file], "isort")
 
 
 class ISort:
+    """Convert settings to 'pyproject.toml' equivalent"""
+
     def __init__(self, transformer: Transformer):
         self._tr = transformer
 
