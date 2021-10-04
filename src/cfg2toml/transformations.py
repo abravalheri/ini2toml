@@ -1,4 +1,4 @@
-"""Reusable post-processing and type casting operations"""
+"""Reusable value and type casting transformations"""
 import logging
 from collections.abc import MutableMapping, Sequence
 from functools import singledispatch

@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from cfg2toml import processing as lib
+from cfg2toml import transformations as lib
 from cfg2toml.toml_adapter import dumps, loads
 
 

@@ -2,8 +2,8 @@ import pytest
 from configupdater import ConfigUpdater
 
 from cfg2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
-from cfg2toml.processing import Transformer
 from cfg2toml.toml_adapter import dumps, loads
+from cfg2toml.transformations import Transformer
 from cfg2toml.translator import Translator
 
 

@@ -3,8 +3,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 from functools import partial
 from typing import List, Optional, TypeVar, cast
 
-from ..processing import Transformer, coerce_scalar, split_list
 from ..toml_adapter import aot
+from ..transformations import Transformer, coerce_scalar, split_list
 from ..types import Profile, Translator
 
 M = TypeVar("M", bound=MutableMapping)

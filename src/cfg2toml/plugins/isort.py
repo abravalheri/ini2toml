@@ -3,7 +3,7 @@ from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import Optional, Set, TypeVar
 
-from ..processing import Transformer, coerce_scalar, kebab_case, split_list
+from ..transformations import Transformer, coerce_scalar, kebab_case, split_list
 from ..types import Profile, Translator
 
 M = TypeVar("M", bound=MutableMapping)
