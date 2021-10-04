@@ -5,11 +5,11 @@ from contextlib import contextmanager
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent, wrap
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from .meta import __version__
 from .translator import Translator
-from .types import Profile
+from .types import Profile, ProfileAugmentation
 
 _logger = logging.getLogger(__package__)
 
@@ -27,8 +27,75 @@ def critical_logging():
         raise
 
 
+META: Dict[str, dict] = {
+    "version": dict(
+        flags=("-V", "--version"),
+        action="version",
+        version=f"{__package__} {__version__}",
+    ),
+    "input_file": dict(
+        dest="input_file",
+        type=argparse.FileType("r"),
+        help=".cfg/.ini file to be converted",
+    ),
+    "output_file": dict(
+        flags=("-o", "--output-file"),
+        default="-",
+        type=argparse.FileType("w"),
+        help="file where to write the converted TOML (`stdout` by default)",
+    ),
+    "profile": dict(
+        flags=("-p", "--profile"),
+        default=None,
+        help=f"a translation profile name, that will instruct {__package__} how "
+        "to perform the most appropriate conversion. Available profiles:\n",
+    ),
+    "verbose": dict(
+        flags=("-v", "--verbose"),
+        dest="loglevel",
+        action="store_const",
+        const=logging.INFO,
+        help="set loglevel to INFO",
+    ),
+    "very_verbose": dict(
+        flags=("-vv", "--very-verbose"),
+        dest="loglevel",
+        action="store_const",
+        const=logging.DEBUG,
+        help="set loglevel to DEBUG",
+    ),
+}
+
+
+def __meta__(
+    profiles: Sequence[Profile], augmentations: Sequence[ProfileAugmentation]
+) -> Dict[str, dict]:
+    """'Hyper parameters' to instruct :mod:`argparse` how to create the CLI"""
+    meta = {k: v.copy() for k, v in META.items()}
+    meta["profile"]["help"] += _profiles_help_text(profiles)
+    for aug in augmentations:
+        dest = aug.name
+        if aug.active_by_default:
+            pre_help = "<<disable>> "
+            flag = f"--no-{dest.replace('_', '-')}"
+            action = "store_false"
+            state = "active"
+        else:
+            pre_help = ""
+            flag = f"--{dest.replace('_', '-')}"
+            action = "store_true"
+            state = "disabled"
+        help_text = pre_help + _flatten_str(aug.help_text) + f" ({state} by default)"
+        meta[aug.name] = dict(flags=(flag,), dest=dest, action=action, help=help_text)
+    return meta
+
+
 @critical_logging()
-def parse_args(args: Sequence[str], profiles: Sequence[Profile]) -> argparse.Namespace:
+def parse_args(
+    args: Sequence[str],
+    profiles: Sequence[Profile],
+    augmentations: Sequence[ProfileAugmentation],
+) -> argparse.Namespace:
     """Parse command line parameters
 
     Args:
@@ -38,45 +105,8 @@ def parse_args(args: Sequence[str], profiles: Sequence[Profile]) -> argparse.Nam
     """
     description = "Automatically converts .cfg/.ini files into TOML"
     parser = argparse.ArgumentParser(description=description, formatter_class=Formatter)
-    parser.add_argument(
-        "-V", "--version", action="version", version=f"{__package__} {__version__}"
-    )
-    parser.add_argument(
-        dest="input_file",
-        type=argparse.FileType("r"),
-        help=".cfg/.ini file to be converted",
-    )
-    parser.add_argument(
-        "-o",
-        "--output-file",
-        default="-",
-        type=argparse.FileType("w"),
-        help="file where to write the converted TOML (`stdout` by default)",
-    )
-    parser.add_argument(
-        "-p",
-        "--profile",
-        default=None,
-        help=f"a translation profile name, that will instruct {__package__} how "
-        "to perform the most appropriate conversion. Available profiles:\n"
-        + _profiles_help_text(profiles),
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="loglevel",
-        action="store_const",
-        const=logging.INFO,
-        help="set loglevel to INFO",
-    )
-    parser.add_argument(
-        "-vv",
-        "--very-verbose",
-        dest="loglevel",
-        action="store_const",
-        const=logging.DEBUG,
-        help="set loglevel to DEBUG",
-    )
+    for opts in __meta__(profiles, augmentations).values():
+        parser.add_argument(*opts.pop("flags", ()), **opts)
     parser.set_defaults(loglevel=logging.WARNING)
     return parser.parse_args(args)
 
@@ -113,11 +143,16 @@ def run(args: Sequence[str] = ()):
     """
     args = args or sys.argv[1:]
     translator = Translator()
-    available_profiles = list(translator.profiles.keys())
-    params = parse_args(args, list(translator.profiles.values()))
+    profiles = list(translator.profiles.values())
+    profile_names = list(translator.profiles.keys())
+    profile_augmentations = list(translator.augmentations.values())
+    params = parse_args(args, profiles, profile_augmentations)
     setup_logging(params.loglevel)
-    profile = _get_profile(params.profile, params.input_file.name, available_profiles)
-    out = translator.translate(params.input_file.read(), profile)
+    profile = _get_profile(params.profile, params.input_file.name, profile_names)
+    active_augmentations = {k: v for k, v in vars(params).items() if k not in META}
+    active_augmentations.pop("input_file", None)
+    active_augmentations.pop("profile", None)
+    out = translator.translate(params.input_file.read(), profile, active_augmentations)
     params.output_file.write(out)
 
 
@@ -148,8 +183,11 @@ def _profiles_help_text(profiles: Sequence[Profile]):
     return "\n".join(_format_profile_help(p) for p in visible)
 
 
-def _format_profile_help(profile: Profile):
-    text = " ".join(dedent(profile.help_text).splitlines()).strip()
+def _flatten_str(text):
+    text = " ".join(x.strip() for x in dedent(text).splitlines()).strip()
     text = text.rstrip(".,;").strip()
-    text = text[0].lower() + text[1:]
-    return f"- {profile.name}: {text}."
+    return (text[0].lower() + text[1:]).strip()
+
+
+def _format_profile_help(profile: Profile):
+    return f"- {profile.name}: {_flatten_str(profile.help_text)}."

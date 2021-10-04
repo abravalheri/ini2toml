@@ -45,12 +45,36 @@ class Profile(Protocol):
     toml_template: str
 
 
+class ProfileAugmentation(Protocol):
+    fn: "ProfileAugmentationFn"
+    active_by_default: bool
+    name: str
+    help_text: str
+
+
 class Translator(Protocol):
     def __getitem__(self, profile_name: str) -> Profile:
-        ...
+        """Create and register (and return) a translation :class:`Profile`
+        (or return a previously registered one) (see :ref:`core-concepts`).
+        """
+
+    def augment_profiles(
+        self,
+        fn: "ProfileAugmentationFn",
+        active_by_default: bool = False,
+        name: str = "",
+        help_text: str = "",
+    ):
+        """Register a profile augmentation function (see :ref:`core-concepts`).
+        The keyword ``name`` and ``help_text`` can be used to customise the description
+        featured in ``cfg2toml``'s CLI, but when these arguments are not given (or empty
+        strings), ``name`` is taken from ``fn.__name__`` and ``help_text`` is taken from
+        ``fn.__doc__`` (docstring).
+        """
 
 
 Extension = Callable[[Translator], None]
+ProfileAugmentationFn = Callable[[Profile], None]
 
 
 # ---- Transformations and Intermediate representations ----

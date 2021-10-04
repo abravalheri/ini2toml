@@ -4,8 +4,7 @@ from functools import partial
 from typing import Optional, Set, TypeVar
 
 from ..processing import Transformer, coerce_scalar, kebab_case, split_list
-from ..translator import Translator
-from ..types import Profile
+from ..types import Profile, Translator
 
 M = TypeVar("M", bound=MutableMapping)
 

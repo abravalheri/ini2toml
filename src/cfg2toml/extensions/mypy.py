@@ -5,8 +5,7 @@ from typing import List, Optional, TypeVar, cast
 
 from ..processing import Transformer, coerce_scalar, split_list
 from ..toml_adapter import aot
-from ..translator import Translator
-from ..types import Profile
+from ..types import Profile, Translator
 
 M = TypeVar("M", bound=MutableMapping)
 

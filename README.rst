@@ -100,6 +100,8 @@ This means that ``cfg2toml`` will make an effort to translate the original
 file's comments and little details (as much as possible), which would otherwise
 be stripped out of the resulting TOML file and lost.
 
+.. _pipeline:
+
 The AST translation works as a 5-stage data pipeline:
 
 1. The original |cfg_ini| text file is :ref:`pre-processed <text-processing>`.
@@ -111,6 +113,8 @@ The AST translation works as a 5-stage data pipeline:
 6. ``cfg2toml`` convert the TOML object into a string that uses TOML syntax.
 7. The resulting TOML text file is :ref:`post-processed <text-processing>`.
 
+
+.. _core-concepts:
 
 Core Concepts
 =============
@@ -149,6 +153,8 @@ For example, the Python community uses the ``setup.cfg`` file to store packaging
 Therefore, ``cfg2toml`` built-in profile named ``"setup.cfg"`` is responsible for converting
 ``"setup.cfg"`` files into `PEP 621`_-compliant TOML documents.
 
+Each profile will correspond to a specific :ref:`pipeline` being selected for
+execution.
 When using the ``cfg2toml`` command line tool without explicitly specifying a
 profile, the |basename|_ of the input file will be used if it is implemented,
 falling back to ``"setup.cfg"``.
@@ -217,7 +223,7 @@ after :ref:`cfg-processing`.
 Extensions
 ----------
 
-Extensions are a way of augmenting the built-in ``cfg2toml`` functionality, by
+Extensions are a way of extending the built-in ``cfg2toml`` functionality, by
 adding processors to specific profiles using the Python programming language.
 
 The implementation requirement for a ``cfg2toml`` extension is to implement a
@@ -237,13 +243,21 @@ can register new processors for different profiles, as shown in the example bell
        profile.toml_processing += my_toml_processor
        profile.post_processing += my_post_processor
 
+
 .. _profile augmentation:
-It is also possible to augment/modify all existing profiles with extensions
-via the ``Translator.augment_profiles`` function.
-This is specially useful to perform generic tasks that do not depend on the
-nature/focus of the file being converted (e.g. fixing spaces, blank lines,
-etc). An example of these - here called **"profile augmentations"** - is shown
-in the following example:
+
+Profile-independent processing via *profile augmentation*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes it might be useful to implement generic processing tasks that do not
+depend on the nature/focus of the file being converted and therefore do not
+belong to a specific profile (e.g. fixing trailing spaces, blank lines, ...).
+The ``Translator.augment_profiles`` mechanism in ``cfg2toml`` allow extensions
+to include such processing tasks, by enabling them to modify the profile after
+it is selected.
+
+An example of these - here called **"profile augmentation functions"** - is
+shown in the following example:
 
 .. code-block:: python
    from cfg2toml import Translator, Profile
@@ -262,12 +276,12 @@ Customising the CLI help text
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``cfg2toml`` will try to automatically generate a *help text* to be displayed
-in the CLI for the registered profiles based on the ``name`` and
-``help_text`` properties of the ``Profile`` objects. If ``help_text`` is blank,
-the profile will not be featured in the CLI description (hidden).
+in the CLI for the registered profiles based on the ``name`` and ``help_text``
+properties of the ``Profile`` objects. If ``help_text`` is blank, the profile
+will not be featured in the CLI description (i.e. it will be a hidden profile).
 
 ``cfg2toml`` will also generate a "on/off"-style CLI option flag (depending on
-the ``active_by_default`` value) for each ":ref:`profile augmentation`".
+the ``active_by_default`` value) for each ":ref:`profile augmentation` function".
 By default, the name and docstring of the function registered with
 ``Translator.augment_profiles`` will be used to create the CLI help text, but
 this can also be customised via optional keyword arguments ``name`` and

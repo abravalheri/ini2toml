@@ -5,8 +5,7 @@ from typing import Optional, TypeVar
 
 from ..access import set_nested
 from ..processing import Transformer, split_kv_pairs, split_list, split_scalar
-from ..translator import Translator
-from ..types import Profile
+from ..types import Profile, Translator
 
 M = TypeVar("M", bound=MutableMapping)
 
