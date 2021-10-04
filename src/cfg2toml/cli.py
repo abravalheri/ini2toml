@@ -183,7 +183,9 @@ def _profiles_help_text(profiles: Sequence[Profile]):
     return "\n".join(_format_profile_help(p) for p in visible)
 
 
-def _flatten_str(text):
+def _flatten_str(text: str):
+    if not text:
+        return text
     text = " ".join(x.strip() for x in dedent(text).splitlines()).strip()
     text = text.rstrip(".,;").strip()
     return (text[0].lower() + text[1:]).strip()

@@ -42,23 +42,23 @@ def test_coverage():
 
     [tool.coverage.paths]
     source = [
-        "src/",
-        "*/site-packages/",
+        "src/", 
+        "*/site-packages/", 
     ]
 
     [tool.coverage.report]
     # Regexes for lines to exclude from consideration
     exclude_lines = [
         # Have to re-enable the standard pragma
-        "pragma: no cover",
+        "pragma: no cover", 
         # Don't complain about missing debug-only code
-        "def __repr__",
+        "def __repr__", 
         # Don't complain if tests don't hit defensive assertion code
-        "raise AssertionError",
-        "raise NotImplementedError",
+        "raise AssertionError", 
+        "raise NotImplementedError", 
         # Don't complain if non-runnable code isn't run
-        "if 0:",
-        "if __name__ == .__main__.:",
+        "if 0:", 
+        "if __name__ == .__main__.:", 
     ]
     """
     translator = Translator(extensions=[coverage.activate])

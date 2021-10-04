@@ -127,9 +127,9 @@ def test_apply():
     doc["table"] = tr.apply(doc["table"], "option6", split_int)
     expected = """\
     option6 = [
-        1,
+        1, 
         2, # comment
-        3,
+        3, 
     ]
     """
     assert dedent(expected) in dumps(doc)
@@ -138,8 +138,8 @@ def test_apply():
     expected = """\
     option7 = [
         # comment
-        1,
-        2,
+        1, 
+        2, 
     ]
     """
     assert dedent(expected) in dumps(doc)
@@ -147,8 +147,8 @@ def test_apply():
     doc["table"] = tr.apply(doc["table"], "option8", dangling_list_no_subsplit)
     expected = """\
     option8 = [
-        "1, 2",
-        "3",
+        "1, 2", 
+        "3", 
     ]
     """
     assert dedent(expected) in dumps(doc)
@@ -156,8 +156,8 @@ def test_apply():
     doc["table"] = tr.apply(doc["table"], "option9", split_int)
     expected = """\
     option9 = [
-        1, 2,
-        3,
+        1, 2, 
+        3, 
     ]
     """
     assert dedent(expected) in dumps(doc)

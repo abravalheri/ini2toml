@@ -27,9 +27,9 @@ def test_pytest():
     python_files = ["test_*.py", "check_*.py", "example_*.py"]
     required_plugins = ["pytest-django>=3.0.0,<4.0.0", "pytest-html", "pytest-xdist>=1.0.0"]
     norecursedirs = [
-        "dist",
-        "build",
-        ".tox",
+        "dist", 
+        "build", 
+        ".tox", 
     ]
     """  # noqa
     translator = Translator(extensions=[pytest.activate])

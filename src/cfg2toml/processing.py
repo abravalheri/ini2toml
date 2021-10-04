@@ -380,17 +380,6 @@ def _collapse_list(obj: CommentedList) -> Array:
                 cast(Item, out).comment(entry.comment)
     if multiline:
         cast(list, out).append(Whitespace("\n"))
-        values = out._value
-        L = len(values)
-        for i, v in enumerate(out._value):
-            # Workaround to remove trailing space
-            if (
-                isinstance(v, Whitespace)
-                and i + 1 < L
-                and isinstance(values[i + 1], Whitespace)
-                and "\n" in values[i + 1].s
-            ):
-                v._s = v._s.strip()
 
     return out
 

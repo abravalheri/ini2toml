@@ -109,8 +109,8 @@ expected_apply_value_processing = """\
 [metadata]
 version = "5.3" # comment
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Programming Language :: Python",
+    "Development Status :: 4 - Beta", 
+    "Programming Language :: Python", 
 ]
 keywords = ["python", "module"]
 
@@ -118,8 +118,8 @@ keywords = ["python", "module"]
 zip-safe = false # comment
 package-dir = {"*" = "src"} # TODO: tomlkit/atoml bug with empty keys
 install-requires = [
-    "importlib-metadata; python_version<\\"3.8\\"",
-    "configupdater>=3,<=4",
+    "importlib-metadata; python_version<\\"3.8\\"", 
+    "configupdater>=3,<=4", 
 ]
 [options.entry-points]
 # For example:
