@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Sequence
 
 from . import __version__
 from .translator import Translator
-from .types import Profile, ProfileAugmentation
+from .types import CLIChoice, Profile, ProfileAugmentation
 
 _logger = logging.getLogger(__package__)
 
@@ -50,19 +50,35 @@ META: Dict[str, dict] = {
         help=f"a translation profile name, that will instruct {__package__} how "
         "to perform the most appropriate conversion. Available profiles:\n",
     ),
+    "enable": dict(
+        flags=("-E", "--enable"),
+        nargs="+",
+        dest="enable",
+        metavar="TRANSFORMATION",
+        help="enable one or more of the following processing options (optional):\n",
+    ),
+    "disable": dict(
+        flags=("-D", "--disable"),
+        nargs="+",
+        dest="disable",
+        default=(),
+        metavar="TRANSFORMATION",
+        help="disable one or more of the following processing options "
+        "(active by default):\n",
+    ),
     "verbose": dict(
         flags=("-v", "--verbose"),
         dest="loglevel",
         action="store_const",
         const=logging.INFO,
-        help="set loglevel to INFO",
+        help="set logging level to INFO",
     ),
     "very_verbose": dict(
         flags=("-vv", "--very-verbose"),
         dest="loglevel",
         action="store_const",
         const=logging.DEBUG,
-        help="set loglevel to DEBUG",
+        help="set logging level to DEBUG",
     ),
 }
 
@@ -72,21 +88,20 @@ def __meta__(
 ) -> Dict[str, dict]:
     """'Hyper parameters' to instruct :mod:`argparse` how to create the CLI"""
     meta = {k: v.copy() for k, v in META.items()}
-    meta["profile"]["help"] += _profiles_help_text(profiles)
-    for aug in augmentations:
-        dest = aug.name
-        if aug.active_by_default:
-            pre_help = "<<disable>> "
-            flag = f"--no-{dest.replace('_', '-')}"
-            action = "store_false"
-            state = "active"
-        else:
-            pre_help = ""
-            flag = f"--{dest.replace('_', '-')}"
-            action = "store_true"
-            state = "disabled"
-        help_text = pre_help + _flatten_str(aug.help_text) + f" ({state} by default)"
-        meta[aug.name] = dict(flags=(flag,), dest=dest, action=action, help=help_text)
+    meta["profile"]["help"] += _choices_help(profiles, lambda x: x.help_text.strip())
+
+    enable: List[ProfileAugmentation] = []
+    disable: List[ProfileAugmentation] = []
+    for aug in sorted(augmentations, key=lambda x: x.name):
+        target = disable if aug.active_by_default else enable
+        target.append(aug)
+
+    for key, value in {"enable": enable, "disable": disable}.items():
+        meta[key]["choices"] = [aug.name for aug in value]
+        meta[key]["help"] += _choices_help(value)
+        if not value:
+            meta.pop(key, None)
+
     return meta
 
 
@@ -149,9 +164,9 @@ def run(args: Sequence[str] = ()):
     params = parse_args(args, profiles, profile_augmentations)
     setup_logging(params.loglevel)
     profile = _get_profile(params.profile, params.input_file.name, profile_names)
-    active_augmentations = {k: v for k, v in vars(params).items() if k not in META}
-    active_augmentations.pop("input_file", None)
-    active_augmentations.pop("profile", None)
+    opts = vars(params)
+    active_augmentations = {k: True for k in (opts.get("enable") or ())}
+    active_augmentations.update({k: False for k in (opts.get("disable") or ())})
     out = translator.translate(params.input_file.read(), profile, active_augmentations)
     params.output_file.write(out)
 
@@ -178,12 +193,14 @@ def _get_profile(profile: Optional[str], file_name: str, available: List[str]) -
     return DEFAULT_PROFILE
 
 
-def _profiles_help_text(profiles: Sequence[Profile]):
-    visible = (p for p in profiles if p.help_text.strip())
-    return "\n".join(_format_profile_help(p) for p in visible)
+def _choices_help(choices: Sequence[CLIChoice], filt=lambda _: True) -> str:
+    """``filt``: predicate function, only choices for which ``filt(c)`` is ``True`` will
+    be included in the help text.
+    """
+    return "\n".join(_format_choice_help(c) for c in choices if filt(c))
 
 
-def _flatten_str(text: str):
+def _flatten_str(text: str) -> str:
     if not text:
         return text
     text = " ".join(x.strip() for x in dedent(text).splitlines()).strip()
@@ -191,5 +208,5 @@ def _flatten_str(text: str):
     return (text[0].lower() + text[1:]).strip()
 
 
-def _format_profile_help(profile: Profile):
-    return f"- {profile.name}: {_flatten_str(profile.help_text)}."
+def _format_choice_help(choice: CLIChoice) -> str:
+    return f'- "{choice.name}": {_flatten_str(choice.help_text)}.'

@@ -34,6 +34,11 @@ CFGProcessor = Union[CFGProcessor_, CFGProcessorM]
 TOMLProcessor = Union[TOMLProcessor_, TOMLProcessorM]
 
 
+class CLIChoice(Protocol):
+    name: str
+    help_text: str
+
+
 class Profile(Protocol):
     name: str
     help_text: str

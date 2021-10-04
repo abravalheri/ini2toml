@@ -54,7 +54,7 @@ class Translator:
         name: str = "",
         help_text: str = "",
     ):
-        name = name or fn.__name__
+        name = (name or fn.__name__).strip()
         InvalidAugmentationName.check(name)
         AlreadyRegisteredAugmentation.check(name, fn, self.augmentations)
         help_text = help_text or fn.__doc__ or ""
