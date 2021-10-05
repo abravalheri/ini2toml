@@ -9,6 +9,7 @@ from configupdater import ConfigUpdater
 from packaging.requirements import Requirement
 
 from ..access import get_nested, pop_nested, set_nested
+from ..toml_adapter import InlineTable, table
 from ..transformations import (
     Transformer,
     coerce_bool,
@@ -287,8 +288,9 @@ class SetuptoolsPEP621:
         return out
 
     def fix_packages(self, _orig: Mapping, out: M) -> M:
-        setuptools = out.setdefault("tool", {}).setdefault("setuptools", {})
-        packages = setuptools.setdefault("packages", {})
+        if "tool" not in out or "packages" not in out["tool"].get("setuptools"):
+            return out
+        packages = out["tool"]["setuptools"]["packages"]
         if any(f"find{_}namespace" in packages for _ in "_-") and "find" in packages:
             value = packages.pop("find_namespace", packages.pop("find-namespace", None))
             find_namespace = (
@@ -296,6 +298,7 @@ class SetuptoolsPEP621:
             )
             find_namespace.update(packages.pop("find"))
             packages["find-namespace"] = find_namespace
+            _packages_table_toml_workaround(out)
         return out
 
     def fix_setup_requires(self, _orig: Mapping, out: M) -> M:
@@ -387,3 +390,13 @@ def isdirective(value, valid=("file", "attr")) -> bool:
         and len(value) == 1
         and next(iter(value.keys())) in valid
     )
+
+
+def _packages_table_toml_workaround(out: M) -> M:
+    packages = out["tool"]["setuptools"]["packages"]
+    if isinstance(packages, InlineTable):
+        replacement = table()
+        replacement.update(packages)
+        out["tool"]["setuptools"]["packages"] = replacement
+
+    return out
