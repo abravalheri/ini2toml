@@ -1,8 +1,10 @@
 # The code in this module is mostly borrowed/adapted from PyScaffold and was originally
 # published under the MIT license
+# The original PyScaffold license can be found in 'tests/examples/pyscaffold'
 
 import sys
-from typing import Callable, Iterable, List, Optional, cast
+from textwrap import dedent
+from typing import Callable, Iterable, List, Optional
 
 from .. import __version__
 from ..types import Plugin
@@ -78,9 +80,6 @@ class ErrorLoadingPlugin(RuntimeError):
         if entry_point and not plugin:
             plugin = getattr(entry_point, "module", entry_point.name)
 
-        if plugin.endswith(".plugin"):
-            plugin = plugin[: -len(".plugin")]
-        plugin = plugin.replace(f"{__package__}.", f"{__package__}ext-")
-
         sub = dict(package=__package__, version=__version__, plugin=plugin)
-        super().__init__(cast(str, self.__doc__).format(*sub))
+        msg = dedent(self.__doc__ or "").format(**sub).splitlines()
+        super().__init__(f"{msg[0]}\n{' '.join(msg[1:])}")

@@ -318,7 +318,7 @@ When using a `PEP 621`_-compliant backend, the following can be add to your
 It is recommended that plugins created by the community and meant to be
 publicly shared are distributed via PyPI_ under a name that adheres to the following convention::
 
-    cfg2tomlext-<your specific name>
+    cfg2toml-contrib-<your specific name>
 
 with ``<your specific name>`` being the same string identifier used as entry-point.
 
