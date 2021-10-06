@@ -293,10 +293,8 @@ class SetuptoolsPEP621:
         packages = out["tool"]["setuptools"]["packages"]
         if any(f"find{_}namespace" in packages for _ in "_-") and "find" in packages:
             value = packages.pop("find_namespace", packages.pop("find-namespace", None))
-            find_namespace = (
-                value if value and isinstance(value, MutableMapping) else {}
-            )
-            find_namespace.update(packages.pop("find"))
+            find_namespace = packages.pop("find", {})
+            find_namespace.update(value if value and isinstance(value, Mapping) else {})
             packages["find-namespace"] = find_namespace
             _packages_table_toml_workaround(out)
         return out
@@ -393,7 +391,7 @@ def isdirective(value, valid=("file", "attr")) -> bool:
 
 
 def _packages_table_toml_workaround(out: M) -> M:
-    packages = out["tool"]["setuptools"]["packages"]
+    packages = out.get("tool", {}).get("setuptools", {}).get("packages", {})
     if isinstance(packages, InlineTable):
         replacement = table()
         replacement.update(packages)
