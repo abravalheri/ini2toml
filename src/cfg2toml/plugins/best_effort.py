@@ -40,11 +40,7 @@ class BestEffort:
     def process_values(self, _orig: Mapping, doc: M) -> M:
         doc_items = list(doc.items())
         for name, section in doc_items:
-            options = list(section.items())
-            # Convert option values:
-            for field, value in options:
-                self.apply_best_effort(section, field, value)
-
+            section = self.apply_best_effort_to_section(section)
             # Separate nested sections
             if self.section_splitter.search(name):
                 keys = self.section_splitter.split(name)
@@ -55,6 +51,13 @@ class BestEffort:
 
         return doc
 
+    def apply_best_effort_to_section(self, section: M) -> M:
+        options = list(section.items())
+        # Convert option values:
+        for field, value in options:
+            self.apply_best_effort(section, field, value)
+        return section
+
     def apply_best_effort(self, container: M, field: str, value: str) -> M:
         lines = value.splitlines()
         if len(lines) > 1:
@@ -62,6 +65,6 @@ class BestEffort:
                 self._tr.apply(container, field, self.split_dict)
             else:
                 self._tr.apply(container, field, split_list)
-        else:
+        elif field != "version":
             self._tr.apply(container, field, split_scalar)
         return container

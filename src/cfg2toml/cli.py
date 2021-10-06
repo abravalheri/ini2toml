@@ -163,7 +163,7 @@ def run(args: Sequence[str] = ()):
     profile_augmentations = list(translator.augmentations.values())
     params = parse_args(args, profiles, profile_augmentations)
     setup_logging(params.loglevel)
-    profile = _get_profile(params.profile, params.input_file.name, profile_names)
+    profile = guess_profile(params.profile, params.input_file.name, profile_names)
     opts = vars(params)
     active_augmentations = {k: True for k in (opts.get("enable") or ())}
     active_augmentations.update({k: False for k in (opts.get("disable") or ())})
@@ -180,7 +180,7 @@ class Formatter(argparse.RawTextHelpFormatter):
         return list(chain.from_iterable(wrap(x, width) for x in text.splitlines()))
 
 
-def _get_profile(profile: Optional[str], file_name: str, available: List[str]) -> str:
+def guess_profile(profile: Optional[str], file_name: str, available: List[str]) -> str:
     if profile:
         return profile
 

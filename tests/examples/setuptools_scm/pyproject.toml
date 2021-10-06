@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "setuptools_scm"
+description = "the blessed package to manage your versions by scm tags"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Version Control",
+    "Topic :: System :: Software Distribution",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "packaging>=20.0",
+    "setuptools",
+    "tomli>=1.0.0", # keep in sync
+]
+
+[[project.author]]
+name = "Ronny Pfannschmidt"
+email = "opensource@ronnypfannschmidt.de"
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "https://github.com/pypa/setuptools_scm/"
+
+[project.optional-dependencies]
+toml = [
+    "setuptools>=42",
+    "tomli>=1.0.0",
+]
+
+[project.entry-points]
+"distutils.setup-keywords" = {use_scm_version = "setuptools_scm.integration:version_keyword"}
+"setuptools.file-finders" = {setuptools_scm = "setuptools_scm.integration:find_files"}
+"setuptools.finalize-distribution-options" = {setuptools_scm = "setuptools_scm.integration:infer_version"}
+
+[project.entry-points."setuptools-scm.version-scheme"]
+guess-next-dev = "setuptools_scm.version:guess_next_dev_version"
+post-release = "setuptools_scm.version:postrelease_version"
+python-simplified-semver = "setuptools_scm.version:simplified_semver_version"
+release-branch-semver = "setuptools_scm.version:release_branch_semver_version"
+no-guess-dev = "setuptools_scm.version:no_guess_dev_version"
+calver-by-date = "setuptools_scm.version:calver_by_date"
+
+[project.entry-points."setuptools-scm.parse-scm-fallback"]
+".hg_archival.txt" = "setuptools_scm.hg:parse_archival"
+PKG-INFO = "setuptools_scm.hacks:parse_pkginfo"
+pip-egg-info = "setuptools_scm.hacks:parse_pip_egg_info"
+"setup.py" = "setuptools_scm.hacks:fallback_version"
+
+[project.entry-points."setuptools-scm.parse-scm"]
+".hg" = "setuptools_scm.hg:parse"
+".git" = "setuptools_scm.git:parse"
+
+[project.entry-points."setuptools-scm.local-scheme"]
+node-and-date = "setuptools_scm.version:get_local_node_and_date"
+node-and-timestamp = "setuptools_scm.version:get_local_node_and_timestamp"
+dirty-tag = "setuptools_scm.version:get_local_dirty_tag"
+no-local-version = "setuptools_scm.version:get_no_local_node"
+
+[project.entry-points."setuptools-scm.files-command"]
+".hg" = "setuptools_scm.file_finder_hg:hg_find_files"
+".git" = "setuptools_scm.file_finder_git:git_find_files"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+zip-safe = true
+
+[tool.setuptools.packages.find]
+where = "src"

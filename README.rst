@@ -47,7 +47,7 @@ Description
 ===========
 
 The original purpose of this project is to help migrating ``setup.cfg`` files
-to `PEP 621`_, but by plugin it can also be used to convert any compatible |cfg_ini|_
+to `PEP 621`_, but by extension it can also be used to convert any compatible |cfg_ini|_
 file to TOML_.
 
 Please notice, the provided |cfg_ini|_ files should follow the same syntax

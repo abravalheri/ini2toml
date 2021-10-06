@@ -19,6 +19,7 @@ from ..transformations import (
     split_list,
 )
 from ..types import Profile, Transformation, Translator
+from .best_effort import BestEffort
 
 M = TypeVar("M", bound=MutableMapping)
 
@@ -68,6 +69,7 @@ class SetuptoolsPEP621:
 
     def __init__(self, transformer: Transformer):
         self._tr = transformer
+        self._be = BestEffort(transformer, key_sep="=")
 
     def attach_to(self, profile: Profile):
         profile.cfg_processors.insert(0, self.normalise_keys)
@@ -125,6 +127,7 @@ class SetuptoolsPEP621:
             ("options", "namespace-packages"): split_list_comma,
             ("options", "py-modules"): split_list_comma,
             ("options", "data-files"): split_kv_pairs,
+            ("options", "packages", "find", "include"): split_list_comma,
             ("options", "packages", "find", "exclude"): split_list_comma,
         }
         # See also dynamic_processing_rules
@@ -137,6 +140,7 @@ class SetuptoolsPEP621:
         groups: Dict[Tuple[str, ...], Transformation] = {
             ("options", "entry-points"): split_kv_pairs,
             ("options", "extras-require"): split_list_comma,
+            ("options", "package-data"): split_list_comma,
         }
         return {(*p, k): fn for p, fn in groups.items() for k in get_nested(doc, p, ())}
 
@@ -163,7 +167,8 @@ class SetuptoolsPEP621:
         emails = chain_iter(
             metadata.pop(f"{k}-email", "").strip().split(",") for k in keys
         )
-        author = [{"name": n, "email": e} for n, e in zip(names, emails) if n]
+        authors_ = {e: n for n, e in zip(names, emails) if n}  # deduplicate
+        author = [{"name": n, "email": e} for e, n in authors_.items()]
         # long_description.file => readme.file
         # long_description => readme.text
         # long-description-content-type => readme.content-type
@@ -214,7 +219,7 @@ class SetuptoolsPEP621:
         # ---- distutils/setuptools command specifics outside of "options" ----
         sections = list(doc.keys())
         extras = {
-            k: doc.pop(k)
+            k: self._be.apply_best_effort_to_section(doc.pop(k))
             for k in sections
             for p in SETUPTOOLS_COMMAND_SECTIONS
             if k.startswith(p) and k != "build-system"
@@ -296,7 +301,7 @@ class SetuptoolsPEP621:
             find_namespace = packages.pop("find", {})
             find_namespace.update(value if value and isinstance(value, Mapping) else {})
             packages["find-namespace"] = find_namespace
-            _packages_table_toml_workaround(out)
+        _packages_table_toml_workaround(out)
         return out
 
     def fix_setup_requires(self, _orig: Mapping, out: M) -> M:
@@ -391,10 +396,10 @@ def isdirective(value, valid=("file", "attr")) -> bool:
 
 
 def _packages_table_toml_workaround(out: M) -> M:
-    packages = out.get("tool", {}).get("setuptools", {}).get("packages", {})
-    if isinstance(packages, InlineTable):
+    pkg = out.get("tool", {}).get("setuptools", {}).get("packages", {})
+    if isinstance(pkg, InlineTable) and pkg.get("find") or pkg.get("find-namespace"):
         replacement = table()
-        replacement.update(packages)
+        replacement.update(pkg)
         out["tool"]["setuptools"]["packages"] = replacement
 
     return out

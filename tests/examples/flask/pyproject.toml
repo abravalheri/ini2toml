@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Flask"
+description = "A simple framework for building complex web applications."
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Internet :: WWW/HTTP :: WSGI",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+requires-python = ">= 3.6"
+scripts = {flask = "flask.cli:main"}
+dynamic = ["version"]
+
+[[project.author]]
+name = "Armin Ronacher"
+email = "armin.ronacher@active-4.com"
+
+[[project.author]]
+name = "Pallets"
+email = "contact@palletsprojects.com"
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.license]
+text = "BSD-3-Clause"
+
+[project.urls]
+Donate = "https://palletsprojects.com/donate"
+Documentation = "https://flask.palletsprojects.com/"
+Changes = "https://flask.palletsprojects.com/changes/"
+"Source Code" = "https://github.com/pallets/flask/"
+"Issue Tracker" = "https://github.com/pallets/flask/issues/"
+Twitter = "https://twitter.com/PalletsTeam"
+Chat = "https://discord.gg/pallets"
+Homepage = "https://palletsprojects.com/p/flask"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+# Dependencies are in setup.py for GitHub's dependency graph.
+
+[tool.setuptools.packages.find]
+where = "src"
+
+[tool.setuptools.dynamic]
+version = {attr = "flask.__version__"}
+
+[tool.flake8]
+# B = bugbear
+# E = pycodestyle errors
+# F = flake8 pyflakes
+# W = pycodestyle warnings
+# B9 = bugbear opinions
+# ISC = implicit-str-concat
+select = "B, E, F, W, B9, ISC"
+ignore = "\n# slice notation whitespace, invalid\nE203\n# import at top, too many circular import fixes\nE402\n# line length, handled by bugbear B950\nE501\n# bare except, handled by bugbear B001\nE722\n# bin op line break, invalid\nW503"
+# up to 88 allowed by bugbear B950
+max-line-length = "80"
+per-file-ignores = "\n# __init__ module exports names\nsrc/flask/__init__.py: F401"
+
+[tool.coverage.run]
+branch = true
+source = [
+    "flask",
+    "tests",
+]
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "*/site-packages",
+]
+
+[tool.mypy]
+files = ["src/flask"]
+python_version = "3.6"
+allow_redefinition = true
+disallow_subclassing_any = true
+# disallow_untyped_calls = True
+# disallow_untyped_defs = True
+# disallow_incomplete_defs = True
+no_implicit_optional = true
+local_partial_types = true
+# no_implicit_reexport = True
+strict_equality = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+# warn_return_any = True
+# warn_unreachable = True
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["asgiref.*"]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["blinker.*"]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["dotenv.*"]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["cryptography.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
