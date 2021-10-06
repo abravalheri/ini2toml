@@ -3,7 +3,7 @@ from collections.abc import Mapping, MutableMapping
 from functools import partial, reduce
 from itertools import chain
 from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, List, Optional, Tuple, TypeVar, Union, cast
 
 from configupdater import ConfigUpdater
 from packaging.requirements import Requirement
@@ -397,9 +397,13 @@ def isdirective(value, valid=("file", "attr")) -> bool:
 
 def _packages_table_toml_workaround(out: M) -> M:
     pkg = out.get("tool", {}).get("setuptools", {}).get("packages", {})
-    if isinstance(pkg, InlineTable) and pkg.get("find") or pkg.get("find-namespace"):
+    if (
+        isinstance(pkg, InlineTable)
+        and cast(Mapping, pkg).get("find")
+        or cast(Mapping, pkg).get("find-namespace")
+    ):
         replacement = table()
-        replacement.update(pkg)
+        cast(MutableMapping, replacement).update(pkg)
         out["tool"]["setuptools"]["packages"] = replacement
 
     return out
