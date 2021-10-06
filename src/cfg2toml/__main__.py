@@ -1,3 +1,3 @@
 from .cli import run
 
-run()
+run()  # pragma: no cover

@@ -3,6 +3,7 @@ import logging
 import sys
 from contextlib import contextmanager
 from itertools import chain
+from os import pathsep
 from pathlib import Path
 from textwrap import dedent, wrap
 from typing import Dict, List, Optional, Sequence
@@ -123,7 +124,15 @@ def parse_args(
     for opts in __meta__(profiles, augmentations).values():
         parser.add_argument(*opts.pop("flags", ()), **opts)
     parser.set_defaults(loglevel=logging.WARNING)
-    return parser.parse_args(args)
+    params = parser.parse_args(args)
+    profile_names = [p.name for p in profiles]
+    profile = guess_profile(params.profile, params.input_file.name, profile_names)
+    params.profile = profile
+    opts = vars(params)
+    active_augmentations = {k: True for k in (opts.get("enable") or ())}
+    active_augmentations.update({k: False for k in (opts.get("disable") or ())})
+    params.active_augmentations = active_augmentations
+    return params
 
 
 def setup_logging(loglevel: int):
@@ -143,6 +152,7 @@ def exceptisons2exit():
     except Exception as ex:
         _logger.error(f"{ex.__class__.__name__}: {ex}")
         _logger.debug("Please check the following information:", exc_info=True)
+        raise SystemExit(1)
 
 
 @exceptisons2exit()
@@ -159,15 +169,12 @@ def run(args: Sequence[str] = ()):
     args = args or sys.argv[1:]
     translator = Translator()
     profiles = list(translator.profiles.values())
-    profile_names = list(translator.profiles.keys())
     profile_augmentations = list(translator.augmentations.values())
     params = parse_args(args, profiles, profile_augmentations)
     setup_logging(params.loglevel)
-    profile = guess_profile(params.profile, params.input_file.name, profile_names)
-    opts = vars(params)
-    active_augmentations = {k: True for k in (opts.get("enable") or ())}
-    active_augmentations.update({k: False for k in (opts.get("disable") or ())})
-    out = translator.translate(params.input_file.read(), profile, active_augmentations)
+    out = translator.translate(
+        params.input_file.read(), params.profile, params.active_augmentations
+    )
     params.output_file.write(out)
 
 
@@ -184,11 +191,18 @@ def guess_profile(profile: Optional[str], file_name: str, available: List[str]) 
     if profile:
         return profile
 
-    options = [file_name, Path(file_name).name]
-    for option in options:
-        if option in available:
-            _logger.info(f"Profile not explicitly set, {option!r} inferred.")
-            return option
+    name = Path(file_name).name
+    if name in available:
+        # Optimize for the easy case
+        _logger.info(f"Profile not explicitly set, {name!r} inferred.")
+        return name
+
+    fname = file_name.replace(pathsep, "/")
+    for name in available:
+        if fname.endswith(name):
+            _logger.info(f"Profile not explicitly set, {name!r} inferred.")
+            return name
+
     _logger.warning(f"Profile not explicitly set, using {DEFAULT_PROFILE!r}.")
     return DEFAULT_PROFILE
 
