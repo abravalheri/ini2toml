@@ -3,8 +3,8 @@ from textwrap import dedent
 
 import pytest
 
-from cfg2toml import transformations as lib
-from cfg2toml.toml_adapter import dumps, loads
+from ini2toml import transformations as lib
+from ini2toml.toml_adapter import dumps, loads
 
 
 def test_coerce_bool():

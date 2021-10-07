@@ -17,7 +17,7 @@ EMPTY = MappingProxyType({})  # type: ignore
 
 class Translator:
     """Translator object that follows the public API defined in
-    :class:`cfg2toml.types.Translator`.
+    :class:`ini2toml.types.Translator`.
     """
 
     profiles: Dict[str, types.Profile]
@@ -148,7 +148,7 @@ class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
 
 
 class UndefinedProfile(ValueError):
-    """The given profile ('{name}') is not registered with ``cfg2toml``.
+    """The given profile ('{name}') is not registered with ``ini2toml``.
     Are you sure you have the right plugins installed and loaded?
     """
 

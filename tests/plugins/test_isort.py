@@ -1,7 +1,7 @@
 from textwrap import dedent
 
-from cfg2toml.plugins import isort
-from cfg2toml.translator import Translator
+from ini2toml.plugins import isort
+from ini2toml.translator import Translator
 
 
 def test_isort():
@@ -9,7 +9,7 @@ def test_isort():
     profile = black
     order_by_type = false
     src_paths=isort,test
-    known_first_party = cfg2toml
+    known_first_party = ini2toml
     combine_as_imports = true
     default_section = THIRDPARTY
     include_trailing_comma = true
@@ -21,7 +21,7 @@ def test_isort():
     profile = "black"
     order_by_type = false
     src_paths = ["isort", "test"]
-    known_first_party = ["cfg2toml"]
+    known_first_party = ["ini2toml"]
     combine_as_imports = true
     default_section = "THIRDPARTY"
     include_trailing_comma = true

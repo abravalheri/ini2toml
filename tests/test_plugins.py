@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from cfg2toml import plugins
-from cfg2toml.plugins import ENTRYPOINT_GROUP, ErrorLoadingPlugin
+from ini2toml import plugins
+from ini2toml.plugins import ENTRYPOINT_GROUP, ErrorLoadingPlugin
 
 EXISTING = (
     "setuptools_pep621",

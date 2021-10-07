@@ -1,10 +1,10 @@
 import pytest
 from configupdater import ConfigUpdater
 
-from cfg2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
-from cfg2toml.toml_adapter import dumps, loads
-from cfg2toml.transformations import Transformer
-from cfg2toml.translator import Translator
+from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
+from ini2toml.toml_adapter import dumps, loads
+from ini2toml.transformations import Transformer
+from ini2toml.translator import Translator
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def translate():
 
 
 @pytest.fixture
-def cfg2tomlobj(translate):
+def ini2tomlobj(translate):
     return lambda text: loads(translate(text))
 
 
@@ -30,7 +30,7 @@ summary = Automatically translates .cfg/.ini files into TOML
 author_email = example@example
 license-file = LICENSE.txt
 long_description_content_type = text/x-rst; charset=UTF-8
-home_page = https://github.com/abravalheri/cfg2toml/
+home_page = https://github.com/abravalheri/ini2toml/
 classifier = Development Status :: 4 - Beta
 platform = any
 """
@@ -40,7 +40,7 @@ description = Automatically translates .cfg/.ini files into TOML
 author-email = example@example
 license-files = LICENSE.txt
 long-description-content-type = text/x-rst; charset=UTF-8
-url = https://github.com/abravalheri/cfg2toml/
+url = https://github.com/abravalheri/ini2toml/
 classifiers = Development Status :: 4 - Beta
 platforms = any
 """
@@ -102,7 +102,7 @@ install-requires =
 # For example:
 pyscaffold.cli =
     # comment
-    fibonacci = cfg2toml.skeleton:run # comment
+    fibonacci = ini2toml.skeleton:run # comment
     awesome = pyscaffoldext.awesome.extension:AwesomeExtension
 """
 expected_apply_value_processing = """\
@@ -126,14 +126,14 @@ install-requires = [
 
 [options.entry-points."pyscaffold.cli"]
 # comment
-fibonacci = "cfg2toml.skeleton:run" # comment
+fibonacci = "ini2toml.skeleton:run" # comment
 awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
 """
 
 
-def test_apply_value_processing(cfg2tomlobj, plugin):
+def test_apply_value_processing(ini2tomlobj, plugin):
     cfg = ConfigUpdater().read_string(example_apply_value_processing)
-    doc = cfg2tomlobj(example_apply_value_processing)
+    doc = ini2tomlobj(example_apply_value_processing)
     doc = plugin.separate_subtables(cfg, doc)
     doc = plugin.apply_value_processing(cfg, doc)
     assert dumps(doc).strip() == expected_apply_value_processing.strip()
@@ -161,9 +161,9 @@ where = "src"
 """  # TODO: unnecessary double newline
 
 
-def test_separate_subtables(cfg2tomlobj, plugin):
+def test_separate_subtables(ini2tomlobj, plugin):
     cfg = ConfigUpdater().read_string(example_separate_subtables.strip())
-    doc = cfg2tomlobj(example_separate_subtables)
+    doc = ini2tomlobj(example_separate_subtables)
     doc = plugin.separate_subtables(cfg, doc)
     assert dumps(doc).strip() == expected_separate_subtables.strip()
 

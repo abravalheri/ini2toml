@@ -1,5 +1,5 @@
 """
-    Setup file for cfg2toml.
+    Setup file for ini2toml.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 4.1rc1.post1.dev19+g4c2abfd.

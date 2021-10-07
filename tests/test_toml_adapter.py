@@ -2,7 +2,7 @@ from textwrap import dedent
 
 import pytest
 
-from cfg2toml.toml_adapter import comment, document, dumps, loads, table
+from ini2toml.toml_adapter import comment, document, dumps, loads, table
 
 
 class TestUnderstandTomlLib:

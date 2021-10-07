@@ -1,4 +1,4 @@
-from cfg2toml import access as lib
+from ini2toml import access as lib
 
 
 def test_get_nested():

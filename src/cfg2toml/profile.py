@@ -7,7 +7,7 @@ from .types import CFGProcessor, ProfileAugmentationFn, TextProcessor, TOMLProce
 @dataclass
 class Profile:
     """Profile object that follows the public API defined in
-    :class:`cfg2toml.types.Profile`.
+    :class:`ini2toml.types.Profile`.
     """
 
     name: str

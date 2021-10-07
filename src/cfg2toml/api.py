@@ -1,6 +1,6 @@
 """API available for general public usage.
 
-The function ``activate`` in each submodule of the :obj:`cfg2toml.plugins` package
+The function ``activate`` in each submodule of the :obj:`ini2toml.plugins` package
 is also considered part of the public API.
 """
 from .plugins import ErrorLoadingPlugin

@@ -2,8 +2,8 @@ import sys
 from itertools import chain
 from pathlib import Path
 
-from cfg2toml import cli, toml_adapter
-from cfg2toml.translator import Translator
+from ini2toml import cli, toml_adapter
+from ini2toml.translator import Translator
 
 
 def examples():

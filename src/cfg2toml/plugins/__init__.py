@@ -16,7 +16,7 @@ else:  # pragma: no cover
     from importlib_metadata import EntryPoint, entry_points
 
 
-ENTRYPOINT_GROUP = "cfg2toml.processing"
+ENTRYPOINT_GROUP = "ini2toml.processing"
 
 
 def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:

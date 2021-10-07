@@ -1,7 +1,7 @@
 from textwrap import dedent
 
-from cfg2toml.plugins import mypy
-from cfg2toml.translator import Translator
+from ini2toml.plugins import mypy
+from ini2toml.translator import Translator
 
 
 def test_mypy():

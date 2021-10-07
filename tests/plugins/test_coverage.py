@@ -1,7 +1,7 @@
 from textwrap import dedent
 
-from cfg2toml.plugins import coverage
-from cfg2toml.translator import Translator
+from ini2toml.plugins import coverage
+from ini2toml.translator import Translator
 
 
 def test_coverage():
@@ -9,7 +9,7 @@ def test_coverage():
     # .coveragerc to control coverage.py
     [run]
     branch = True
-    source = cfg2toml
+    source = ini2toml
     # omit = bad_file.py
     [paths]
     source =
@@ -37,7 +37,7 @@ def test_coverage():
 
     [tool.coverage.run]
     branch = true
-    source = ["cfg2toml"]
+    source = ["ini2toml"]
     # omit = bad_file.py
 
     [tool.coverage.paths]

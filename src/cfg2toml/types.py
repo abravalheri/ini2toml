@@ -80,7 +80,7 @@ class Translator(Protocol):
     ):
         """Register a profile augmentation function (see :ref:`core-concepts`).
         The keyword ``name`` and ``help_text`` can be used to customise the description
-        featured in ``cfg2toml``'s CLI, but when these arguments are not given (or empty
+        featured in ``ini2toml``'s CLI, but when these arguments are not given (or empty
         strings), ``name`` is taken from ``fn.__name__`` and ``help_text`` is taken from
         ``fn.__doc__`` (docstring).
         """
