@@ -21,7 +21,7 @@ concepts between these two files.
 but there are parameters specific to setuptools_ without an obvious equivalent.
 For the time being setuptools_ documentation does not offer a clear way of
 mapping those fields. As a result the (experimental) automatic translation
-proposed by ``cfg2toml`` takes the following assumptions:
+proposed by ``ini2toml`` takes the following assumptions:
 
 - Any field without an obvious equivalent in `PEP 621`_, are stored in the
   ``[tool.setuptools]`` TOML table, regardless if it comes from the
@@ -41,7 +41,7 @@ proposed by ``cfg2toml`` takes the following assumptions:
     'file: description.rst' => {file = "description.rst"}
 
 - Instead of requiring a separated/dedicated section to specify parameters, the
-  directives ``find:`` and ``find_namespace:`` use a nested table. For example::
+  directives ``find:`` and ``find_namespace:`` just use a nested table. For example::
 
   .. code-block:: ini
 
@@ -56,8 +56,9 @@ proposed by ``cfg2toml`` takes the following assumptions:
   .. code-block:: toml
 
      # pyproject.toml
-     [tool.setuptools.packages]
-     find_namespace = {where = "src", exclude = ["tests"]}
+     [tool.setuptools.packages.find-namespace]
+     where = "src",
+     exclude = ["tests"]
 
 - Fields set up to be dynamically resolved by setuptools_ via directives, that
   only have an static equivalent in `PEP 621`_ (e.g. ``version = attr: module.attribute``
@@ -85,7 +86,7 @@ proposed by ``cfg2toml`` takes the following assumptions:
 
 
 Please notice these conventions are part of a proposal and might change.
-The implementation in ``cfg2toml`` is flexible to quickly adapt to these
+The implementation in ``ini2toml`` is flexible to quickly adapt to these
 changes.
 
 
