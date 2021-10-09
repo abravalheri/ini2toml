@@ -2,9 +2,8 @@ import re
 from collections.abc import Mapping
 from functools import partial, reduce
 from itertools import chain
-from typing import Dict, List, Tuple, TypeVar, Union, cast
+from typing import Dict, List, Tuple, Type, TypeVar, Union, cast
 
-from ..access import get_nested
 from ..transformations import (
     apply,
     coerce_bool,
@@ -57,19 +56,24 @@ def activate(translator: Translator):
 class SetuptoolsPEP621:
     """Convert settings to 'pyproject.toml' based on PEP 621"""
 
-    TEMPLATE = {
-        "metadata": IR(),  # NOTE will be renamed later
-        "build-system": IR(
-            {
-                "requires": ["setuptools", "wheel"],  # NOTE the code assumes no version
-                "build-backend": "setuptools.build_meta",
-            },
-        ),
-        "tool": IR(),
-    }
-
     def __init__(self):
         self._be = BestEffort(key_sep="=")
+
+    @staticmethod
+    def template(ir_cls: Type[M] = IR) -> M:  # type: ignore
+        return ir_cls(
+            {
+                "metadata": ir_cls(),  # NOTE: will be renamed later
+                "build-system": ir_cls(
+                    {
+                        "requires": ["setuptools", "wheel"],
+                        # ^ NOTE: the code ahead assumes no version
+                        "build-backend": "setuptools.build_meta",
+                    },
+                ),
+                "tool": ir_cls(),
+            }
+        )
 
     def setupcfg_aliases(self):
         """``setup.cfg`` aliases as defined in:
@@ -361,7 +365,6 @@ class SetuptoolsPEP621:
         """Add mandatory dependencies if they are missing"""
         options = doc["options"]
         requirements = options.get("setup-requires", "")
-        print(f"{requirements=}")
         if not requirements:
             return doc
         req = requirements.splitlines()
@@ -371,10 +374,8 @@ class SetuptoolsPEP621:
             joiner = "; "
             req = req[0].split(";")
         build_req = doc["build-system"]["requires"]
-        print(f"{build_req=}")
         req.extend(d for d in build_req if d not in requirements)
         options["setup-requires"] = joiner.join(req)
-        print(f"{options['setup-requires']=}")
         return doc
 
     def move_setup_requires(self, doc: M) -> M:
@@ -389,7 +390,7 @@ class SetuptoolsPEP621:
         top-level keys are ``build-system``, ``project`` and ``tool``
         """
         N = len("tool:")
-        allowed = ("build-system", "project", "tool")
+        allowed = ("build-system", "project", "tool", "metadata", "options")
         for top_level_key in list(doc.keys()):
             key = top_level_key
             if any(top_level_key[:N] == p for p in ("tool:", "tool.")):
@@ -425,7 +426,7 @@ class SetuptoolsPEP621:
             self.ensure_pep518,
             self.separate_subtables,
         ]
-        out = doc.__class__(self.TEMPLATE)  # type: ignore
+        out = self.template(doc.__class__)  # type: ignore
         out.update(doc)
         out.setdefault("metadata", IR())
         out.setdefault("options", IR())

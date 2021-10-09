@@ -2,7 +2,6 @@ import pytest
 
 from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
 from ini2toml.translator import Translator
-from ini2toml.types import IntermediateRepr as IR
 
 
 @pytest.fixture
@@ -263,16 +262,16 @@ build-backend = "setuptools.build_meta"
 
 
 def test_fix_setup_requires(plugin, parse, convert):
-    doc = IR(plugin.TEMPLATE.copy())
+    doc = plugin.template()
     doc.update(parse(example_fix_setup_requires.strip()))
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.fix_setup_requires(doc)
     doc = plugin.apply_value_processing(doc)
     doc = plugin.move_setup_requires(doc)
-    doc.pop('tool', None)
-    doc.pop('options', None)
-    doc.pop('metadata', None)
+    doc.pop("tool", None)
+    doc.pop("options", None)
+    doc.pop("metadata", None)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_fix_setup_requires.strip()
@@ -281,21 +280,27 @@ def test_fix_setup_requires(plugin, parse, convert):
 # ----
 
 expected_empty = """\
+[project]
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool]
+[tool.setuptools]
 """
 
 
 def test_empty(translator, plugin, parse, convert):
-    text = translator.translate("", profile_name='setup.cfg')
-    assert text.strip() == expected_empty.strip()
+    doc = parse("")
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.normalise_keys(doc)
+    doc = plugin.pep621_transform(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_empty.strip()
 
-    # doc = parse("")
-    # print(doc)
-    # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    # doc = plugin.normalise_keys(doc)
-    # doc = plugin.pep621_transform(doc)
-    # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    # print(doc)
-    # assert convert(doc).strip() == expected_empty.strip()
+    # Same thing but with the higher level API:
+    text = translator.translate("", profile_name="setup.cfg")
+    assert text.strip() == expected_empty.strip()
