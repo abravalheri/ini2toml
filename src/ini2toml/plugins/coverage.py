@@ -41,13 +41,13 @@ class Coverage:
 
     def process_values(self, doc: M, sections=SECTIONS, prefix=PREFIX) -> M:
         for name in sections:
-            possibilities = [
+            candidates = [
                 doc.get(f"{prefix}{name}"),
                 doc.get("tool", {}).get("coverage", {}).get(name),
                 doc.get(("tool", "coverage"), {}).get(name),
                 doc.get(("tool", "coverage", name)),
             ]
-            for section in possibilities:
+            for section in candidates:
                 if section:
                     self.process_section(section)
         return doc
