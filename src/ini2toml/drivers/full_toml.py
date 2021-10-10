@@ -7,6 +7,7 @@ from functools import singledispatch
 from typing import Optional, Union, cast
 
 from atoml import (
+    aot,
     array,
     comment,
     document,
@@ -17,7 +18,7 @@ from atoml import (
     nl,
     table,
 )
-from atoml.items import Array, InlineTable, Item, Table, Whitespace
+from atoml.items import AoT, Array, InlineTable, Item, Table, Whitespace
 from atoml.toml_document import TOMLDocument
 
 from ..types import (
@@ -27,15 +28,11 @@ from ..types import (
     CommentedList,
     CommentKey,
     IntermediateRepr,
+    ListRepr,
     WhitespaceKey,
 )
 
-__all__ = [
-    "dumps",
-    "loads",
-    "convert",
-    "convert_toml"
-]
+__all__ = ["dumps", "loads", "convert", "convert_toml"]
 
 
 def convert(irepr: IntermediateRepr) -> str:
@@ -48,7 +45,9 @@ def convert_toml(irepr: IntermediateRepr) -> TOMLDocument:
     return out
 
 
-def _convert_toml(irepr: IntermediateRepr, out: Union[TOMLDocument, Table, InlineTable]):
+def _convert_toml(
+    irepr: IntermediateRepr, out: Union[TOMLDocument, Table, InlineTable]
+):
     if irepr.inline_comment and isinstance(out, Item):
         out.comment(irepr.inline_comment)
     for key, value in irepr.items():
@@ -57,7 +56,6 @@ def _convert_toml(irepr: IntermediateRepr, out: Union[TOMLDocument, Table, Inlin
         elif isinstance(key, CommentKey):
             out.append(None, comment(value))
         elif isinstance(key, tuple):
-            print(f"{key=}")
             parent_key, *rest = key
             if not isinstance(parent_key, str):
                 raise InvalidTOMLKey(key)
@@ -133,6 +131,30 @@ def _collapse_dict(obj: CommentedKV) -> Union[Table, InlineTable]:
             out[k].comment(entry.comment)
         else:
             out.append(None, comment(entry.comment))
+    return out
+
+
+@_collapse.register(IntermediateRepr)
+def _collapse_irepr(obj: IntermediateRepr):
+    # guess a good repr
+    rough_repr = repr(obj).replace(obj.__class__.__name__, "").strip()
+    out = table() if len(rough_repr) > 120 or "\n" in rough_repr else inline_table()
+    _convert_toml(obj, out)
+    return out
+
+
+@_collapse.register(ListRepr)
+def _collapse_list_repr(obj: ListRepr) -> Union[AoT, Array]:
+    is_aot, max_len, has_nl, num_elem = obj.classify()
+    # Just some heuristics which kind of array we are going to use
+    if is_aot:
+        out = aot()
+    else:
+        out = array()
+        if has_nl or max_len > 80 or (max_len > 10 and num_elem > 6):
+            out.multiline(True)
+    for elem in obj:
+        out.append(_collapse(elem))
     return out
 
 

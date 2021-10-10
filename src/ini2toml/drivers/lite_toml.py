@@ -4,18 +4,18 @@ It makes it easy to swap between implementations for testing (by means of search
 replace).
 """
 from functools import singledispatch
-from typing import Any, Optional, Union, cast
+from typing import Any
 
 from tomli_w import dumps
 
 from ..errors import InvalidTOMLKey
 from ..types import (
-    KV,
     Commented,
     CommentedKV,
     CommentedList,
     CommentKey,
     IntermediateRepr,
+    ListRepr,
     WhitespaceKey,
 )
 
@@ -72,3 +72,15 @@ def _collapse_list(obj: CommentedList) -> list:
 @_collapse.register(CommentedKV)
 def _collapse_dict(obj: CommentedKV) -> dict:
     return obj.as_dict()
+
+
+@_collapse.register(IntermediateRepr)
+def _collapse_irepr(obj: IntermediateRepr):
+    out = {}
+    _convert_dict(obj, out)
+    return out
+
+
+@_collapse.register(ListRepr)
+def _collapse_list_repr(obj: ListRepr) -> list:
+    return [_collapse(e) for e in obj]

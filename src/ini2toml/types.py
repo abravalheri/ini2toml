@@ -1,5 +1,6 @@
 import sys
 from collections import UserList
+from collections.abc import Mapping as _Mapping
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from enum import Enum
@@ -107,7 +108,7 @@ NOT_GIVEN = NotGiven.NOT_GIVEN
 
 
 @dataclass(frozen=True)
-class _Key:
+class HiddenKey:
     _value: int = field(default_factory=lambda: uuid4().int)
 
     def __str__(self):
@@ -116,15 +117,15 @@ class _Key:
     __repr__ = __str__
 
 
-class WhitespaceKey(_Key):
+class WhitespaceKey(HiddenKey):
     pass
 
 
-class CommentKey(_Key):
+class CommentKey(HiddenKey):
     pass
 
 
-Key = Union[str, _Key, Tuple[Union[str, _Key], ...]]
+Key = Union[str, HiddenKey, Tuple[Union[str, HiddenKey], ...]]
 
 
 class IntermediateRepr(MutableMapping):
@@ -222,6 +223,30 @@ class IntermediateRepr(MutableMapping):
 
     def __len__(self):
         return len(self.order)
+
+
+class ListRepr(UserList):
+    def classify(self: Sequence) -> Tuple[bool, int, bool, int]:
+        """Expensive method that helps to choose what is the best TOML representation
+        for a Python list.
+        The return value is composed by 4 values, in order:
+        - aot(bool): ``True`` if all elements are dict-like objects
+        - max_len(int): Rough (and definitely not precise) estimative of the number of
+          chars the TOML representation for the largest element would be.
+        - has_nl(bool): if any TOML representation for the elements has a ``\\n`` char.
+        - num_elements(int): number of elements in the list.
+        """
+        aot = True
+        has_nl = False
+        max_len = 0
+        for elem in self:
+            if not isinstance(elem, _Mapping):
+                aot = False
+            elem_repr = repr(elem)
+            max_len = max(max_len, len(elem_repr))
+            has_nl = has_nl or "\n" in elem_repr
+
+        return aot, max_len, has_nl, len(self)
 
 
 # These objects hold information about the processed values + comments
