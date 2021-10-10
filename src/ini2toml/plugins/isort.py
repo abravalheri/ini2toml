@@ -1,35 +1,31 @@
 # https://pycqa.github.io/isort/docs/configuration/config_files
 from collections.abc import Mapping, MutableMapping
 from functools import partial
-from typing import Optional, Set, TypeVar
+from typing import Set, TypeVar
 
-from ..transformations import Transformer, coerce_scalar, kebab_case, split_list
-from ..types import Profile, Translator
+from ..transformations import coerce_scalar, kebab_case, split_list
+from ..types import Translator
 
 M = TypeVar("M", bound=MutableMapping)
 
 
-def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    plugin = ISort(transformer or Transformer())
+def activate(translator: Translator):
+    plugin = ISort()
     profile = translator[".isort.cfg"]
-    plugin.attach_to(profile, "settings")
+    fn = partial(plugin.process_values, section_name="settings")
+    profile.intermediate_processors.append(fn)
     profile.help_text = plugin.__doc__ or ""
 
     for file in ("setup.cfg", "tox.ini"):
-        plugin.attach_to(translator[file], "isort")
+        translator[file].intermediate_processors.append(plugin.process_values)
 
 
 class ISort:
     """Convert settings to 'pyproject.toml' equivalent"""
 
-    def __init__(self, transformer: Transformer):
-        self._tr = transformer
-
-    def attach_to(self, profile: Profile, section_name: str = "isort"):
-        profile.toml_processors.append(partial(self.process_values, section_name))
+    # dicts? ["import_headings", "git_ignore", "know_other"]
 
     def find_list_options(self, section: Mapping) -> Set[str]:
-        # dicts = ["import_headings", "git_ignore", "know_other"]
         fields = {
             "force_to_top",
             "treat_comments_as_code",
@@ -57,15 +53,20 @@ class ISort:
         fields = {*fields, *dynamic_fields}
         return {*fields, *map(kebab_case, fields)}
 
-    def process_values(self, section_name: str, _orig: Mapping, doc: M) -> M:
-        isort = doc.pop(section_name, doc.get("tool", {}).pop(section_name, {}))
-        list_options = self.find_list_options(isort)
-        for field in isort:
-            if field in list_options:
-                self._tr.apply(isort, field, split_list)
-            else:
-                self._tr.apply(isort, field, coerce_scalar)
-
-        if isort:
-            doc.setdefault("tool", {})["isort"] = isort
+    def process_values(self, doc: M, section_name="isort") -> M:
+        candidates = [
+            doc.get(section_name),
+            doc.get(("tool", section_name)),
+            doc.get("tool", {}).get(section_name),
+        ]
+        for section in candidates:
+            if section:
+                self.process_section(section)
         return doc
+
+    def process_section(self, section: M) -> M:
+        list_options = self.find_list_options(section)
+        for field in section:
+            fn = split_list if field in list_options else coerce_scalar
+            section[field] = fn(section[field])
+        return section
