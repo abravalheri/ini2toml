@@ -1,29 +1,27 @@
 import sys
-from pprint import pformat
-from itertools import chain
 from collections import UserList
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from enum import Enum
-from uuid import uuid4
+from itertools import chain
+from pprint import pformat
 from textwrap import indent
 from types import MappingProxyType
 from typing import (
     Any,
     Callable,
+    Dict,
     Generic,
     List,
+    Mapping,
     Optional,
+    Sequence,
     Tuple,
     TypeVar,
     Union,
-    Dict,
-    Sequence,
-    Mapping,
     cast,
 )
-
-from configupdater import ConfigUpdater
+from uuid import uuid4
 
 if sys.version_info <= (3, 8):  # pragma: no cover
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
@@ -35,10 +33,10 @@ else:  # pragma: no cover
 T = TypeVar("T")
 S = TypeVar("S")
 M = TypeVar("M", bound=MutableMapping)
-I = TypeVar("I", bound="IntermediateRepr")
+IRepr = TypeVar("IRepr", bound="IntermediateRepr")
 
 TextProcessor = Callable[[str], str]
-IntermediateProcessor = Callable[["IntermediateRepr"], "IntermediateRepr"]
+IntermediateProcessor = Callable[[IRepr], IRepr]
 
 EMPTY: Mapping = MappingProxyType({})
 
@@ -157,7 +155,7 @@ class IntermediateRepr(MutableMapping):
 
     def __eq__(self, other):
         L = len(self)
-        if not(
+        if not (
             isinstance(other, self.__class__)
             and self.inline_comment == other.inline_comment
             and len(other) == L
@@ -191,7 +189,7 @@ class IntermediateRepr(MutableMapping):
     def append(self, key: Key, value: Any):
         self.insert(len(self.order), key, value)
 
-    def copy(self: I) -> I:
+    def copy(self: IRepr) -> IRepr:
         return self.__class__(self.elements.copy(), self.order[:], self.inline_comment)
 
     def replace_first_remove_others(
