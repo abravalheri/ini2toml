@@ -32,21 +32,18 @@ def test_coverage():
     expected = """\
     # .coveragerc to control coverage.py
 
-    [tool]
-    [tool.coverage]
-
-    [tool.coverage.run]
+    [run]
     branch = true
     source = ["ini2toml"]
     # omit = bad_file.py
 
-    [tool.coverage.paths]
+    [paths]
     source = [
         "src/", 
         "*/site-packages/", 
     ]
 
-    [tool.coverage.report]
+    [report]
     # Regexes for lines to exclude from consideration
     exclude_lines = [
         # Have to re-enable the standard pragma
