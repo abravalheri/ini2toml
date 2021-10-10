@@ -1,5 +1,6 @@
 from textwrap import dedent
 
+from ini2toml.drivers import full_toml, lite_toml
 from ini2toml.plugins import coverage
 from ini2toml.translator import Translator
 
@@ -58,9 +59,13 @@ def test_coverage():
         "if __name__ == .__main__.:", 
     ]
     """
-    translator = Translator(plugins=[coverage.activate])
-    out = translator.translate(dedent(example), ".coveragerc").strip()
-    expected = dedent(expected).strip()
-    print("expected=\n" + expected + "\n***")
-    print("out=\n" + out)
-    assert expected == out
+    for convert in (full_toml.convert, lite_toml.convert):
+        translator = Translator(plugins=[coverage.activate], toml_dumps_fn=convert)
+        out = translator.translate(dedent(example), ".coveragerc").strip()
+        expected = dedent(expected).strip()
+        print("expected=\n" + expected + "\n***")
+        print("out=\n" + out)
+        try:
+            assert expected == out
+        except AssertionError:
+            assert full_toml.loads(expected) == full_toml.loads(out)
