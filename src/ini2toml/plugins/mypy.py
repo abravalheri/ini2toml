@@ -1,29 +1,22 @@
 # https://mypy.readthedocs.io/en/stable/config_file.html
-from collections.abc import Mapping, MutableMapping, MutableSequence
+import string
+from collections.abc import MutableMapping, MutableSequence
 from functools import partial
-from typing import List, Optional, TypeVar, cast
+from typing import List, TypeVar, cast
 
-from ..toml_adapter import aot
-from ..transformations import Transformer, coerce_scalar, split_list
-from ..types import Profile, Translator
+from ..transformations import coerce_scalar, split_list
+from ..types import IntermediateRepr, ListRepr, Translator
 
 M = TypeVar("M", bound=MutableMapping)
-
-LIST_VALUES = (
-    "files",
-    "always_false",
-    "disable_error_code",
-    "plugins",
-)
-DONT_TOUCH = ("python_version",)
+R = TypeVar("R", bound=IntermediateRepr)
 
 list_comma = partial(split_list, sep=",")
 
 
-def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    plugin = Mypy(transformer or Transformer())
+def activate(translator: Translator):
+    plugin = Mypy()
     for file in ("setup.cfg", "mypy.ini", ".mypy.ini"):
-        plugin.attach_to(translator[file])
+        translator[file].intermediate_processors.append(plugin.process_values)
 
     translator["mypy.ini"].help_text = plugin.__doc__ or ""
 
@@ -31,52 +24,52 @@ def activate(translator: Translator, transformer: Optional[Transformer] = None):
 class Mypy:
     """Convert settings to 'pyproject.toml' equivalent"""
 
-    def __init__(self, transformer: Transformer):
-        self._tr = transformer
+    LIST_VALUES = (
+        "files",
+        "always_false",
+        "disable_error_code",
+        "plugins",
+    )
 
-    def attach_to(self, profile: Profile):
-        profile.toml_processors.append(self.process_values)
+    DONT_TOUCH = ("python_version",)
 
-    def process_values(self, orig: Mapping, doc: M) -> M:
-        for section in [*doc, *doc.get("tool", {})]:
-            if section.startswith("mypy-"):
-                doc = self.process_overrides_section(orig, doc, section)
-            elif section == "mypy":
-                doc = self.process_section(orig, doc, section)
+    def process_values(self, doc: M) -> M:
+        print(f"{doc=}")
+        for parent in (doc, doc.get("tool", {})):
+            for key in list(parent.keys()):  # need to be eager: we will modify the list
+                key_ = key[-1] if isinstance(key, tuple) else key
+                if not isinstance(key_, str):
+                    continue
+                name = key_.strip('"' + string.whitespace)
+                if name.startswith("mypy-"):
+                    overrides = self.get_or_create_overrides(parent)
+                    self.process_overrides(parent.pop(key), overrides, name)
+                elif name == "mypy":
+                    self.process_options(parent[key])
         return doc
 
-    def process_section(self, _orig: Mapping, doc: M, section_name: str) -> M:
-        sec = doc.pop(section_name, doc.get("tool", {}).pop(section_name, {}))
-        sec = self.process_options(sec)
-        if not sec:
-            return doc
-        doc.setdefault("tool", {})["mypy"] = sec
-        return doc
+    def process_overrides(self, section: R, overrides: MutableSequence, name: str) -> R:
+        section = self.process_options(section)
+        modules = [n.replace("mypy-", "") for n in name.split(",")]
+        self.add_overrided_modules(section, name, modules)
+        overrides.append(section)
+        return section
 
-    def process_overrides_section(self, _orig: Mapping, doc: M, section_name: str) -> M:
-        modules = [n.replace("mypy-", "") for n in section_name.split(",")]
-        sec = doc.pop(section_name, doc.get("tool", {}).pop(section_name, {}))
-        sec = self.process_options(sec)
-        sec = self.add_overrides_modules(sec, modules)
-        if not sec:
-            return doc
-        mypy = doc.setdefault("tool", {}).setdefault("mypy", {})
-        mypy.setdefault("overrides", self.create_overrides()).append(sec)
-        return doc
-
-    def process_options(self, sec: M) -> M:
-        for field in sec:
-            if field in DONT_TOUCH:
+    def process_options(self, section: M) -> M:
+        for field in section:
+            if field in self.DONT_TOUCH:
                 continue
-            elif field in LIST_VALUES:
-                self._tr.apply(sec, field, split_list)
-            else:
-                self._tr.apply(sec, field, coerce_scalar)
-        return sec
+            fn = split_list if field in self.LIST_VALUES else coerce_scalar
+            section[field] = fn(section[field])
+        return section
 
-    def create_overrides(self) -> MutableSequence:
-        return cast(MutableSequence, aot())
+    def get_or_create_overrides(self, parent: MutableMapping) -> MutableSequence:
+        mypy = parent.setdefault("mypy", IntermediateRepr())
+        return cast(MutableSequence, mypy.setdefault("overrides", ListRepr()))
 
-    def add_overrides_modules(self, section: M, modules: List[str]) -> M:
-        section["module"] = modules  # TODO: anyway of making this the first field?
+    def add_overrided_modules(self, section: R, name: str, modules: List[str]) -> R:
+        if not isinstance(section, IntermediateRepr):
+            raise ValueError(f"Expecting section {name} to be an IntermediateRepr")
+        if "module" not in section:
+            section.insert(0, "module", modules)
         return section
