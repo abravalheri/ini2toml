@@ -64,7 +64,8 @@ def test_critical_logging_sets_log_level_on_error(monkeypatch, caplog):
     with pytest.raises(ValueError):
         with cli.critical_logging():
             raise ValueError
-    assert spy.call_args.kwargs["level"] == logging.DEBUG
+    _args, kwargs = spy.call_args
+    assert kwargs["level"] == logging.DEBUG
 
 
 def test_critical_logging_does_nothing_if_no_argv(monkeypatch, caplog):
