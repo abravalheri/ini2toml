@@ -1,13 +1,29 @@
 import sys
+from pprint import pformat
+from itertools import chain
 from collections import UserList
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Generic, List, Optional, Tuple, TypeVar, Union
+from uuid import uuid4
+from textwrap import indent
+from types import MappingProxyType
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    Dict,
+    Sequence,
+    Mapping,
+    cast,
+)
 
 from configupdater import ConfigUpdater
-
-from .toml_adapter import TOMLDocument
 
 if sys.version_info <= (3, 8):  # pragma: no cover
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
@@ -19,19 +35,12 @@ else:  # pragma: no cover
 T = TypeVar("T")
 S = TypeVar("S")
 M = TypeVar("M", bound=MutableMapping)
+I = TypeVar("I", bound="IntermediateRepr")
 
 TextProcessor = Callable[[str], str]
+IntermediateProcessor = Callable[["IntermediateRepr"], "IntermediateRepr"]
 
-# Specific, using ConfigUpdater and TOMLDocument objects
-CFGProcessor_ = Callable[[ConfigUpdater], ConfigUpdater]
-TOMLProcessor_ = Callable[[ConfigUpdater, TOMLDocument], TOMLDocument]
-
-# Generic, using MutableMapping
-CFGProcessorM = Callable[[M], M]
-TOMLProcessorM = Callable[[Mapping, M], M]
-
-CFGProcessor = Union[CFGProcessor_, CFGProcessorM]
-TOMLProcessor = Union[TOMLProcessor_, TOMLProcessorM]
+EMPTY: Mapping = MappingProxyType({})
 
 
 class CLIChoice(Protocol):
@@ -43,11 +52,8 @@ class Profile(Protocol):
     name: str
     help_text: str
     pre_processors: List[TextProcessor]
-    cfg_processors: List[CFGProcessor]
-    toml_processors: List[TOMLProcessor]
+    intermediate_processors: List[IntermediateProcessor]
     post_processors: List[TextProcessor]
-    cfg_parser_opts: dict
-    toml_template: str
 
 
 class ProfileAugmentation(Protocol):
@@ -101,6 +107,125 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 NotGiven = Enum("NotGiven", "NOT_GIVEN")
 NOT_GIVEN = NotGiven.NOT_GIVEN
 
+
+@dataclass(frozen=True)
+class _Key:
+    _value: int = field(default_factory=lambda: uuid4().int)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}()"
+
+    __repr__ = __str__
+
+
+class WhitespaceKey(_Key):
+    pass
+
+
+class CommentKey(_Key):
+    pass
+
+
+Key = Union[str, _Key, Tuple[Union[str, _Key], ...]]
+
+
+class IntermediateRepr(MutableMapping):
+    def __init__(
+        self,
+        elements: Mapping[Key, Any] = EMPTY,
+        order: Sequence[Key] = (),
+        inline_comment: str = "",
+        **kwargs,
+    ):
+        el = chain(elements.items(), kwargs.items())
+        self.elements: Dict[Key, Any] = {}
+        self.order: List[Key] = []
+        self.inline_comment = inline_comment
+        self.elements.update(el)
+        self.order.extend(order or self.elements.keys())
+        elem_not_in_order = any(k not in self.order for k in self.elements)
+        order_not_in_elem = any(k not in self.elements for k in self.order)
+        if elem_not_in_order or order_not_in_elem:
+            raise ValueError(f"{order} and {elements} need to have the same keys")
+
+    def __repr__(self):
+        inner = ",\n".join(
+            indent(f"{k}={pformat(getattr(self, k))}", "    ")
+            for k in ("elements", "order", "inline_comment")
+        )
+        return f"{self.__class__.__name__}(\n{inner}\n)"
+
+    def __eq__(self, other):
+        L = len(self)
+        if not(
+            isinstance(other, self.__class__)
+            and self.inline_comment == other.inline_comment
+            and len(other) == L
+        ):
+            return False
+        self_ = [(str(k), v) for k, v in self.items()]
+        other_ = [(str(k), v) for k, v in other.items()]
+        return all(self_[i] == other_[i] for i in range(L))
+
+    def rename(self, old_key: Key, new_key: Key, ignore_missing=False):
+        if old_key == new_key:
+            return self
+        if new_key in self.order:
+            raise ValueError(f"{new_key=} already exists")
+        if old_key not in self.order and ignore_missing:
+            return self
+        i = self.order.index(old_key)
+        self.order[i] = new_key
+        self.elements[new_key] = self.elements.pop(old_key)
+        return self
+
+    def insert(self, i, key: Key, value: Any):
+        if key in self.order:
+            raise ValueError(f"{key=} already exists")
+        self.order.insert(i, key)
+        self.elements[key] = value
+
+    def index(self, key: Key) -> int:
+        return self.order.index(key)
+
+    def append(self, key: Key, value: Any):
+        self.insert(len(self.order), key, value)
+
+    def copy(self: I) -> I:
+        return self.__class__(self.elements.copy(), self.order[:], self.inline_comment)
+
+    def replace_first_remove_others(
+        self, existing_keys: Sequence[Key], new_key: Key, value: Any
+    ):
+        idx = [self.index(k) for k in existing_keys if k in self]
+        if not idx:
+            i = len(self)
+        else:
+            i = sorted(idx)[0]
+            for key in existing_keys:
+                self.pop(key, None)
+        self.insert(i, new_key, value)
+        return i
+
+    def __getitem__(self, key: Key):
+        return self.elements[key]
+
+    def __setitem__(self, key: Key, value: Any):
+        if key not in self.elements:
+            self.order.append(key)
+        self.elements[key] = value
+
+    def __delitem__(self, key: Key):
+        del self.elements[key]
+        self.order.remove(key)
+
+    def __iter__(self):
+        return iter(self.order)
+
+    def __len__(self):
+        return len(self.order)
+
+
 # These objects hold information about the processed values + comments
 # in such a way that we can later convert them to TOML while still preserving
 # the comments (if we want to).
@@ -126,8 +251,41 @@ class CommentedList(Generic[T], UserList):
         super().__init__(data)
         self.comment: Optional[str] = None  # TODO: remove this workaround
 
+    def as_list(self) -> list:
+        out = []
+        for entry in self:
+            values = entry.value_or([])
+            for value in values:
+                out.append(value)
+        return out
+
 
 class CommentedKV(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[KV[T]]]]):
         super().__init__(data)
         self.comment: Optional[str] = None  # TODO: remove this workaround
+
+    def find(self, key: str) -> Optional[Tuple[int, int]]:
+        for i, row in enumerate(self):
+            for j, item in enumerate(row.value_or([])):
+                if item[0] == key:
+                    return (i, j)
+        return None
+
+    def pop_key(self, key: str) -> Optional[T]:
+        idx = self.find(key)
+        if idx is None:
+            return None
+        i, j = idx
+        row = self[i]
+        value = row.value_or([])[j]
+        del row[j]
+        return value[1]
+
+    def as_dict(self) -> dict:
+        out = {}
+        for entry in self:
+            values = (v for v in entry.value_or([cast(KV, ())]) if v)
+            for k, v in values:
+                out[k] = v
+        return out
