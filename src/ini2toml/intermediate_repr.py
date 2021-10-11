@@ -96,6 +96,11 @@ class IntermediateRepr(MutableMapping):
         return all(self_[i] == other_[i] for i in range(L))
 
     def rename(self, old_key: Key, new_key: Key, ignore_missing=False):
+        """This method renames an existing key, without changing its position.
+        Notice that ``new_key`` cannot be already present, and that trying to rename
+        a non-pre-existing key will also result in error (unless
+        ``ignore_missing=True``).
+        """
         if old_key == new_key:
             return self
         if new_key in self.order:
@@ -107,16 +112,23 @@ class IntermediateRepr(MutableMapping):
         self.elements[new_key] = self.elements.pop(old_key)
         return self
 
-    def insert(self, i, key: Key, value: Any):
+    def insert(self, position: int, key: Key, value: Any):
+        """Simulate the position-aware :meth:`collections.abc.MutableMapping.insert`
+        method, but also require a ``key`` to be specified.
+        """
         if key in self.order:
             raise KeyError(f"{key=} already exists")
-        self.order.insert(i, key)
+        self.order.insert(position, key)
         self.elements[key] = value
 
     def index(self, key: Key) -> int:
+        """Find the position of ``key``"""
         return self.order.index(key)
 
     def append(self, key: Key, value: Any):
+        """Simulate the position-aware :meth:`collections.abc.MutableMapping.append`
+        method, but also require a ``key`` to be specified.
+        """
         self.insert(len(self.order), key, value)
 
     def copy(self: R) -> R:
@@ -125,6 +137,12 @@ class IntermediateRepr(MutableMapping):
     def replace_first_remove_others(
         self, existing_keys: Sequence[Key], new_key: Key, value: Any
     ):
+        """Find the first key in ``existing_keys`` that existing in the intermediate
+        representation, and replaces it with ``new_key`` (similar to
+        :meth:`replace`).
+        All the other keys in ``existing_keys`` are removed and the value of
+        ``new_key`` is set to ``value``.
+        """
         idx = [self.index(k) for k in existing_keys if k in self]
         if not idx:
             i = len(self)

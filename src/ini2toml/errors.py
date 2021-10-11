@@ -42,9 +42,7 @@ class AlreadyRegisteredAugmentation(ValueError):
 
 
 class InvalidAugmentationName(ValueError):
-    """Profile augmentations should be valid python identifiers and not starting with
-    'no_'
-    """
+    """Profile augmentations should be valid python identifiers"""
 
     def __init__(self, name: str):
         msg = self.__class__.__doc__ or ""

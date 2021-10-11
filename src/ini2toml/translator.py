@@ -90,6 +90,9 @@ class Translator:
         name: str = "",
         help_text: str = "",
     ):
+        """Register a profile augmentation function to be called after the
+        profile is selected and before the actual translation.
+        """
         name = (name or fn.__name__).strip()
         InvalidAugmentationName.check(name)
         AlreadyRegisteredAugmentation.check(name, fn, self.augmentations)

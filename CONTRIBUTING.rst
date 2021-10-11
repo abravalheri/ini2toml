@@ -70,27 +70,22 @@ by adding missing information and correcting mistakes.
 
 ``ini2toml`` documentation uses Sphinx_ as its main documentation compiler.
 This means that the docs are kept in the same repository as the project code, and
-that any documentation update is done in the same way was a code contribution.
+that any documentation update is done in the same way was a code contribution,
+via reStructuredText_ files.
 
-.. todo:: Don't forget to mention which markup language you are using.
+.. tip::
+  Please notice that the `GitHub web interface`_ provides a quick way of
+  propose changes in ``ini2toml``'s files. While this mechanism can
+  be tricky for normal code contributions, it works perfectly fine for
+  contributing to the docs, and can be quite handy.
 
-    e.g.,  reStructuredText_ or CommonMark_ with MyST_ extensions.
-
-.. todo:: If your project is hosted on GitHub, you can also mention the following tip:
-
-   .. tip::
-      Please notice that the `GitHub web interface`_ provides a quick way of
-      propose changes in ``ini2toml``'s files. While this mechanism can
-      be tricky for normal code contributions, it works perfectly fine for
-      contributing to the docs, and can be quite handy.
-
-      If you are interested in trying this method out, please navigate to
-      the ``docs`` folder in the source repository_, find which file you
-      would like to propose changes and click in the little pencil icon at the
-      top, to open `GitHub's code editor`_. Once you finish editing the file,
-      please write a message in the form at the bottom of the page describing
-      which changes have you made and what are the motivations behind them and
-      submit your proposal.
+  If you are interested in trying this method out, please navigate to
+  the ``docs`` folder in the source repository_, find which file you
+  would like to propose changes and click in the little pencil icon at the
+  top, to open `GitHub's code editor`_. Once you finish editing the file,
+  please write a message in the form at the bottom of the page describing
+  which changes have you made and what are the motivations behind them and
+  submit your proposal.
 
 When working on documentation changes in your local machine, you can
 compile them using |tox|_::
@@ -131,8 +126,8 @@ This can easily be done via either |virtualenv|_::
 
 or Miniconda_::
 
-    conda create -n pyscaffold python=3 six virtualenv pytest pytest-cov
-    conda activate pyscaffold
+    conda create -n ini2toml python=3 six virtualenv pytest pytest-cov
+    conda activate ini2toml
 
 Clone the repository
 --------------------
@@ -150,8 +145,6 @@ Clone the repository
     pip install -U pip setuptools -e .
 
    to be able run ``putup --help``.
-
-   .. todo:: if you are not using pre-commit, please remove the following item:
 
 #. Install |pre-commit|_::
 
@@ -181,8 +174,6 @@ Implement your changes
     git commit
 
    to record your changes in git_.
-
-   .. todo:: if you are not using pre-commit, please remove the following item:
 
    Please make sure to see the validation messages from |pre-commit|_ and fix
    any eventual issues.
@@ -218,11 +209,9 @@ Submit your contribution
 #. Go to the web page of your fork and click |contribute button|
    to send your changes for review.
 
-   .. todo:: if you are using GitHub, you can uncomment the following paragraph
-
-      Find more detailed information `creating a PR`_. You might also want to open
-      the PR as a draft first and mark it as ready for review after the feedbacks
-      from the continuous integration (CI) system or any required fixes.
+   Find more detailed information in `creating a PR`_. You might also want to open
+   the PR as a draft first and mark it as ready for review after the feedbacks
+   from the continuous integration (CI) system or any required fixes.
 
 
 Troubleshooting
@@ -277,11 +266,6 @@ Maintainer tasks
 
 Releases
 --------
-
-.. todo:: This section assumes you are using PyPI to publicly release your package.
-
-   If instead you are using a different/private package index, please update
-   the instructions accordingly.
 
 If you are part of the group of maintainers and have correct user permissions
 on PyPI_, the following steps can be used to release a new version for

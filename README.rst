@@ -36,10 +36,9 @@ ini2toml
 
 Automatically translates |ini_cfg|_ files into TOML_
 
-.. warning:: This project is under development and currently in the "design
-   stage", which means that the contents of this document should be taken
-   simply as a wish-list_, and as a project description.
-
+.. warning:: This project is **experimental** and under development
+   (so by no means production-ready).
+   Issue reports and contributions are very welcome.
 
 Description
 ===========
@@ -64,8 +63,10 @@ will make an extra effort to translate these comments into a TOML-equivalent
 (please notice sometimes this translation is not perfect, so it is always good
 to check the TOML document afterwards).
 
-First you need to install the package. An easy way to get started is by
+To get started, you need to install the package, which can be easily done
 using |pipx|_:
+
+.. code-block:: bash
 
     $ pipx install 'ini2toml[lite]'
     # OR
@@ -86,12 +87,13 @@ You can also use ``ini2toml`` in your Python scripts or projects:
     # in your python code
     from ini2toml.api import Translator
 
-    toml_str = Translator().translate(original_contents_str, profile="setup.cfg")
+    profile_name = "setup.cfg"
+    toml_str = Translator().translate(original_contents_str, profile_name)
 
 To do so, don't forget to add it to your `virtual environment`_ or specify it as a
 `project dependency`_.
 
-More details about ``ini2toml`` Python API can be found in `our docs`_
+More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 
 
 How it works
@@ -135,14 +137,16 @@ right.
 and allowing third-party :ref:`plugins`, as documented in the next sections.
 
 
+.. _profiles:
+
 Profiles
 --------
 
-A profile is a simple collection of :ref:`text-processing`,
-:ref:`intermediate-processing` transformations, responsible
-for adjusting or correcting any non-trivial translation between the original
-|ini_cfg| file format and the resulting TOML (such as coercing values to
-specific data types or changing field names or configuration keys).
+A profile is a simple collection of :ref:`text <text-processing>` and
+:ref:`intermediate representation <intermediate-processing>` transformations,
+responsible for adjusting or correcting any non-trivial translation between the
+original |ini_cfg| file format and the resulting TOML (such as converting
+values to specific data types or changing field names or configuration keys).
 
 This collection of transformations is identified by a string (the profile
 name), which *in general* corresponds to a file naming convention.
@@ -153,8 +157,8 @@ For example, the Python community uses the ``setup.cfg`` file to store packaging
 Therefore, ``ini2toml`` built-in profile named ``"setup.cfg"`` is responsible for converting
 ``"setup.cfg"`` files into `PEP 621`_-compliant TOML documents.
 
-Each profile will correspond to a specific :ref:`pipeline` being selected for
-execution.
+Each profile will correspond to a specific :ref:`pipeline <pipeline>` being
+selected for execution.
 When using the ``ini2toml`` command line tool without explicitly specifying a
 profile, the |basename|_ of the input file will be used if it is implemented,
 falling back to ``"setup.cfg"``.
@@ -179,14 +183,19 @@ Each text-processor is a simple Python function with the following signature:
        ...
 
 
+.. important:: All processors are called in sequence, so the output of one is
+   the input of the following (also working as a pipeline). Ideally processor
+   implementations should be idempotent_.
+
+
 .. _intermediate-processing:
 
 Intermediate representation processing
 --------------------------------------
 
 Processing the intermediate representation allows more powerful
-transformations, including coercing stored values to specific types (e.g. a INI
-string value to a TOML list) or combining several INI options into a nested
+transformations, including converting stored values to specific types (e.g. a
+INI string value to a TOML list) or combining several INI options into a nested
 TOML table.
 
 Each intermediate-processor is a simple Python function with the following signature:
@@ -196,30 +205,18 @@ Each intermediate-processor is a simple Python function with the following signa
    def intermediate_process(intermediate: IntermediateRepr) -> IntermediateRepr:
        ...
 
-In turn, :class:`ini2toml.api.IntermediateRepr` is just a wrapper around a combination of
-Python :obj:`dict` and :obj:`list` objects to represent an INI document or section.
-This kind of object has two main attributes:
-
-- **order**: a list of "keys". A key is (usually) a string with the section or
-  option name ("section" and "option" here preserve the same meaning as
-  defined by ``ConfigParser``). This attribute defines the order that the
-  ``elements`` will appear in the final generated TOML.
-- **elements**: a mapping between the keys listed in ``order`` and their
-  corresponding value. In the case an entire INI document, each value is a
-  nested ``IntermediateRepr`` that represents a section. In the case a single
-  INI section, each value represents an option. Initially option values will
-  be strings, but after processing they can be any object with a valid TOML
-  correspondence (e.g. numbers, strings, booleans, etc...)
-
-Please notice that when renaming elements, it is the responsibility of the user
-to modify both the **order** and **elements** attributes.
+:class:`~ini2toml.intermediate_repr.IntermediateRepr` is a special kind of
+Python object with characteristics of both :obj:`dict` and :obj:`list`.
+It respects :class:`~collections.abc.MutableMapping` protocol, but also adds
+some handy position-dependent methods - such as
+:meth:`~ini2toml.intermediate_repr.IntermediateRepr.insert`,
+:meth:`~ini2toml.intermediate_repr.IntermediateRepr.index`,
+:meth:`~ini2toml.intermediate_repr.IntermediateRepr.append`
+- and the very useful
+:meth:`~ini2toml.intermediate_repr.IntermediateRepr.rename` method.
 
 
-.. important:: All processors are called in sequence, so the output of one is
-   the input of the following (also working as a pipeline). Ideally processor
-   implementations should be idempotent_.
-
-
+.. _plugins:
 
 Plugins
 -------
@@ -227,11 +224,12 @@ Plugins
 Plugins are a way of extending the built-in ``ini2toml`` functionality, by
 adding processors to specific profiles using the Python programming language.
 
-The implementation requirement for a ``ini2toml`` plugin is to implement a
-function that accepts a ``Translator`` object. Using this object, this function
-can register new processors for different profiles, as shown in the example bellow.
+The implementation requirement for a ``ini2toml`` plugin is a function that
+accepts a ``Translator`` object. Using this object it is possible to register
+new processors for different profiles, as shown in the example bellow.
 
 .. code-block:: python
+
    from ini2toml import Translator
 
 
@@ -252,14 +250,15 @@ Profile-independent processing via *profile augmentation*
 Sometimes it might be useful to implement generic processing tasks that do not
 depend on the nature/focus of the file being converted and therefore do not
 belong to a specific profile (e.g. removing trailing newline, blank lines, ...).
-The ``Translator.augment_profiles`` mechanism in ``ini2toml`` allow plugins
-to include such processing tasks, by enabling them to modify the profile after
-it is selected.
+The :meth:`~ini2toml.translator.Translator.augment_profiles` mechanism in
+``ini2toml`` allow plugins to include such processing tasks, by enabling them
+to modify the profile after it is selected.
 
 An example of these - here called **"profile augmentation functions"** - is
 shown in the following example:
 
 .. code-block:: python
+
    from ini2toml import Translator, Profile
 
 
@@ -281,11 +280,12 @@ properties of the ``Profile`` objects. If ``help_text`` is blank, the profile
 will not be featured in the CLI description (i.e. it will be a hidden profile).
 
 ``ini2toml`` will also generate a "on/off"-style CLI option flag (depending on
-the ``active_by_default`` value) for each ":ref:`profile augmentation` function".
+the ``active_by_default`` value) for each ":ref:`profile-augmentation <profile
+augmentation>` function".
 By default, the name and docstring of the function registered with
-``Translator.augment_profiles`` will be used to create the CLI help text, but
-this can also be customised via optional keyword arguments ``name`` and
-``help_text``.
+:meth:`~ini2toml.translator.Translator.augment_profiles`
+will be used to create the CLI help text, but this can also be customised via
+optional keyword arguments ``name`` and ``help_text``.
 Differently from profiles, these flags will always be visible in the CLI,
 independently of the values of ``help_text``.
 
@@ -334,10 +334,12 @@ functions`_ that implement common operations.
 .. |ini_cfg| replace:: ``.ini/.cfg``
 .. |ConfigParser| replace:: ``ConfigParser``
 .. |ConfigUpdater| replace:: ``ConfigUpdater``
+.. |pipx| replace:: ``pipx``
 
 .. _AST: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 .. _atoml: https://github.com/frostming/atoml
 .. _basename: https://en.wikipedia.org/wiki/Basename
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html
 .. _ConfigUpdater: https://github.com/pyscaffold/configupdater
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _entry-point: https://setuptools.readthedocs.io/en/stable/userguide/entry_point.html#entry-points
@@ -349,6 +351,7 @@ functions`_ that implement common operations.
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _PyPI: https://pypi.org
 .. _Python package: https://packaging.python.org/
+.. _setuptools: https://setuptools.readthedocs.io/en/stable/
 .. _TOML library: https://github.com/hukkin/tomli-w
 .. _TOML: https://toml.io/en/
 .. _tomlkit: https://github.com/sdispater/tomlkit

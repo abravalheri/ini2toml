@@ -18,6 +18,7 @@ class Profile:
     ini_parser_opts: Optional[dict] = None
 
     replace = replace
+    """See :func:`dataclasses.replace`"""
 
 
 @dataclass

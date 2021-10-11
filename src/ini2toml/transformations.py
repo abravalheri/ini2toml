@@ -31,6 +31,7 @@ CoerceFn = Callable[[str], T]
 
 Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 """There are 2 main types of transformation:
+
 - The first one is a simple transformation that processes a string value (coming from an
   option in the original CFG/INI file) into a value with an equivalent TOML data type.
   For example: transforming ``"2"`` (string) into ``2`` (integer).
