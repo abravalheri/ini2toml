@@ -1,22 +1,22 @@
 import re
 from collections.abc import Mapping, MutableMapping
 from functools import partial
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from ..access import set_nested
-from ..transformations import Transformer, split_kv_pairs, split_list, split_scalar
-from ..types import Profile, Translator
+from ..transformations import split_kv_pairs, split_list, split_scalar, split_comment
+from ..types import Translator, IntermediateRepr
 
-M = TypeVar("M", bound=MutableMapping)
+M = TypeVar("M", bound=IntermediateRepr)
 
 SECTION_SPLITTER = re.compile(r"\.|:|\\")
 KEY_SEP = "="
 
 
-def activate(translator: Translator, transformer: Optional[Transformer] = None):
+def activate(translator: Translator):
     profile = translator["best_effort"]
-    plugin = BestEffort(transformer or Transformer())
-    plugin.attach_to(profile)
+    plugin = BestEffort()
+    profile.intermediate_processors.append(plugin.process_values)
     profile.help_text = plugin.__doc__ or ""
 
 
@@ -25,30 +25,21 @@ class BestEffort:
 
     def __init__(
         self,
-        transformer: Transformer,
         key_sep=KEY_SEP,
         section_splitter=SECTION_SPLITTER,
     ):
-        self._tr = transformer
         self.key_sep = key_sep
         self.section_splitter = section_splitter
         self.split_dict = partial(split_kv_pairs, key_sep=KEY_SEP)
 
-    def attach_to(self, profile: Profile):
-        profile.toml_processors.append(self.process_values)
-
-    def process_values(self, _orig: Mapping, doc: M) -> M:
+    def process_values(self, doc: M) -> M:
         doc_items = list(doc.items())
         for name, section in doc_items:
-            section = self.apply_best_effort_to_section(section)
+            doc[name] = self.apply_best_effort_to_section(section)
             # Separate nested sections
             if self.section_splitter.search(name):
-                keys = self.section_splitter.split(name)
-                doc.pop(name)
-                set_nested(doc, keys, section)
-            else:
-                doc[name] = section
-
+                keys = tuple(self.section_splitter.split(name))
+                doc.rename(name, keys)
         return doc
 
     def apply_best_effort_to_section(self, section: M) -> M:
@@ -62,9 +53,11 @@ class BestEffort:
         lines = value.splitlines()
         if len(lines) > 1:
             if self.key_sep in value:
-                self._tr.apply(container, field, self.split_dict)
+                container[field] = self.split_dict(value)
             else:
-                self._tr.apply(container, field, split_list)
-        elif field != "version":
-            self._tr.apply(container, field, split_scalar)
+                container[field] = split_list(value)
+        elif field.endswith("version"):
+            container[field] = split_comment(value)
+        else:
+            container[field] = split_scalar(value)
         return container

@@ -3,7 +3,7 @@ from textwrap import dedent
 import pytest
 
 from ini2toml.plugins import best_effort
-from ini2toml.toml_adapter import loads
+from ini2toml.drivers.full_toml import loads
 from ini2toml.translator import Translator
 
 

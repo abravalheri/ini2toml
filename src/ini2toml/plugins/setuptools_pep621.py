@@ -1,27 +1,25 @@
 import re
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from functools import partial, reduce
 from itertools import chain
-from textwrap import dedent
-from typing import Dict, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Dict, List, Tuple, TypeVar, Union, cast
 
-from configupdater import ConfigUpdater
-from packaging.requirements import Requirement
-
-from ..access import get_nested, pop_nested, set_nested
-from ..toml_adapter import InlineTable, table
+from ..access import get_nested
 from ..transformations import (
-    Transformer,
+    apply,
     coerce_bool,
     kebab_case,
+    remove_prefixes,
     split_comment,
     split_kv_pairs,
     split_list,
 )
-from ..types import Profile, Transformation, Translator
+from ..types import CommentKey
+from ..types import IntermediateRepr as IR
+from ..types import Transformation, Translator
 from .best_effort import BestEffort
 
-M = TypeVar("M", bound=MutableMapping)
+M = TypeVar("M", bound=IR)
 
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 ProcessingRules = Dict[Tuple[str, ...], Transformation]
@@ -49,32 +47,29 @@ SETUPTOOLS_COMMAND_SECTIONS = (
 SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
 
 
-def activate(translator: Translator, transformer: Optional[Transformer] = None):
+def activate(translator: Translator):
+    plugin = SetuptoolsPEP621()
     profile = translator["setup.cfg"]
-    plugin = SetuptoolsPEP621(transformer or Transformer())
-    plugin.attach_to(profile)
+    profile.intermediate_processors += [plugin.normalise_keys, plugin.pep621_transform]
     profile.help_text = plugin.__doc__ or ""
 
 
 class SetuptoolsPEP621:
     """Convert settings to 'pyproject.toml' based on PEP 621"""
 
-    TOML_TEMPLATE = """\
-    [build-system]
-    requires = ["setuptools", "wheel"]
-    build-backend = "setuptools.build_meta"
+    TEMPLATE = {
+        "metadata": IR(),  # NOTE will be renamed later
+        "build-system": IR(
+            {
+                "requires": ["setuptools", "wheel"],  # NOTE the code assumes no version
+                "build-backend": "setuptools.build_meta",
+            },
+        ),
+        "tool": IR(),
+    }
 
-    [project]
-    """
-
-    def __init__(self, transformer: Transformer):
-        self._tr = transformer
-        self._be = BestEffort(transformer, key_sep="=")
-
-    def attach_to(self, profile: Profile):
-        profile.cfg_processors.insert(0, self.normalise_keys)
-        profile.toml_processors.insert(0, self.pep621_transform)
-        profile.toml_template = dedent(self.TOML_TEMPLATE)
+    def __init__(self):
+        self._be = BestEffort(key_sep="=")
 
     def setupcfg_aliases(self):
         """``setup.cfg`` aliases as defined in:
@@ -127,239 +122,319 @@ class SetuptoolsPEP621:
             ("options", "namespace-packages"): split_list_comma,
             ("options", "py-modules"): split_list_comma,
             ("options", "data-files"): split_kv_pairs,
-            ("options", "packages", "find", "include"): split_list_comma,
-            ("options", "packages", "find", "exclude"): split_list_comma,
+            ("options.packages.find", "include"): split_list_comma,
+            ("options.packages.find", "exclude"): split_list_comma,
+            ("options.packages.find-namespace", "include"): split_list_comma,
+            ("options.packages.find-namespace", "exclude"): split_list_comma,
         }
         # See also dynamic_processing_rules
         # Everything else should use split_comment
 
-    def dynamic_processing_rules(self, doc: Mapping) -> ProcessingRules:
+    def dynamic_processing_rules(self, doc: IR) -> ProcessingRules:
         """Dynamically create processing rules, such as :func:`value_processing` based on
         the existing document.
         """
-        groups: Dict[Tuple[str, ...], Transformation] = {
-            ("options", "entry-points"): split_kv_pairs,
-            ("options", "extras-require"): split_list_comma,
-            ("options", "package-data"): split_list_comma,
+        groups = {
+            "options.extras-require": split_list_comma,
+            "options.package-data": split_list_comma,
+            "options.exclude-package-data": split_list_comma,
+            # "options.entry-points" => moved to project
+            "project:entry-points": split_kv_pairs,
+            "project:scripts": split_kv_pairs,
+            "project:gui-scripts": split_kv_pairs,
         }
-        return {(*p, k): fn for p, fn in groups.items() for k in get_nested(doc, p, ())}
+        return {
+            (g, k): fn
+            for g, fn in groups.items()
+            for k in doc.get(g, ())
+            if isinstance(k, str)
+        }
 
-    def pep621_renaming(self, _orig: Mapping, doc: M) -> M:
-        """Renames that have a clear correspondence according to PEP 621.
-        Rules are applied sequentially and therefore can interfere with the following
-        ones. Please notice that renaming is applied after value processing.
-        """
-        # ---- Metadata according to PEP 621 ----
-        metadata = doc.pop("metadata", {})
+    def merge_and_rename_urls(self, doc: M) -> M:
         #  url => urls.homepage
         #  download-url => urls.download
         #  project-urls => urls
-        urls = {
-            dest: metadata.pop(orig)
+        metadata = cast(IR, doc["metadata"])
+        new_urls = (
+            f"{dest} = {metadata.pop(orig)}"
             for orig, dest in [("url", "Homepage"), ("download-url", "Download")]
             if orig in metadata
-        }
-        urls = {**metadata.pop("project-urls", {}), **urls}
+        )
+        urls = "\n".join(chain(new_urls, [metadata.get("project-urls", "")]))
+        urls = urls.strip()
+        if urls:
+            keys = ("project-urls", "url", "download-url")
+            metadata.replace_first_remove_others(keys, "urls", urls)
+        return doc
+
+    def merge_authors_maintainers_and_emails(self, doc: M) -> M:
         # author OR maintainer => author.name
         # author-email OR maintainer-email => author.email
-        keys = ("author", "maintainer")
-        names = chain_iter(metadata.pop(k, "").strip().split(",") for k in keys)
-        emails = chain_iter(
-            metadata.pop(f"{k}-email", "").strip().split(",") for k in keys
-        )
-        authors_ = {e: n for n, e in zip(names, emails) if n}  # deduplicate
-        author = [{"name": n, "email": e} for e, n in authors_.items()]
+        metadata: IR = doc["metadata"]
+        author_ = split_comment(metadata.get("author", ""))
+        maintainer_ = split_comment(metadata.get("maintainer", ""))
+        names_ = (author_, maintainer_)
+        names = chain_iter(n.value_or("").strip().split(",") for n in names_)
+        a_email_ = split_comment(metadata.get("author-email", ""))
+        m_email_ = split_comment(metadata.get("maintainer-email", ""))
+        emails_ = (a_email_, m_email_)
+        emails = chain_iter(n.value_or("").strip().split(",") for n in emails_)
+        comments = [o.comment for o in chain(names_, emails_) if o.has_comment()]
+
+        combined_ = {e: n for n, e in zip(names, emails) if n}  # deduplicate
+        out = [{"name": n, "email": e} for e, n in combined_.items()]
+        if out:
+            keys = ("author", "maintainer", "author-email", "maintainer-email")
+            i = metadata.replace_first_remove_others(keys, "author", out)
+            for j, cmt in enumerate(comments):
+                metadata.insert(j + i + 1, CommentKey(), cmt)
+        return doc
+
+    def merge_and_rename_long_description_and_content_type(self, doc: M) -> M:
         # long_description.file => readme.file
         # long_description => readme.text
         # long-description-content-type => readme.content-type
-        readme = {}
-        if "file" in metadata.get("long-description", {}):
-            readme = {"file": metadata.pop("long-description")["file"]}
-        elif "long-description" in metadata:
-            readme = {"text": metadata.pop("long-description")}
+        metadata: IR = doc["metadata"]
+        if "long-description" not in metadata:
+            metadata.pop("long-description-content-type", None)
+            return doc
+        long_desc = metadata["long-description"].strip()
+        readme: Dict[str, str] = {}
+        if long_desc.startswith("file:"):
+            readme = {"file": remove_prefixes(long_desc, ("file:",)).strip()}
+        elif long_desc:
+            readme = {"text": long_desc}
         if "long-description-content-type" in metadata:
             readme["content-type"] = metadata.pop("long-description-content-type")
         if len(list(readme.keys())) == 1 and "file" in readme:
-            readme = readme["file"]
+            metadata["long-description"] = split_comment(readme["file"])
+        else:
+            readme_ = IR({k: split_comment(v) for k, v in readme.items()})
+            metadata["long-description"] = readme_
+        metadata.rename("long-description", "readme")
+        return doc
+
+    def merge_license_and_files(self, doc: M) -> M:
+        # Prepare license before pep621_renaming
         # license-files => license.file
         # license => license.text
+        metadata: IR = doc["metadata"]
         naming = {"license-files": "file", "license": "text"}
-        license = {v: metadata.pop(k) for k, v in naming.items() if k in metadata}
+        items = [
+            (v, split_comment(metadata.get(k)))
+            for k, v in naming.items()
+            if k in metadata
+        ]
+        if not metadata or not items:
+            return doc
+        # 'file' and 'text' are mutually exclusive in PEP 621
+        license = IR(dict(items[:1]))
+        metadata.replace_first_remove_others(list(naming.keys()), "license", license)
+        return doc
 
-        converted = {
-            "author": author,
-            "readme": readme,
-            "license": license,
-            "urls": urls,
-        }
-        metadata.update({k: v for k, v in converted.items() if v})
+    def move_and_split_entrypoints(self, doc: M) -> M:
+        # This is part of pep621_renaming
+        # "entry-points"."console-scripts" => "scripts"
+        # "entry-points"."gui-scripts" => "gui-scripts"
+        entrypoints: IR = doc.get("options.entry-points", IR())
+        if not entrypoints:
+            return doc
+        doc.rename("options.entry-points", "project:entry-points")
+        # ^ use `:` to guarantee it is split later
+        keys = (k for k in ("gui-scripts", "console-scripts") if k in entrypoints)
+        for key in keys:
+            scripts = entrypoints.pop(key)
+            doc.append(f"project:{key.replace('console-', '')}", scripts)
+        if not entrypoints:
+            doc.pop("options.entry-points")
+        return doc
 
+    def add_options_in_pep621(self, doc: M) -> M:
         # ---- Things in "options" that are covered by PEP 621 ----
-        options = doc.pop("options", {})
         naming = {
             "python-requires": "requires-python",
             "install-requires": "dependencies",
             "extras-require": "optional-dependencies",
             "entry-points": "entry-points",
         }
+        metadata, options = doc["metadata"], doc["options"]
         metadata.update({v: options.pop(k) for k, v in naming.items() if k in options})
-        # "entry-points"."console-scripts" => "scripts"
-        # "entry-points"."gui-scripts" => "gui-scripts"
-        if "console-scripts" in metadata.get("entry-points", {}):
-            metadata["scripts"] = metadata["entry-points"].pop("console-scripts")
-        if "gui-scripts" in metadata.get("entry-points", {}):
-            metadata["gui-scripts"] = metadata["entry-points"].pop("gui-scripts")
-        if not metadata.get("entry-points", {}):
-            metadata.pop("entry-points", None)
+        return doc
 
+    def remove_metadata_not_in_pep621(self, doc: M) -> M:
         # ---- setuptools metadata without correspondence in PEP 621 ----
         specific = ["platforms", "provides", "obsoletes"]
+        metadata, options = doc["metadata"], doc["options"]
         options.update({k: metadata.pop(k) for k in specific if k in metadata})
+        return doc
 
+    def parse_setup_py_command_options(self, doc: M) -> M:
         # ---- distutils/setuptools command specifics outside of "options" ----
         sections = list(doc.keys())
         extras = {
-            k: self._be.apply_best_effort_to_section(doc.pop(k))
+            k: self._be.apply_best_effort_to_section(doc[k])
             for k in sections
             for p in SETUPTOOLS_COMMAND_SECTIONS
             if k.startswith(p) and k != "build-system"
         }
-        options.update(extras)
-
-        # ----
-
-        if metadata:
-            doc["project"] = metadata
-        if options:
-            tool = doc.setdefault("tool", {})
-            tool["setuptools"] = options
-
+        doc["options"].update(extras)
         return doc
 
-    def convert_directives(self, _orig: Mapping, out: M) -> M:
-        split_directive = partial(split_kv_pairs, key_sep=":")
+    def convert_directives(self, out: M) -> M:
         for (section, option), directives in self.setupcfg_directives().items():
             value = out.get(section, {}).get(option, None)
-            if not isinstance(value, str):
-                continue
-            if any(value.strip().startswith(f"{d}:") for d in directives):
-                self._tr.apply(out[section], option, split_directive)
+            if isinstance(value, str) and any(
+                value.strip().startswith(f"{d}:") for d in directives
+            ):
+                out[section][option] = split_kv_pairs(value, key_sep=":")
         return out
 
-    def separate_subtables(self, _orig: Mapping, out: M) -> M:
+    def separate_subtables(self, out: M) -> M:
         """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
-        sections = [k for k in out.keys() if k.startswith("options.") or ":" in k]
+        sections = [
+            k
+            for k in out.keys()
+            if isinstance(k, str) and (k.startswith("options.") or ":" in k)
+        ]
         for section in sections:
-            value = out.pop(section)
-            out = set_nested(out, SECTION_SPLITTER.split(section), value)
+            new_key = SECTION_SPLITTER.split(section)
+            if section.startswith("options."):
+                new_key = ["tool", "setuptools", *new_key[1:]]
+            out.rename(section, tuple(new_key))
         return out
 
-    def apply_value_processing(self, _orig: Mapping, out: M) -> M:
+    def apply_value_processing(self, doc: M) -> M:
         default = {
             (name, option): split_comment
-            for name, section in out.items()
+            for name, section in doc.items()
             if name in ("metadata", "options")
             for option in section
         }
-        fns: dict = {
+        transformations: dict = {
             **default,
             **self.processing_rules(),
-            **self.dynamic_processing_rules(out),
+            **self.dynamic_processing_rules(doc),
         }
-        return reduce(lambda acc, x: self._tr.apply_nested(acc, *x), fns.items(), out)
+        for (section, option), fn in transformations.items():
+            value = doc.get(section, {}).get(option, None)
+            if value is not None:
+                doc[section][option] = fn(value)
+        return doc
 
-    def fix_license(self, _orig: Mapping, out: M) -> M:
-        value = out.get("project", {}).get("license", None)
-        if value and "file" in value:
-            value.pop("text", None)  # these fields are mutually exclusive
-        return out
-
-    def fix_dynamic(self, orig: Mapping, out: M) -> M:
+    def fix_dynamic(self, doc: M) -> M:
         potential = ["version", "classifiers", "description"]
-        project = out.setdefault("project", {})
-        fields = [f for f in potential if isdirective(project.get(f, None))]
+        metadata, options = doc["metadata"], doc["options"]
+
+        fields = [f for f in potential if isdirective(metadata.get(f, None))]
         extras: List[str] = []
-        if "options" in orig and orig["options"].get("entry-points", "").startswith(
-            "file:"
-        ):
+
+        ep = options.pop("entry-points", "")
+        if ep.startswith("file:"):
+            metadata["entry-points"] = {"file": remove_prefixes(ep, ("file:"))}
             fields.append("entry-points")
             extras = ["scripts", "gui-scripts"]
         if not fields:
-            return out
-        project.setdefault("dynamic", []).extend(fields + extras)
-        dynamic = {f: project.pop(f) for f in fields}
-        setuptools = out.setdefault("tool", {}).setdefault("setuptools", {})
-        setuptools.setdefault("dynamic", {}).update(dynamic)
-        return out
+            return doc
+        metadata.setdefault("dynamic", []).extend(fields + extras)
+        dynamic = {f: metadata.pop(f) for f in fields}
+        doc.setdefault("options.dynamic", {}).update(dynamic)
+        return doc
 
-    def fix_packages(self, _orig: Mapping, out: M) -> M:
-        if "tool" not in out or "packages" not in out["tool"].get("setuptools"):
-            return out
-        packages = out["tool"]["setuptools"]["packages"]
-        if any(f"find{_}namespace" in packages for _ in "_-") and "find" in packages:
-            value = packages.pop("find_namespace", packages.pop("find-namespace", None))
-            find_namespace = packages.pop("find", {})
-            find_namespace.update(value if value and isinstance(value, Mapping) else {})
-            packages["find-namespace"] = find_namespace
-        _packages_table_toml_workaround(out)
-        return out
+    def fix_packages(self, doc: M) -> M:
+        options = doc["options"]
+        packages = options.get("packages", "").strip()
+        if not packages:
+            return doc
+        prefixes = ["find", *[f"find{_}namespace" for _ in "_-"]]
+        prefix = next((p for p in prefixes if packages.startswith(f"{p}:")), None)
+        if not prefix:
+            return doc
+        if "options.packages.find" not in doc:
+            options["packages"] = split_kv_pairs(packages, key_sep=":")
+            return doc
+        options.pop("packages")
+        prefix = prefix.replace("_", "-")
+        doc.rename("options.packages.find", f"options.packages.{prefix}")
+        return doc
 
-    def fix_setup_requires(self, _orig: Mapping, out: M) -> M:
-        req = out.get("tool", {}).get("setuptools", {}).pop("setup-requires", [])
-        build_req = out.setdefault("build-system", {}).setdefault("requires", [])
-        existing = {Requirement(r).name: r for r in build_req}
-        new = [(Requirement(r).name, r) for r in req]
-        # Deduplication
-        for name, dep in reversed(new):
-            if name in existing:
-                build_req.remove(existing[name])
-            build_req.insert(0, dep)
-        return out
+    def fix_setup_requires(self, doc: M) -> M:
+        """Add mandatory dependencies if they are missing"""
+        options = doc["options"]
+        requirements = options.get("setup-requires", "")
+        print(f"{requirements=}")
+        if not requirements:
+            return doc
+        req = requirements.splitlines()
+        if len(req) > 1:
+            joiner = "\n"
+        else:
+            joiner = "; "
+            req = req[0].split(";")
+        build_req = doc["build-system"]["requires"]
+        print(f"{build_req=}")
+        req.extend(d for d in build_req if d not in requirements)
+        options["setup-requires"] = joiner.join(req)
+        print(f"{options['setup-requires']=}")
+        return doc
 
-    def ensure_pep518(self, _orig: Mapping, out: M) -> M:
+    def move_setup_requires(self, doc: M) -> M:
+        options = doc["options"]
+        if "setup-requires" in options:
+            doc["build-system"]["requires"] = options.pop("setup-requires")
+        return doc
+
+    def ensure_pep518(self, doc: M) -> M:
         """PEP 518 specifies that any other tool adding configuration under
         ``pyproject.toml`` should use the ``tool`` table. This means that the only
         top-level keys are ``build-system``, ``project`` and ``tool``
         """
         N = len("tool:")
         allowed = ("build-system", "project", "tool")
-        for top_level_key in list(out.keys()):
+        for top_level_key in list(doc.keys()):
             key = top_level_key
             if any(top_level_key[:N] == p for p in ("tool:", "tool.")):
                 key = top_level_key[N:]
             if top_level_key not in allowed:
-                tool = out.setdefault("tool", {})
-                tool[key] = out.pop(top_level_key)
-        return out
+                doc.rename(top_level_key, ("tool", key))
+        return doc
 
-    def cleanup(self, _orig: Mapping, out: M) -> M:
-        possible_removals = [
-            ("project",),
-            ("tool", "setuptools", "packages"),
-            ("tool", "setuptools"),
-            ("tool",),
-        ]
-        for keys in possible_removals:
-            if not get_nested(out, keys):
-                pop_nested(out, keys)
-        return out
-
-    def pep621_transform(self, orig: Mapping, out: M) -> M:
-        fns = [
-            self.convert_directives,
-            self.separate_subtables,
-            self.apply_value_processing,
-            self.pep621_renaming,
-            self.fix_license,
+    def pep621_transform(self, doc: M) -> M:
+        """Rules are applied sequentially and therefore can interfere with the following
+        ones. Please notice that renaming is applied after value processing.
+        """
+        transformations = [
+            # --- transformations mainly focusing on PEP 621 ---
+            self.merge_and_rename_urls,
+            self.merge_authors_maintainers_and_emails,
+            self.merge_license_and_files,
+            self.merge_and_rename_long_description_and_content_type,
+            self.move_and_split_entrypoints,
+            # --- General fixes
+            self.add_options_in_pep621,
+            self.remove_metadata_not_in_pep621,
             self.fix_dynamic,
             self.fix_packages,
             self.fix_setup_requires,
+            # --- value processing and type changes ---
+            self.convert_directives,
+            self.apply_value_processing,
+            self.parse_setup_py_command_options,
+            # --- steps that depend on the values being processed ---
+            self.move_setup_requires,
+            # --- final steps ---
             self.ensure_pep518,
-            self.cleanup,
+            self.separate_subtables,
         ]
-        return reduce(lambda acc, fn: fn(orig, acc), fns, out)  # type: ignore
+        out = doc.__class__(self.TEMPLATE)  # type: ignore
+        out.update(doc)
+        out.setdefault("metadata", IR())
+        out.setdefault("options", IR())
+        out = reduce(apply, transformations, out)
+        out.rename("metadata", "project", ignore_missing=True)
+        out.rename("options", ("tool", "setuptools"), ignore_missing=True)
+        return out
 
-    def normalise_keys(self, cfg: ConfigUpdater) -> ConfigUpdater:
+    def normalise_keys(self, cfg: M) -> M:
         """Normalise keys in ``setup.cfg``, by replacing aliases with cannonic names
         and replacing the snake case with kebab case.
 
@@ -368,19 +443,26 @@ class SetuptoolsPEP621:
            makes more sense for the translation.
         """
         # Normalise for the same convention as pyproject
-        for section in cfg.iter_sections():
-            if not any(section.name.startswith(s) for s in SETUPTOOLS_SECTIONS):
+        for i in range(len(cfg.order)):
+            section_name = cfg.order[i]
+            if not isinstance(section_name, str):
                 continue
-            section.name = kebab_case(section.name)
-            for option in section.iter_options():
-                option.key = kebab_case(option.key)
+            if not any(section_name.startswith(s) for s in SETUPTOOLS_SECTIONS):
+                continue
+            cfg.rename(section_name, kebab_case(section_name))
+            section = cfg.elements[section_name]
+            for j in range(len(section.order)):
+                option_name = section.order[j]
+                if not isinstance(option_name, str):
+                    continue
+                section.rename(option_name, kebab_case(option_name))
         # Normalise aliases
-        if "metadata" not in cfg:
+        metadata = cfg.elements.get("metadata")
+        if not metadata:
             return cfg
         for alias, cannonic in self.setupcfg_aliases().items():
-            option = cfg.get("metadata", alias, None)
-            if option:
-                option.key = cannonic
+            if alias in metadata.elements:
+                metadata.rename(alias, cannonic)
         return cfg
 
 
@@ -395,15 +477,15 @@ def isdirective(value, valid=("file", "attr")) -> bool:
     )
 
 
-def _packages_table_toml_workaround(out: M) -> M:
-    pkg = out.get("tool", {}).get("setuptools", {}).get("packages", {})
-    if (
-        isinstance(pkg, InlineTable)
-        and cast(Mapping, pkg).get("find")
-        or cast(Mapping, pkg).get("find-namespace")
-    ):
-        replacement = table()
-        cast(MutableMapping, replacement).update(pkg)
-        out["tool"]["setuptools"]["packages"] = replacement
+# def _packages_table_toml_workaround(out: M) -> M:
+#     pkg = out.get("tool", {}).get("setuptools", {}).get("packages", {})
+#     if (
+#         isinstance(pkg, InlineTable)
+#         and cast(Mapping, pkg).get("find")
+#         or cast(Mapping, pkg).get("find-namespace")
+#     ):
+#         replacement = table()
+#         cast(MutableMapping, replacement).update(pkg)
+#         out["tool"]["setuptools"]["packages"] = replacement
 
-    return out
+#     return out
