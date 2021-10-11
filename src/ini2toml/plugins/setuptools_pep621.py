@@ -1,7 +1,7 @@
 import re
 from functools import partial, reduce
 from itertools import chain
-from typing import Dict, List, Sequence, Tuple, Type, TypeVar, Union, cast
+from typing import Dict, List, Mapping, Sequence, Tuple, Type, TypeVar, Union, cast
 
 from ..transformations import (
     apply,
@@ -143,7 +143,7 @@ class SetuptoolsPEP621:
         """Dynamically create processing rules, such as :func:`value_processing` based
         on the existing document.
         """
-        groups = {
+        groups: Mapping[str, Transformation] = {
             "options.extras-require": split_list_comma,
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
@@ -210,7 +210,7 @@ class SetuptoolsPEP621:
             metadata.pop("long-description-content-type", None)
             return doc
         long_desc = metadata["long-description"].strip()
-        readme: Dict[str, str] = {}
+        readme: dict = {}
         if long_desc.startswith("file:"):
             readme = {"file": remove_prefixes(long_desc, ("file:",)).strip()}
         elif long_desc:
@@ -233,9 +233,7 @@ class SetuptoolsPEP621:
         metadata: IR = doc["metadata"]
         naming = {"license-files": "file", "license": "text"}
         items = [
-            (v, split_comment(metadata.get(k)))
-            for k, v in naming.items()
-            if k in metadata
+            (v, split_comment(metadata[k])) for k, v in naming.items() if k in metadata
         ]
         if not metadata or not items:
             return doc
@@ -408,7 +406,7 @@ class SetuptoolsPEP621:
         allowed_prefixes = ("options.", "project:")
         for k in list(doc.keys()):
             key = k
-            rest = ()
+            rest: Sequence = ()
             if isinstance(k, tuple):
                 key, *rest = k
             if not (key in allowed or any(key.startswith(p) for p in allowed_prefixes)):
@@ -442,7 +440,7 @@ class SetuptoolsPEP621:
             self.split_subtables,
             self.ensure_pep518,
         ]
-        out = self.template(doc.__class__)  # type: ignore
+        out = self.template(doc.__class__)
         out.update(doc)
         out.setdefault("metadata", IR())
         out.setdefault("options", IR())

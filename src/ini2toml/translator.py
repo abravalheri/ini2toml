@@ -1,7 +1,7 @@
 import logging
 from functools import reduce
 from types import MappingProxyType
-from typing import Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Callable, Dict, List, Mapping, Optional, Sequence
 
 from . import types  # Structural/Abstract types
 from .errors import (
@@ -55,7 +55,7 @@ class Translator:
             try:
                 from .drivers.configupdater import parse
             except ImportError:
-                from .drivers.configparser import parse
+                from .drivers.configparser import parse  # type: ignore[no-redef]
             self._loads_fn = parse
 
         return self._loads_fn(text, self.ini_parser_opts)
@@ -66,10 +66,10 @@ class Translator:
                 from .drivers.full_toml import convert
             except ImportError:
                 try:
-                    from .drivers.lite_toml import convert
+                    from .drivers.lite_toml import convert  # type: ignore[no-redef]
                 except ImportError:
                     msg = "Please install either `ini2toml[full]` or `ini2toml[lite]`"
-                    _logger.warning(f"{msg}. `ini2toml` (only) is not valid.")
+                    _logger.warning(f"{msg}. `ini2toml` (alone) is not valid.")
                     raise
             self._dumps_fn = convert
 

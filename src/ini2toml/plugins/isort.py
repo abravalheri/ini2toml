@@ -4,6 +4,7 @@ from functools import partial
 from typing import Set, TypeVar
 
 from ..transformations import coerce_scalar, kebab_case, split_list
+from ..types import Transformation as T
 from ..types import Translator
 
 M = TypeVar("M", bound=MutableMapping)
@@ -68,5 +69,5 @@ class ISort:
     def process_section(self, section: M):
         list_options = self.find_list_options(section)
         for field in section:
-            fn = split_list if field in list_options else coerce_scalar
+            fn: T = split_list if field in list_options else coerce_scalar
             section[field] = fn(section[field])

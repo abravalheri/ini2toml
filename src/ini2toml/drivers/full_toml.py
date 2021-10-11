@@ -3,7 +3,7 @@ style preserving TOML editing libraries (e.g. atoml and atoml).
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from functools import singledispatch
 from typing import Iterable, Optional, Tuple, TypeVar, Union, cast
 
@@ -91,20 +91,20 @@ def _collapse_commented_kv(obj: CommentedKV, root=False) -> Union[Table, InlineT
 
     for entry in obj.data:
         values = (v for v in entry.value_or([cast(KV, ())]) if v)
-        k: Optional[str] = None
+        k: Optional[str] = None  # if the for loop is empty, k = None
         for value in values:
             k, v = value
-            out[k] = v
+            out[cast(str, k)] = v
         if not entry.has_comment():
             continue
         if not multiline:
-            out.comment(entry.comment)
+            cast(Item, out).comment(entry.comment)
             obj.comment = entry.comment
             return out
         if k:
             out[k].comment(entry.comment)
         else:
-            out.append(None, comment(entry.comment))
+            out.append(None, comment(entry.comment))  # type: ignore[arg-type]
     return out
 
 
@@ -115,7 +115,7 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
         return _convert_irepr_to_toml(obj, document())
     rough_repr = repr(obj).replace(obj.__class__.__name__, "").strip()
     out = table() if len(rough_repr) > 120 or "\n" in rough_repr else inline_table()
-    return _convert_irepr_to_toml(obj, out)
+    return _convert_irepr_to_toml(obj, cast(Union[Table, InlineTable], out))
 
 
 @collapse.register(list)
@@ -126,7 +126,7 @@ def _collapse_list_repr(obj: list, root=False) -> Union[AoT, Array]:
         return create_aot(collapse(e) for e in obj)
 
     out = array()
-    out.extend(collapse(e) for e in obj)
+    cast(MutableSequence, out).extend(collapse(e) for e in obj)
     if (
         has_nl
         or max_len > MAX_INLINE_TABLE_LEN
@@ -140,10 +140,11 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
     if irepr.inline_comment and isinstance(out, Item):
         out.comment(irepr.inline_comment)
     for key, value in irepr.items():
+        # TODO: prefer `add` once atoml's InlineTable supports it
         if isinstance(key, WhitespaceKey):
-            out.append(None, nl())  # TODO: use `add` when InlineTable allow it
+            out.append(None, nl())  # type: ignore[arg-type]
         elif isinstance(key, CommentKey):
-            out.append(None, comment(value))
+            out.append(None, comment(value))  # type: ignore[arg-type]
         elif isinstance(key, tuple):
             parent_key, *rest = key
             if not isinstance(parent_key, str):
@@ -177,6 +178,23 @@ def create_item(value, comment):
     return obj
 
 
+def create_table(m: Mapping) -> Table:
+    if isinstance(m, Table):
+        return m
+    t = table()
+    for k, v in m.items():
+        t.add(k, v)
+    return t
+
+
+def create_aot(elements: Iterable[Mapping]) -> AoT:
+    if isinstance(elements, AoT):
+        return elements
+    out = aot()
+    cast(MutableSequence, out).extend(create_table(t) for t in elements)
+    return out
+
+
 def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
     """Expensive method that helps to choose what is the best TOML representation
     for a Python list.
@@ -198,23 +216,6 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
         has_nl = has_nl or "\n" in elem_repr
 
     return is_aot, max_len, has_nl, len(seq)
-
-
-def create_table(m: Mapping) -> Table:
-    if isinstance(m, Table):
-        return m
-    t = table()
-    for k, v in m.items():
-        t.add(k, v)
-    return t
-
-
-def create_aot(elements: Iterable[Mapping]) -> AoT:
-    if isinstance(elements, AoT):
-        return elements
-    out = aot()
-    out.extend(create_table(t) for t in elements)
-    return out
 
 
 def _no_trail_comment(msg: str):

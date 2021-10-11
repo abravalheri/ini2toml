@@ -4,6 +4,7 @@ from functools import partial
 from typing import TypeVar
 
 from ..transformations import coerce_scalar, split_list
+from ..types import Transformation as T
 from ..types import Translator
 
 M = TypeVar("M", bound=MutableMapping)
@@ -54,5 +55,5 @@ class Coverage:
 
     def process_section(self, section: M):
         for field in section:
-            fn = split_list if field in self.LIST_VALUES else coerce_scalar
+            fn: T = split_list if field in self.LIST_VALUES else coerce_scalar
             section[field] = fn(section[field])

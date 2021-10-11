@@ -5,7 +5,9 @@ from functools import partial
 from typing import List, TypeVar, cast
 
 from ..transformations import coerce_scalar, split_list
-from ..types import IntermediateRepr, Translator
+from ..types import IntermediateRepr
+from ..types import Transformation as T
+from ..types import Translator
 
 M = TypeVar("M", bound=MutableMapping)
 R = TypeVar("R", bound=IntermediateRepr)
@@ -58,7 +60,7 @@ class Mypy:
         for field in section:
             if field in self.DONT_TOUCH:
                 continue
-            fn = split_list if field in self.LIST_VALUES else coerce_scalar
+            fn: T = split_list if field in self.LIST_VALUES else coerce_scalar
             section[field] = fn(section[field])
         return section
 
