@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "Flask"
 description = "A simple framework for building complex web applications."
@@ -18,9 +14,21 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-requires-python = ">= 3.6"
-scripts = {flask = "flask.cli:main"}
 dynamic = ["version"]
+requires-python = ">= 3.6"
+
+[project.urls]
+Homepage = "https://palletsprojects.com/p/flask"
+Donate = "https://palletsprojects.com/donate"
+Documentation = "https://flask.palletsprojects.com/"
+Changes = "https://flask.palletsprojects.com/changes/"
+"Source Code" = "https://github.com/pallets/flask/"
+"Issue Tracker" = "https://github.com/pallets/flask/issues/"
+Twitter = "https://twitter.com/PalletsTeam"
+Chat = "https://discord.gg/pallets"
+
+[project.license]
+text = "BSD-3-Clause"
 
 [[project.author]]
 name = "Armin Ronacher"
@@ -34,18 +42,12 @@ email = "contact@palletsprojects.com"
 file = "README.rst"
 content-type = "text/x-rst"
 
-[project.license]
-text = "BSD-3-Clause"
+[project.scripts]
+flask = "flask.cli:main"
 
-[project.urls]
-Donate = "https://palletsprojects.com/donate"
-Documentation = "https://flask.palletsprojects.com/"
-Changes = "https://flask.palletsprojects.com/changes/"
-"Source Code" = "https://github.com/pallets/flask/"
-"Issue Tracker" = "https://github.com/pallets/flask/issues/"
-Twitter = "https://twitter.com/PalletsTeam"
-Chat = "https://discord.gg/pallets"
-Homepage = "https://palletsprojects.com/p/flask"
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -58,18 +60,9 @@ where = "src"
 [tool.setuptools.dynamic]
 version = {attr = "flask.__version__"}
 
-[tool.flake8]
-# B = bugbear
-# E = pycodestyle errors
-# F = flake8 pyflakes
-# W = pycodestyle warnings
-# B9 = bugbear opinions
-# ISC = implicit-str-concat
-select = "B, E, F, W, B9, ISC"
-ignore = "\n# slice notation whitespace, invalid\nE203\n# import at top, too many circular import fixes\nE402\n# line length, handled by bugbear B950\nE501\n# bare except, handled by bugbear B001\nE722\n# bin op line break, invalid\nW503"
-# up to 88 allowed by bugbear B950
-max-line-length = "80"
-per-file-ignores = "\n# __init__ module exports names\nsrc/flask/__init__.py: F401"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
@@ -83,6 +76,19 @@ source = [
     "src",
     "*/site-packages",
 ]
+
+[tool.flake8]
+# B = bugbear
+# E = pycodestyle errors
+# F = flake8 pyflakes
+# W = pycodestyle warnings
+# B9 = bugbear opinions
+# ISC = implicit-str-concat
+select = "B, E, F, W, B9, ISC"
+ignore = "\n# slice notation whitespace, invalid\nE203\n# import at top, too many circular import fixes\nE402\n# line length, handled by bugbear B950\nE501\n# bare except, handled by bugbear B001\nE722\n# bin op line break, invalid\nW503"
+# up to 88 allowed by bugbear B950
+max-line-length = "80"
+per-file-ignores = "\n# __init__ module exports names\nsrc/flask/__init__.py: F401"
 
 [tool.mypy]
 files = ["src/flask"]
@@ -103,21 +109,17 @@ warn_unused_ignores = true
 # warn_unreachable = True
 
 [[tool.mypy.overrides]]
-ignore_missing_imports = true
 module = ["asgiref.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-ignore_missing_imports = true
 module = ["blinker.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-ignore_missing_imports = true
 module = ["dotenv.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-ignore_missing_imports = true
 module = ["cryptography.*"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-filterwarnings = ["error"]
+ignore_missing_imports = true
