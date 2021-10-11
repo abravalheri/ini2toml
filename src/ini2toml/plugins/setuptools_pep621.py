@@ -142,10 +142,11 @@ class SetuptoolsPEP621:
             "options.extras-require": split_list_comma,
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
+            # ----
             # "options.entry-points" => moved to project
+            # console-scripts and gui-scripts already handled in
+            # move_and_split_entrypoints
             "project:entry-points": split_kv_pairs,
-            "project:scripts": split_kv_pairs,
-            "project:gui-scripts": split_kv_pairs,
         }
         return {
             (g, k): fn
@@ -247,7 +248,7 @@ class SetuptoolsPEP621:
         # ^ use `:` to guarantee it is split later
         keys = (k for k in ("gui-scripts", "console-scripts") if k in entrypoints)
         for key in keys:
-            scripts = entrypoints.pop(key)
+            scripts = split_kv_pairs(entrypoints.pop(key))
             doc.append(f"project:{key.replace('console-', '')}", scripts)
         if not entrypoints:
             doc.pop("options.entry-points")
@@ -450,19 +451,19 @@ class SetuptoolsPEP621:
                 continue
             if not any(section_name.startswith(s) for s in SETUPTOOLS_SECTIONS):
                 continue
+            section = cfg[section_name]
             cfg.rename(section_name, kebab_case(section_name))
-            section = cfg.elements[section_name]
             for j in range(len(section.order)):
                 option_name = section.order[j]
                 if not isinstance(option_name, str):
                     continue
                 section.rename(option_name, kebab_case(option_name))
         # Normalise aliases
-        metadata = cfg.elements.get("metadata")
+        metadata = cfg.get("metadata")
         if not metadata:
             return cfg
         for alias, cannonic in self.setupcfg_aliases().items():
-            if alias in metadata.elements:
+            if alias in metadata:
                 metadata.rename(alias, cannonic)
         return cfg
 
