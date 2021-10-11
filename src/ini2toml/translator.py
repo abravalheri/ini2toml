@@ -1,18 +1,22 @@
+import logging
 from functools import reduce
-from textwrap import dedent
 from types import MappingProxyType
-from typing import Callable, Dict, List, Mapping, Optional, Sequence, Union, cast
-
-from configupdater import Comment, ConfigUpdater, Option, Section, Space
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 from . import types  # Structural/Abstract types
+from .errors import (
+    AlreadyRegisteredAugmentation,
+    InvalidAugmentationName,
+    UndefinedProfile,
+)
 from .plugins import list_from_entry_points as list_all_plugins
 from .profile import Profile, ProfileAugmentation
-from .toml_adapter import Item, Table, TOMLDocument, comment, dumps, loads, nl, table
-
-TOMLContainer = Union[TOMLDocument, Table]
+from .transformations import apply
 
 EMPTY = MappingProxyType({})  # type: ignore
+
+
+_logger = logging.getLogger(__name__)
 
 
 class Translator:
@@ -27,23 +31,55 @@ class Translator:
         self,
         profiles: Optional[Sequence[types.Profile]] = None,
         plugins: Optional[List[types.Plugin]] = None,
-        cfg_parser_opts: Optional[dict] = None,
+        ini_parser_opts: Optional[dict] = None,
         profile_augmentations: Optional[Sequence[types.ProfileAugmentation]] = None,
+        ini_loads_fn: Optional[Callable[[str, dict], types.IntermediateRepr]] = None,
+        toml_dumps_fn: Optional[Callable[[types.IntermediateRepr], str]] = None,
     ):
         self.plugins = list_all_plugins() if plugins is None else plugins
-        self.cfg_parser_opts = cfg_parser_opts or {}
+        self.ini_parser_opts = ini_parser_opts or {}
         self.profiles = {p.name: p for p in (profiles or ())}
         augmentations = profile_augmentations or ()
-        self.augmentations = {(p.name or p.fn.__name__): p for p in augmentations}
+        self.augmentations: Dict[str, types.ProfileAugmentation] = {
+            (p.name or p.fn.__name__): p for p in augmentations
+        }
+
+        self._loads_fn = ini_loads_fn
+        self._dumps_fn = toml_dumps_fn
 
         for activate in self.plugins:
             activate(self)
 
+    def loads(self, text: str) -> types.IntermediateRepr:
+        if self._loads_fn is None:
+            try:
+                from .drivers.configupdater import parse
+            except ImportError:
+                from .drivers.configparser import parse
+            self._loads_fn = parse
+
+        return self._loads_fn(text, self.ini_parser_opts)
+
+    def dumps(self, irepr: types.IntermediateRepr) -> str:
+        if self._dumps_fn is None:
+            try:
+                from .drivers.full_toml import convert
+            except ImportError:
+                try:
+                    from .drivers.lite_toml import convert
+                except ImportError:
+                    msg = "Please install either `ini2toml[full]` or `ini2toml[lite]`"
+                    _logger.warning(f"{msg}. `ini2toml` (only) is not valid.")
+                    raise
+            self._dumps_fn = convert
+
+        return self._dumps_fn(irepr)
+
     def __getitem__(self, profile_name: str) -> types.Profile:
         if profile_name not in self.profiles:
             profile = Profile(profile_name)
-            if self.cfg_parser_opts:
-                profile = profile.replace(cfg_parser_opts=self.cfg_parser_opts)
+            if self.ini_parser_opts:
+                profile = profile.replace(ini_parser_opts=self.ini_parser_opts)
             self.profiles[profile_name] = profile
         return self.profiles[profile_name]
 
@@ -71,129 +107,15 @@ class Translator:
 
     def translate(
         self,
-        cfg: str,
+        ini: str,
         profile_name: str,
         active_augmentations: Mapping[str, bool] = EMPTY,
     ) -> str:
         UndefinedProfile.check(profile_name, list(self.profiles.keys()))
         profile = self._add_augmentations(self[profile_name], active_augmentations)
 
-        cfg = reduce(lambda acc, fn: fn(acc), profile.pre_processors, cfg)
-        updater = ConfigUpdater(**profile.cfg_parser_opts).read_string(cfg)
-        updater = reduce(lambda acc, fn: fn(acc), profile.cfg_processors, updater)
-        doc = loads(profile.toml_template)
-        translate_cfg(doc, updater)
-        doc = reduce(lambda acc, fn: fn(updater, acc), profile.toml_processors, doc)
-        toml = dumps(cast(dict, doc)).strip()
-        # TODO: atoml/tomlkit is always appending a newline at the end of the document
-        #       when a section is replaced (even if it exists before), so we need to
-        #       strip()
-        return reduce(lambda acc, fn: fn(acc), profile.post_processors, toml).strip()
-
-
-def translate_cfg(out: TOMLDocument, cfg: ConfigUpdater):
-    parser_opts = getattr(cfg, "_parser_opts", {})  # TODO: private attr
-    for block in cfg.iter_blocks():
-        if isinstance(block, Section):
-            translate_section(out, block, parser_opts)
-        elif isinstance(block, Comment):
-            translate_comment(out, block, parser_opts)
-        elif isinstance(block, Space):
-            translate_space(out, block, parser_opts)
-        else:  # pragma: no cover -- not supposed to happen
-            raise InvalidCfgBlock(block)
-
-
-def translate_section(doc: TOMLDocument, item: Section, parser_opts: dict):
-    out = table()
-    # Inline comment
-    cmt = getattr(item, "_raw_comment", "")  # TODO: private attr
-    prefixes = "".join(parser_opts.get("comment_prefixes", "#;"))
-    cmt = cmt.strip().lstrip(prefixes).strip()
-    if cmt:
-        cast(Item, out).comment(cmt.strip().lstrip(prefixes).strip())
-    # Children
-    for block in item.iter_blocks():
-        if isinstance(block, Option):
-            translate_option(out, block, parser_opts)
-        elif isinstance(block, Comment):
-            translate_comment(out, block, parser_opts)
-        elif isinstance(block, Space):
-            translate_space(out, block, parser_opts)
-        else:  # pragma: no cover -- not supposed to happen
-            raise InvalidCfgBlock(block)
-    doc[item.name] = out
-
-
-def translate_option(container: Table, item: Option, parser_opts: dict):
-    container[item.key] = item.value
-
-
-def translate_comment(container: TOMLContainer, item: Comment, parser_opts: dict):
-    prefixes = "".join(parser_opts.get("comment_prefixes", "#;"))
-    for line in str(item).splitlines():
-        container.add(comment(str(line).strip().lstrip(prefixes).strip()))
-
-
-def translate_space(container: TOMLContainer, item: Space, _parser_opts: dict):
-    for _ in str(item).splitlines():
-        container.add(nl())
-
-
-class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
-    """Something is wrong with the provided CFG AST, the given block is not valid."""
-
-    def __init__(self, block):
-        super().__init__(f"{block.__class__}: {block}", {"block_object": block})
-
-
-class UndefinedProfile(ValueError):
-    """The given profile ('{name}') is not registered with ``ini2toml``.
-    Are you sure you have the right plugins installed and loaded?
-    """
-
-    def __init__(self, name: str, available: Sequence[str]):
-        msg = self.__class__.__doc__ or ""
-        super().__init__(msg.format(name=name) + f"Available: {', '.join(available)})")
-
-    @classmethod
-    def check(cls, name: str, available: List[str]):
-        if name not in available:
-            raise cls(name, available)
-
-
-class AlreadyRegisteredAugmentation(ValueError):
-    """The profile augmentation '{name}' is already registered for '{existing}'.
-
-    Some installed plugins seem to be in conflict with each other,
-    please check '{new}' and '{existing}'.
-    If you are the developer behind one of them, please use a different name.
-    """
-
-    def __init__(self, name: str, new: Callable, existing: Callable):
-        existing_id = f"{existing.__module__}.{existing.__qualname__}"
-        new_id = f"{new.__module__}.{new.__qualname__}"
-        msg = dedent(self.__class__.__doc__ or "")
-        super().__init__(msg.format(name=name, new=new_id, existing=existing_id))
-
-    @classmethod
-    def check(
-        cls, name: str, fn: Callable, registry: Mapping[str, types.ProfileAugmentation]
-    ):
-        if name in registry:
-            raise cls(name, fn, registry[name].fn)
-
-
-class InvalidAugmentationName(ValueError):
-    """Profile augmentations should be valid python identifiers and not starting with
-    'no_'
-    """
-
-    def __init__(self, name: str):
-        msg = self.__class__.__doc__ or ""
-        super().__init__(f"{msg} ('{name}' given)")
-
-    @classmethod
-    def check(cls, name: str):
-        if not name.isidentifier() or name.startswith("no_"):
-            raise cls(name)
+        ini = reduce(apply, profile.pre_processors, ini)
+        irepr = self.loads(ini)
+        irepr = reduce(apply, profile.intermediate_processors, irepr)
+        toml = self.dumps(irepr)
+        return reduce(apply, profile.post_processors, toml)
