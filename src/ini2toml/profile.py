@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field, replace
 from typing import List, Optional
 
-from .types import ProfileAugmentationFn, TextProcessor, IntermediateProcessor
+from .types import IntermediateProcessor, ProfileAugmentationFn, TextProcessor
 
 
 @dataclass
@@ -15,6 +15,7 @@ class Profile:
     pre_processors: List[TextProcessor] = field(default_factory=list)
     intermediate_processors: List[IntermediateProcessor] = field(default_factory=list)
     post_processors: List[TextProcessor] = field(default_factory=list)
+    ini_parser_opts: Optional[dict] = None
 
     replace = replace
 

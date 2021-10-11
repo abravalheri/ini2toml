@@ -40,7 +40,7 @@ def test_simple_example():
     translator["simple"]
     out = translator.translate(dedent(example), "simple")
     print(out)
-    assert out == dedent(expected).strip()
+    assert out == dedent(expected)
 
 
 def test_parser_opts():
@@ -75,12 +75,12 @@ def test_parser_opts():
     """
 
     parser_opts = {"comment_prefixes": (":",), "delimiters": ("-",)}
-    translator = Translator(plugins=[], cfg_parser_opts=parser_opts)
+    translator = Translator(plugins=[], ini_parser_opts=parser_opts)
     # ensure profile exists
     translator["simple"]
     out = translator.translate(dedent(example), "simple")
     print(out)
-    assert out == dedent(expected).strip()
+    assert out == dedent(expected)
 
 
 def test_undefined_profile():
