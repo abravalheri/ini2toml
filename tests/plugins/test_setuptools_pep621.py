@@ -1,6 +1,6 @@
 import pytest
 
-from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate
+from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate, isdirective
 from ini2toml.translator import Translator
 
 
@@ -335,6 +335,51 @@ def test_fix_setup_requires(plugin, parse, convert):
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_fix_setup_requires.strip()
+
+
+example_dynamic = """\
+[metadata]
+version = attr: django.__version__
+classifiers = file: classifiers.txt
+description = file: readme.txt
+
+[options]
+entry-points = file: entry-points.txt
+"""
+
+expected_dynamic = """\
+[metadata]
+
+dynamic = ["version", "classifiers", "description", "entry-points", "scripts", "gui-scripts"]
+
+["options.dynamic"]
+version = {attr = "django.__version__"}
+classifiers = {file = "classifiers.txt"}
+description = {file = "readme.txt"}
+entry-points = {file = "entry-points.txt"}
+"""  # noqa
+
+
+def test_isdirective(plugin, parse, convert):
+    doc = parse(example_dynamic.strip())
+    assert isdirective(doc["metadata"]["version"], ("attr",))
+    assert isdirective(doc["metadata"]["classifiers"])
+    assert isdirective(doc["metadata"]["description"], ("file",))
+    assert isdirective(doc["options"]["entry-points"])
+    assert not isdirective("")
+    assert not isdirective("some value")
+
+
+def test_fix_dynamic(plugin, parse, convert):
+    doc = parse(example_dynamic.strip())
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.fix_dynamic(doc)
+    doc.pop("tool", None)
+    doc.pop("options", None)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_dynamic.strip()
 
 
 # ----

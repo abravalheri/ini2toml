@@ -206,6 +206,6 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
 
 
 def _no_trail_comment(msg: str):
-    cmt = comment(msg)
+    cmt = comment(str(msg))
     cmt.trivia.trail = ""
     return cmt
