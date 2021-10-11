@@ -1,5 +1,7 @@
 from textwrap import dedent
 
+import tomli
+
 from ini2toml.drivers import full_toml, lite_toml
 from ini2toml.plugins import coverage
 from ini2toml.translator import Translator
@@ -68,4 +70,5 @@ def test_coverage():
         try:
             assert expected == out
         except AssertionError:
-            assert full_toml.loads(expected) == full_toml.loads(out)
+            # At least the Python-equivalents when parsing should be the same
+            assert tomli.loads(expected) == tomli.loads(out)
