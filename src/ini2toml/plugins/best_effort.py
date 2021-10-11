@@ -3,7 +3,7 @@ from functools import partial
 from typing import TypeVar
 
 from ..transformations import split_comment, split_kv_pairs, split_list, split_scalar
-from ..types import IntermediateRepr, Translator
+from ..types import HiddenKey, IntermediateRepr, Translator
 
 M = TypeVar("M", bound=IntermediateRepr)
 
@@ -48,6 +48,8 @@ class BestEffort:
         return section
 
     def apply_best_effort(self, container: M, field: str, value: str):
+        if isinstance(field, HiddenKey):
+            return
         lines = value.splitlines()
         if len(lines) > 1:
             if self.key_sep in value:
