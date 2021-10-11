@@ -5,7 +5,7 @@ replace).
 """
 from collections.abc import Mapping, Sequence
 from functools import singledispatch
-from typing import Optional, Tuple, TypeVar, Union, cast
+from typing import Iterable, Optional, Tuple, TypeVar, Union, cast
 
 from atoml import (
     aot,
@@ -29,7 +29,6 @@ from ..types import (
     CommentedList,
     CommentKey,
     IntermediateRepr,
-    ListRepr,
     WhitespaceKey,
 )
 
@@ -119,25 +118,21 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
     return _convert_irepr_to_toml(obj, out)
 
 
-@collapse.register(ListRepr)
-def _collapse_list_repr(obj: ListRepr, root=False) -> Union[AoT, Array]:
+@collapse.register(list)
+def _collapse_list_repr(obj: list, root=False) -> Union[AoT, Array]:
     is_aot, max_len, has_nl, num_elem = classify_list(obj)
     # Just some heuristics which kind of array we are going to use
     if is_aot:
-        out = aot()
-    else:
-        out = array()
-        if (
-            has_nl
-            or max_len > MAX_INLINE_TABLE_LEN
-            or (
-                max_len > INLINE_TABLE_LONG_ELEM
-                and num_elem > MAX_INLINE_TABLE_LONG_ELEM
-            )
-        ):
-            out.multiline(True)
-    for elem in obj:
-        out.append(collapse(elem))
+        return create_aot(collapse(e) for e in obj)
+
+    out = array()
+    out.extend(collapse(e) for e in obj)
+    if (
+        has_nl
+        or max_len > MAX_INLINE_TABLE_LEN
+        or (max_len > INLINE_TABLE_LONG_ELEM and num_elem > MAX_INLINE_TABLE_LONG_ELEM)
+    ):
+        out.multiline(True)
     return out
 
 
@@ -203,6 +198,23 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
         has_nl = has_nl or "\n" in elem_repr
 
     return is_aot, max_len, has_nl, len(seq)
+
+
+def create_table(m: Mapping) -> Table:
+    if isinstance(m, Table):
+        return m
+    t = table()
+    for k, v in m.items():
+        t.add(k, v)
+    return t
+
+
+def create_aot(elements: Iterable[Mapping]) -> AoT:
+    if isinstance(elements, AoT):
+        return elements
+    out = aot()
+    out.extend(create_table(t) for t in elements)
+    return out
 
 
 def _no_trail_comment(msg: str):

@@ -13,7 +13,6 @@ from .intermediate_repr import (
     HiddenKey,
     IntermediateRepr,
     Key,
-    ListRepr,
     WhitespaceKey,
 )
 
@@ -101,7 +100,6 @@ __all__ = [
     "IntermediateRepr",
     "Key",
     "KV",
-    "ListRepr",
     "NOT_GIVEN",
     "Plugin",
     "Profile",

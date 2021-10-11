@@ -5,7 +5,7 @@ from functools import partial
 from typing import List, TypeVar, cast
 
 from ..transformations import coerce_scalar, split_list
-from ..types import IntermediateRepr, ListRepr, Translator
+from ..types import IntermediateRepr, Translator
 
 M = TypeVar("M", bound=MutableMapping)
 R = TypeVar("R", bound=IntermediateRepr)
@@ -64,7 +64,7 @@ class Mypy:
 
     def get_or_create_overrides(self, parent: MutableMapping) -> MutableSequence:
         mypy = parent.setdefault("mypy", IntermediateRepr())
-        return cast(MutableSequence, mypy.setdefault("overrides", ListRepr()))
+        return cast(MutableSequence, mypy.setdefault("overrides", []))
 
     def add_overrided_modules(self, section: R, name: str, modules: List[str]):
         if not isinstance(section, IntermediateRepr):

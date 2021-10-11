@@ -9,14 +9,7 @@ from typing import Any
 from tomli_w import dumps
 
 from ..errors import InvalidTOMLKey
-from ..types import (
-    Commented,
-    CommentedKV,
-    CommentedList,
-    HiddenKey,
-    IntermediateRepr,
-    ListRepr,
-)
+from ..types import Commented, CommentedKV, CommentedList, HiddenKey, IntermediateRepr
 
 __all__ = [
     "dumps",
@@ -55,8 +48,8 @@ def _collapse_irepr(obj: IntermediateRepr) -> dict:
     return _convert_irepr_to_dict(obj, {})
 
 
-@collapse.register(ListRepr)
-def _collapse_list_repr(obj: ListRepr) -> list:
+@collapse.register(list)
+def _collapse_list_repr(obj: list) -> list:
     return [collapse(e) for e in obj]
 
 

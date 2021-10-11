@@ -350,7 +350,14 @@ entry-points = file: entry-points.txt
 expected_dynamic = """\
 [metadata]
 
-dynamic = ["version", "classifiers", "description", "entry-points", "scripts", "gui-scripts"]
+dynamic = [
+    "version",
+    "classifiers",
+    "description",
+    "entry-points",
+    "scripts",
+    "gui-scripts",
+]
 
 ["options.dynamic"]
 version = {attr = "django.__version__"}

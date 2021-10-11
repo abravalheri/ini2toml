@@ -154,12 +154,6 @@ class IntermediateRepr(MutableMapping):
         return len(self.order)
 
 
-class ListRepr(UserList):
-    """Internal representation of a list value.
-    It is very useful to represent AoT TOML elements.
-    """
-
-
 # These objects hold information about the processed values + comments
 # in such a way that we can later convert them to TOML while still preserving
 # the comments (if we want to).
