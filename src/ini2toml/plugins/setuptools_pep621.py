@@ -12,7 +12,7 @@ from ..transformations import (
     split_kv_pairs,
     split_list,
 )
-from ..types import CommentKey
+from ..types import CommentKey, HiddenKey
 from ..types import IntermediateRepr as IR
 from ..types import Transformation, Translator
 from .best_effort import BestEffort
@@ -409,6 +409,8 @@ class SetuptoolsPEP621:
             rest: Sequence = ()
             if isinstance(k, tuple):
                 key, *rest = k
+            if isinstance(key, HiddenKey):
+                continue
             if not (key in allowed or any(key.startswith(p) for p in allowed_prefixes)):
                 doc.rename(k, ("tool", key, *rest))
         return doc
