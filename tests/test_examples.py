@@ -2,7 +2,8 @@ import sys
 from itertools import chain
 from pathlib import Path
 
-from ini2toml import cli, toml_adapter
+from ini2toml import cli
+from ini2toml.drivers.full_toml import loads
 from ini2toml.translator import Translator
 
 
@@ -33,7 +34,7 @@ def test_examples_api():
         expected_text = expected.read_text().strip()
         assert out == expected_text
         # Make sure they can be parsed
-        assert toml_adapter.loads(out) == toml_adapter.loads(expected_text)
+        assert loads(out) == loads(expected_text)
 
 
 def test_examples_cli(capsys):
@@ -44,4 +45,4 @@ def test_examples_cli(capsys):
         expected_text = expected.read_text().strip()
         assert out == expected_text
         # Make sure they can be parsed
-        assert toml_adapter.loads(out) == toml_adapter.loads(expected_text)
+        assert loads(out) == loads(expected_text)
