@@ -22,21 +22,46 @@ from ..types import (
 __all__ = [
     "dumps",
     "convert",
-    "convert_dict",
+    "collapse",
 ]
 
 
 def convert(irepr: IntermediateRepr) -> str:
-    return dumps(convert_dict(irepr))
+    return dumps(collapse(irepr))
 
 
-def convert_dict(irepr: IntermediateRepr) -> dict:
-    out: dict = {}
-    _convert_dict(irepr, out)
-    return out
+@singledispatch
+def collapse(obj):
+    # Catch all
+    return obj
 
 
-def _convert_dict(irepr: IntermediateRepr, out: dict):
+@collapse.register(Commented)
+def _collapse_commented(obj: Commented) -> Any:
+    return obj.value_or(None)
+
+
+@collapse.register(CommentedList)
+def _collapse_commented_list(obj: CommentedList) -> list:
+    return obj.as_list()
+
+
+@collapse.register(CommentedKV)
+def _collapse_commented_kv(obj: CommentedKV) -> dict:
+    return obj.as_dict()
+
+
+@collapse.register(IntermediateRepr)
+def _collapse_irepr(obj: IntermediateRepr) -> dict:
+    return _convert_irepr_to_dict(obj, {})
+
+
+@collapse.register(ListRepr)
+def _collapse_list_repr(obj: ListRepr) -> list:
+    return [collapse(e) for e in obj]
+
+
+def _convert_irepr_to_dict(irepr: IntermediateRepr, out: dict) -> dict:
     for key, value in irepr.items():
         if isinstance(key, (WhitespaceKey, CommentKey)):
             continue
@@ -45,42 +70,11 @@ def _convert_dict(irepr: IntermediateRepr, out: dict):
             if not isinstance(parent_key, str):
                 raise InvalidTOMLKey(key)
             p = out.setdefault(parent_key, {})
-            _convert_dict(IntermediateRepr({rest: value}), p)  # type: ignore
+            nested_key = rest[0] if len(rest) == 1 else tuple(rest)
+            _convert_irepr_to_dict(IntermediateRepr({nested_key: value}), p)
         elif isinstance(key, str):
             if isinstance(value, IntermediateRepr):
-                _convert_dict(value, out.setdefault(key, {}))
+                _convert_irepr_to_dict(value, out.setdefault(key, {}))
             else:
-                out[key] = _collapse(value)
-
-
-@singledispatch
-def _collapse(obj):
-    # Catch all
-    return obj
-
-
-@_collapse.register(Commented)
-def _collapse_scalar(obj: Commented) -> Any:
-    return obj.value_or(None)
-
-
-@_collapse.register(CommentedList)
-def _collapse_list(obj: CommentedList) -> list:
-    return obj.as_list()
-
-
-@_collapse.register(CommentedKV)
-def _collapse_dict(obj: CommentedKV) -> dict:
-    return obj.as_dict()
-
-
-@_collapse.register(IntermediateRepr)
-def _collapse_irepr(obj: IntermediateRepr):
-    out = {}
-    _convert_dict(obj, out)
+                out[key] = collapse(value)
     return out
-
-
-@_collapse.register(ListRepr)
-def _collapse_list_repr(obj: ListRepr) -> list:
-    return [_collapse(e) for e in obj]
