@@ -144,7 +144,7 @@ class SetuptoolsPEP621:
         on the existing document.
         """
         groups: Mapping[str, Transformation] = {
-            "options.extras-require": split_list_comma,
+            "options.extras-require": split_list_semi,
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             # ----
