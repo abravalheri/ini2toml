@@ -1,10 +1,10 @@
 from typing import Mapping
 
-from configupdater import ConfigUpdater, Section, Option, Comment, Space
+from configupdater import Comment, ConfigUpdater, Option, Section, Space
 
-from ..types import CommentKey, WhitespaceKey, IntermediateRepr, EMPTY
+from ..errors import InvalidCfgBlock
 from ..transformations import remove_prefixes
-
+from ..types import EMPTY, CommentKey, IntermediateRepr, WhitespaceKey
 
 COMMENT_PREFIXES = ("#", ";")
 
@@ -59,10 +59,3 @@ def translate_comment(irepr: IntermediateRepr, item: Comment, opts: Mapping):
 def translate_space(irepr: IntermediateRepr, item: Space, _opts: Mapping):
     for line in str(item).splitlines(keepends=True):
         irepr.append(WhitespaceKey(), line)
-
-
-class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
-    """Something is wrong with the provided CFG AST, the given block is not valid."""
-
-    def __init__(self, block):
-        super().__init__(f"{block.__class__}: {block}", {"block_object": block})

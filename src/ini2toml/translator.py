@@ -54,7 +54,7 @@ class Translator:
         if self._loads_fn is None:
             try:
                 from .drivers.configupdater import parse
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 from .drivers.configparser import parse  # type: ignore[no-redef]
             self._loads_fn = parse
 
@@ -64,7 +64,7 @@ class Translator:
         if self._dumps_fn is None:
             try:
                 from .drivers.full_toml import convert
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 try:
                     from .drivers.lite_toml import convert  # type: ignore[no-redef]
                 except ImportError:

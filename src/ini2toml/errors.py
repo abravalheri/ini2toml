@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Sequence, Callable, Mapping, List
+from typing import Callable, List, Mapping, Sequence
 
 from . import types
 
@@ -52,7 +52,7 @@ class InvalidAugmentationName(ValueError):
 
     @classmethod
     def check(cls, name: str):
-        if not name.isidentifier() or name.startswith("no_"):
+        if not name.isidentifier():
             raise cls(name)
 
 
@@ -62,3 +62,10 @@ class InvalidTOMLKey(ValueError):
     def __init__(self, key):
         msg = self.__doc__.format(key=key)
         super().__init__(msg)
+
+
+class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
+    """Something is wrong with the provided CFG AST, the given block is not valid."""
+
+    def __init__(self, block):
+        super().__init__(f"{block.__class__}: {block}", {"block_object": block})

@@ -99,7 +99,7 @@ class IntermediateRepr(MutableMapping):
         if old_key == new_key:
             return self
         if new_key in self.order:
-            raise ValueError(f"{new_key=} already exists")
+            raise KeyError(f"{new_key=} already exists")
         if old_key not in self.order and ignore_missing:
             return self
         i = self.order.index(old_key)
@@ -109,7 +109,7 @@ class IntermediateRepr(MutableMapping):
 
     def insert(self, i, key: Key, value: Any):
         if key in self.order:
-            raise ValueError(f"{key=} already exists")
+            raise KeyError(f"{key=} already exists")
         self.order.insert(i, key)
         self.elements[key] = value
 

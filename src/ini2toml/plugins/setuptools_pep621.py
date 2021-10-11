@@ -486,17 +486,3 @@ class SetuptoolsPEP621:
 
 def isdirective(value, valid=("file", "attr")) -> bool:
     return isinstance(value, str) and any(value.startswith(f"{p}:") for p in valid)
-
-
-# def _packages_table_toml_workaround(out: R) -> R:
-#     pkg = out.get("tool", {}).get("setuptools", {}).get("packages", {})
-#     if (
-#         isinstance(pkg, InlineTable)
-#         and cast(Mapping, pkg).get("find")
-#         or cast(Mapping, pkg).get("find-namespace")
-#     ):
-#         replacement = table()
-#         cast(MutableMapping, replacement).update(pkg)
-#         out["tool"]["setuptools"]["packages"] = replacement
-
-#     return out
