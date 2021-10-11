@@ -1,7 +1,10 @@
 from textwrap import dedent
 
-from cfg2toml.plugins import coverage
-from cfg2toml.translator import Translator
+import tomli
+
+from ini2toml.drivers import full_toml, lite_toml
+from ini2toml.plugins import coverage
+from ini2toml.translator import Translator
 
 
 def test_coverage():
@@ -9,7 +12,7 @@ def test_coverage():
     # .coveragerc to control coverage.py
     [run]
     branch = True
-    source = cfg2toml
+    source = ini2toml
     # omit = bad_file.py
     [paths]
     source =
@@ -32,21 +35,18 @@ def test_coverage():
     expected = """\
     # .coveragerc to control coverage.py
 
-    [tool]
-    [tool.coverage]
-
-    [tool.coverage.run]
+    [run]
     branch = true
-    source = ["cfg2toml"]
+    source = ["ini2toml"]
     # omit = bad_file.py
 
-    [tool.coverage.paths]
+    [paths]
     source = [
         "src/", 
         "*/site-packages/", 
     ]
 
-    [tool.coverage.report]
+    [report]
     # Regexes for lines to exclude from consideration
     exclude_lines = [
         # Have to re-enable the standard pragma
@@ -61,9 +61,14 @@ def test_coverage():
         "if __name__ == .__main__.:", 
     ]
     """
-    translator = Translator(plugins=[coverage.activate])
-    out = translator.translate(dedent(example), ".coveragerc").strip()
-    expected = dedent(expected).strip()
-    print("expected=\n" + expected + "\n***")
-    print("out=\n" + out)
-    assert expected == out
+    for convert in (full_toml.convert, lite_toml.convert):
+        translator = Translator(plugins=[coverage.activate], toml_dumps_fn=convert)
+        out = translator.translate(dedent(example), ".coveragerc").strip()
+        expected = dedent(expected).strip()
+        print("expected=\n" + expected + "\n***")
+        print("out=\n" + out)
+        try:
+            assert expected == out
+        except AssertionError:
+            # At least the Python-equivalents when parsing should be the same
+            assert tomli.loads(expected) == tomli.loads(out)

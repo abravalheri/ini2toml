@@ -1,30 +1,26 @@
 """Reusable value and type casting transformations"""
 import logging
-from collections.abc import MutableMapping, Sequence
-from functools import singledispatch
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, cast, overload
-
-from .access import get_nested
-from .toml_adapter import (
-    Array,
-    InlineTable,
-    Item,
-    Table,
-    Whitespace,
-    array,
-    comment,
-    inline_table,
-    item,
-    table,
+from collections.abc import MutableMapping
+from typing import (
+    Any,
+    Callable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
 )
+
 from .types import NOT_GIVEN, Commented, CommentedKV, CommentedList
 
-CP = "#;"
+CP = ("#", ";")
 """Default Comment Prefixes"""
 
 T = TypeVar("T")
 S = TypeVar("S")
-M = TypeVar("M", bound="MutableMapping")
+M = TypeVar("M", bound=MutableMapping)
 KV = Tuple[str, T]
 
 Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime
@@ -48,63 +44,6 @@ entire table of the TOML document.
 """
 
 _logger = logging.getLogger(__name__)
-
-
-class Transformer:
-    """A transformer is an object that can :meth:`apply` a transformation to a TOML
-    object representation modifying it in a way that the result is an equally valid TOML
-    object representation.
-
-    Since transformations can result in intermediary forms (such as :obj:`Commented`,
-    :obj:`CommentedKV` and :obj:`CommentedList`) in addition to data types supported by
-    TOML, :obj:`Transformer` objects know how to internally :meth:`collapse` these
-    intermediary forms into valid objects.
-
-    Despite not originally intended to hold any state, :obj:`Transformer` is implemented
-    as a class to allow polymorphism, since Python does not offer other strategies like
-    parametric modules.
-
-    A nice aspect of this choice is that different transformers can re-use the same
-    transformations but with different outcomes. For example, a first transformer can
-    remove all comments coming from the CFG/INI file, while a second can turn them into
-    TOML comments.
-    """
-
-    def apply(self, container: M, field: str, fn: Transformation) -> M:
-        """Modify the TOML container by applying the transformation ``fn`` to the value
-        stored under the ``field`` key.
-        """
-        value = container[field]
-        try:
-            processed = fn(value)
-        except Exception:
-            msg = f"Impossible to transform: {value} <{value.__class__.__name__}>"
-            _logger.warning(msg)
-            _logger.debug("Please check the following details", exc_info=True)
-            return container
-        container[field] = self.collapse(processed)
-        return container
-
-    def apply_nested(self, container: M, path: Sequence, fn: Transformation) -> M:
-        *parent, last = path
-        nested = get_nested(container, parent, None)
-        if not nested:
-            return container
-        if not isinstance(nested, MutableMapping):
-            msg = "Cannot apply transformations to "
-            raise ValueError(msg + f"{nested} ({nested.__class__.__name__})")
-        if last in nested:
-            self.apply(nested, last, fn)
-        return container
-
-    def collapse(self, obj):
-        """Convert ``obj`` as a result of a transformation function -
-        that can be a built-in value (such as ``int``, ``bool``, etc) or an internal
-        value representation that preserves comments (``Commented``, ``CommentedList``,
-        ``CommentedKV``) - into a value that can be directly added to a container
-        serving as basis for the TOML document.
-        """
-        return _collapse(obj)
 
 
 # ---- Simple value processors ----
@@ -241,7 +180,7 @@ def split_list(
     """
     if not isinstance(value, str):
         return value
-    comment_prefixes = comment_prefixes.replace(sep, "")
+    comment_prefixes = [p for p in comment_prefixes if sep not in p]
 
     values = value.strip().splitlines()
     if not subsplit_dangling and len(values) > 1:
@@ -306,8 +245,7 @@ def split_kv_pairs(
     For each item in this list, the key is separated from the value by ``key_sep``.
     ``coerce_fn`` is used to convert the value in each pair.
     """
-    comment_prefixes = comment_prefixes.replace(key_sep, "")
-    comment_prefixes = comment_prefixes.replace(pair_sep, "")
+    prefixes = [p for p in comment_prefixes if key_sep not in p and pair_sep not in p]
 
     values = value.strip().splitlines()
     if not subsplit_dangling and len(values) > 1:
@@ -321,17 +259,23 @@ def split_kv_pairs(
         )
         return [(k.strip(), coerce_fn(v.strip())) for k, v in pairs]
 
-    return CommentedKV([split_comment(v, _split_kv, comment_prefixes) for v in values])
+    return CommentedKV([split_comment(v, _split_kv, prefixes) for v in values])
 
 
 # ---- Public Helpers ----
 
 
-def create_item(value, comment):
-    obj = item(value)
-    if comment is not None:
-        obj.comment(comment)
-    return obj
+def remove_prefixes(text: str, prefixes: Sequence[str]):
+    text = text.strip()
+    for prefix in prefixes:
+        if prefix and text.startswith(prefix):
+            return text[len(prefix) :].strip()
+    return text
+
+
+def apply(x, fn):
+    """Useful to reduce over a list of functions"""
+    return fn(x)
 
 
 # ---- Private Helpers ----
@@ -344,71 +288,7 @@ def _split_in_2(v: str, sep: str) -> Tuple[str, Optional[str]]:
     return first, second
 
 
-def _strip_comment(msg: Optional[str], prefixes: str = CP) -> Optional[str]:
+def _strip_comment(msg: Optional[str], prefixes: Sequence[str] = CP) -> Optional[str]:
     if not msg:
         return None
-    return msg.strip().lstrip(prefixes).strip()
-
-
-@singledispatch
-def _collapse(obj):
-    # Catch all
-    return obj
-
-
-@_collapse.register(Commented)
-def _collapse_scalar(obj: Commented) -> Item:
-    return create_item(obj.value_or(None), obj.comment)
-
-
-@_collapse.register(CommentedList)
-def _collapse_list(obj: CommentedList) -> Array:
-    out = array()
-    out.multiline(False)  # Let's manually control the whitespace
-    multiline = len(obj) > 1
-
-    for entry in obj.data:
-        values = entry.value_or([])
-        if multiline:
-            cast(list, out).append(Whitespace("\n" + 4 * " "))
-        for value in values:
-            cast(list, out).append(value)
-        if entry.has_comment():
-            if multiline:
-                cast(list, out).append(_no_trail_comment(entry.comment))
-            else:
-                cast(Item, out).comment(entry.comment)
-    if multiline:
-        cast(list, out).append(Whitespace("\n"))
-
-    return out
-
-
-@_collapse.register(CommentedKV)
-def _collapse_dict(obj: CommentedKV) -> Union[Table, InlineTable]:
-    multiline = len(obj) > 1
-    out: Union[Table, InlineTable] = table() if multiline else inline_table()
-
-    for entry in obj.data:
-        values = (v for v in entry.value_or([cast(KV, ())]) if v)
-        k: Optional[str] = None
-        for value in values:
-            k, v = value
-            out[k] = v  # type: ignore
-        if not entry.has_comment():
-            continue
-        if not multiline:
-            out.comment(entry.comment)  # type: ignore
-            obj.comment = entry.comment
-            return out
-        if k:
-            out[k].comment(entry.comment)
-        else:
-            out.append(None, comment(entry.comment))  # type: ignore
-    return out
-
-
-def _no_trail_comment(msg: str):
-    cmt = comment(msg)
-    cmt.trivia.trail = ""
-    return cmt
+    return remove_prefixes(msg, prefixes)

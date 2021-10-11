@@ -1,4 +1,4 @@
-'cfg2toml' is licensed under the MPL-2.0 license; see the LICENSE.txt file for details.
+'ini2toml' is licensed under the MPL-2.0 license; see the LICENSE.txt file for details.
 
 A few extra files are collocated in this code base ('tests/examples') exclusively for testing
 purposes during development:
@@ -10,7 +10,7 @@ purposes during development:
 - 'setuptools_scm/setup.cfg' from https://github.com/pypa/setuptools_scm, licensed under MIT
 - 'virtualenv/setup.cfg' from https://github.com/pypa/virtualenv, licensed under MIT
 
-These files are not part of the 'cfg2toml' project and not meant
-for distribution (as part of the 'cfg2toml' software package).
+These files are not part of the 'ini2toml' project and not meant
+for distribution (as part of the 'ini2toml' software package).
 The original licenses for each one of these files can be found inside the
 respective directory under 'tests/examples'.

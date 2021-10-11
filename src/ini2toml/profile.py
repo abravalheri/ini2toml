@@ -1,23 +1,21 @@
 from dataclasses import dataclass, field, replace
 from typing import List, Optional
 
-from .types import CFGProcessor, ProfileAugmentationFn, TextProcessor, TOMLProcessor
+from .types import IntermediateProcessor, ProfileAugmentationFn, TextProcessor
 
 
 @dataclass
 class Profile:
     """Profile object that follows the public API defined in
-    :class:`cfg2toml.types.Profile`.
+    :class:`ini2toml.types.Profile`.
     """
 
     name: str
     help_text: str = ""
     pre_processors: List[TextProcessor] = field(default_factory=list)
-    cfg_processors: List[CFGProcessor] = field(default_factory=list)
-    toml_processors: List[TOMLProcessor] = field(default_factory=list)
+    intermediate_processors: List[IntermediateProcessor] = field(default_factory=list)
     post_processors: List[TextProcessor] = field(default_factory=list)
-    cfg_parser_opts: dict = field(default_factory=dict)
-    toml_template: str = ""
+    ini_parser_opts: Optional[dict] = None
 
     replace = replace
 

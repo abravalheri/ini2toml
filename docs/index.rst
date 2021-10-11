@@ -1,8 +1,8 @@
 ========
-cfg2toml
+ini2toml
 ========
 
-This is the documentation of **cfg2toml**.
+This is the documentation of **ini2toml**.
 
 .. note::
 

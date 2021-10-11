@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "PyScaffold"
 description = "Template tool for putting up the scaffold of a Python project"
@@ -35,20 +31,16 @@ dependencies = [
     # However we specify a higher version so we encourage users to update the
     # version they have installed...
 ]
-scripts = {putup = "pyscaffold.cli:run"}
 
 [[project.author]]
 name = "Florian Wilhelm"
 email = "Florian.Wilhelm@gmail.com"
 
-[project.readme]
-file = "README.rst"
-content-type = "text/x-rst; charset=UTF-8"
-
 [project.license]
 text = "MIT"
 
 [project.urls]
+Homepage = "https://github.com/pyscaffold/pyscaffold/"
 Documentation = "https://pyscaffold.org/"
 Source = "https://github.com/pyscaffold/pyscaffold/"
 Tracker = "https://github.com/pyscaffold/pyscaffold/issues"
@@ -56,7 +48,10 @@ Changelog = "https://pyscaffold.org/en/latest/changelog.html"
 Conda-Forge = "https://anaconda.org/conda-forge/pyscaffold"
 Download = "https://pypi.org/project/PyScaffold/#files"
 Twitter = "https://twitter.com/PyScaffold"
-Homepage = "https://github.com/pyscaffold/pyscaffold/"
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst; charset=UTF-8"
 
 [project.optional-dependencies]
 # Add here additional requirements for extra features, like:
@@ -106,6 +101,13 @@ gitlab = "pyscaffold.extensions.gitlab_ci:GitLab"
 cirrus = "pyscaffold.extensions.cirrus:Cirrus"
 no_pyproject = "pyscaffold.extensions.no_pyproject:NoPyProject"
 
+[project.scripts]
+putup = "pyscaffold.cli:run"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools]
 zip-safe = false
 include-package-data = true
@@ -115,27 +117,6 @@ platforms = "any"
 [tool.setuptools.packages.find-namespace]
 where = "src"
 exclude = ["tests"]
-
-[tool.flake8]
-# Some sane defaults for the code style checker flake8
-# black compatibility
-max_line_length = "88"
-# E203 and W503 have edge cases handled by black
-extend_ignore = "E203, W503"
-exclude = "\nsrc/pyscaffold/contrib\n.tox\nbuild\ndist\n.eggs\ndocs/conf.py"
-
-[devpi.upload]
-# Options for the devpi: PyPI server and packaging tool
-# VCS export must be deactivated since we are using setuptools-scm
-no_vcs = "1"
-formats = "bdist_wheel"
-
-[tool.mypy]
-ignore_missing_imports = true
-pretty = true
-show_error_codes = true
-show_error_context = true
-show_traceback = true
 
 [tool.pytest.ini_options]
 # Options for pytest:
@@ -166,3 +147,24 @@ log_level = "DEBUG"
 log_cli = true
 log_cli_level = "CRITICAL"
 junit_family = "xunit2"
+
+[tool.devpi.upload]
+# Options for the devpi: PyPI server and packaging tool
+# VCS export must be deactivated since we are using setuptools-scm
+no_vcs = "1"
+formats = "bdist_wheel"
+
+[tool.flake8]
+# Some sane defaults for the code style checker flake8
+# black compatibility
+max_line_length = "88"
+# E203 and W503 have edge cases handled by black
+extend_ignore = "E203, W503"
+exclude = "\nsrc/pyscaffold/contrib\n.tox\nbuild\ndist\n.eggs\ndocs/conf.py"
+
+[tool.mypy]
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true

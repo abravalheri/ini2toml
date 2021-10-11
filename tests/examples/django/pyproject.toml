@@ -1,10 +1,7 @@
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "Django"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
+readme = "README.rst"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Web Environment",
@@ -23,7 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-readme = "README.rst"
+dynamic = ["version"]
 requires-python = ">=3.8"
 dependencies = [
     "asgiref >= 3.3.2",
@@ -31,8 +28,6 @@ dependencies = [
     "sqlparse >= 0.2.2",
     "tzdata; sys_platform == 'win32'",
 ]
-scripts = {django-admin = "django.core.management:execute_from_command_line"}
-dynamic = ["version"]
 
 [[project.author]]
 name = "Django Software Foundation"
@@ -42,16 +37,23 @@ email = "foundation@djangoproject.com"
 text = "BSD-3-Clause"
 
 [project.urls]
+Homepage = "https://www.djangoproject.com/"
 Documentation = "https://docs.djangoproject.com/"
 "Release notes" = "https://docs.djangoproject.com/en/stable/releases/"
 Funding = "https://www.djangoproject.com/fundraising/"
 Source = "https://github.com/django/django"
 Tracker = "https://code.djangoproject.com/"
-Homepage = "https://www.djangoproject.com/"
 
 [project.optional-dependencies]
 argon2 = ["argon2-cffi >= 19.1.0"]
 bcrypt = ["bcrypt"]
+
+[project.scripts]
+django-admin = "django.core.management:execute_from_command_line"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = {find = ""}

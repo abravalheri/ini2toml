@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cfg2toml import cli
-from cfg2toml.profile import Profile, ProfileAugmentation
+from ini2toml import cli
+from ini2toml.profile import Profile, ProfileAugmentation
 
 
 def test_guess_profile(caplog):

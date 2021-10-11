@@ -2,9 +2,9 @@ from textwrap import dedent
 
 import pytest
 
-from cfg2toml.plugins import best_effort
-from cfg2toml.toml_adapter import loads
-from cfg2toml.translator import Translator
+from ini2toml.drivers.full_toml import loads
+from ini2toml.plugins import best_effort
+from ini2toml.translator import Translator
 
 
 @pytest.fixture
@@ -14,11 +14,11 @@ def translate():
 
 
 @pytest.fixture
-def cfg2tomlobj(translate):
+def ini2tomlobj(translate):
     return lambda text: loads(translate(text))
 
 
-def test_best_effort(cfg2tomlobj):
+def test_best_effort(ini2tomlobj):
     example = """\
     [section]
     a = 1
@@ -34,7 +34,7 @@ def test_best_effort(cfg2tomlobj):
     [nested.section]
     value = string
     """
-    doc = cfg2tomlobj(dedent(example))
+    doc = ini2tomlobj(dedent(example))
     assert doc["section"]["a"] == 1
     assert doc["section"]["b"] == 0.42
     assert doc["section"]["c"] is False

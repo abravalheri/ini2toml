@@ -1,8 +1,10 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-source = cfg2toml
-# omit = bad_file.py
+source = ini2toml
+omit =
+    */ini2toml/api.py
+    */ini2toml/__main__.py
 
 [paths]
 source =
