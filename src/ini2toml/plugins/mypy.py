@@ -34,7 +34,6 @@ class Mypy:
     DONT_TOUCH = ("python_version",)
 
     def process_values(self, doc: M) -> M:
-        print(f"{doc=}")
         for parent in (doc, doc.get("tool", {})):
             for key in list(parent.keys()):  # need to be eager: we will delete elements
                 key_ = key[-1] if isinstance(key, tuple) else key
