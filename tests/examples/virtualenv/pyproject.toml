@@ -99,7 +99,7 @@ testing = [
     "pytest-mock>=2",
     "pytest-randomly>=1",
     "pytest-timeout>=1",
-    "packaging>=20.0", # python_version>"3.4"
+    "packaging>=20.0;python_version>\"3.4\"",
 ]
 
 [project.scripts]
