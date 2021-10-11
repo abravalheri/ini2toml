@@ -14,7 +14,13 @@ Contents
 
    Overview <readme>
    Setuptools & PEP 621 <setuptools_pep621>
+
+.. toctree::
+   :caption: Project
+   :maxdepth: 2
+
    Contributions & Help <contributing>
+   Developer Guide <dev-guide>
    License <license>
    Authors <authors>
    Changelog <changelog>

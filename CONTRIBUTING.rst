@@ -76,11 +76,11 @@ and use Python's built-in web server for a preview in your web browser
 Code Contributions
 ==================
 
-.. todo:: Please include a reference or explanation about the internals of the project.
+Understanding how the project works
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   An architecture description, design principles or at least a summary of the
-   main concepts will make it easy for potential contributors to get started
-   quickly.
+If you have a change in mind, but don't know how to implement it, please have a
+look in our :doc:`/dev-guide`.
 
 Submit an issue
 ---------------
@@ -268,8 +268,6 @@ on PyPI_, the following steps can be used to release a new version for
 
 
 .. <-- strart -->
-.. todo:: Please review and change the following definitions:
-
 .. |the repository service| replace:: GitHub
 .. |contribute button| replace:: "Create pull request"
 
