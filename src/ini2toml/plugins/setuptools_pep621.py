@@ -258,7 +258,7 @@ class SetuptoolsPEP621:
             scripts = split_kv_pairs(entrypoints.pop(key)).to_ir()
             doc.append(f"project:{key.replace('console-', '')}", scripts)
         if not entrypoints:
-            doc.pop("options.entry-points")
+            doc.pop("project:entry-points")
         return doc
 
     def move_options_missing_in_pep621(self, doc: R) -> R:
