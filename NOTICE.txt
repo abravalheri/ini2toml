@@ -1,7 +1,4 @@
 'ini2toml' is licensed under the MPL-2.0 license; see the LICENSE.txt file for details.
-The sister project 'cfg2toml' (from the same original author) is explicitly
-allowed to share or use 'ini2toml' code under its own license even if it is
-not MPL-2.0.
 
 A few extra files are collocated in this code base ('tests/examples') exclusively for testing
 purposes during development:

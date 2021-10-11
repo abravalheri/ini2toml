@@ -49,21 +49,27 @@ to `PEP 621`_, but by extension it can also be used to convert any compatible |i
 file to TOML_.
 
 Please notice, the provided |ini_cfg|_ files should follow the same syntax
-supported by Python's |ConfigParser|_ library (here referred to as INI syntax).
-
-
-    ``ini2toml`` does not present any INI comments into the generated TOML
-    file. If you need/prefer that functionality, please have a look in our
-    sister project: ``cfg2toml``.
+supported by Python's |ConfigParser|_ library (here referred to as INI syntax)
+and more specifically abide by |ConfigUpdater|_ restrictions (e.g., no
+interpolation or repeated fields).
 
 
 Usage
 =====
 
+``ini2toml`` comes in two flavours: *"lite"* and *"full"*. The "lite"
+flavour will create a TOML document that does not contain any of the comments
+from the original |ini_cfg| file. On the other hand, the "full" flavour
+will make an extra effort to translate these comments into a TOML-equivalent
+(please notice sometimes this translation is not perfect, so it is always good
+to check the TOML document afterwards).
+
 First you need to install the package. An easy way to get started is by
 using |pipx|_:
 
-    $ pipx install ini2toml
+    $ pipx install 'ini2toml[lite]'
+    # OR
+    $ pipx install 'ini2toml[full]'
 
 Now you can use ``ini2toml`` as a command line:
 
@@ -91,19 +97,20 @@ More details about ``ini2toml`` Python API can be found in `our docs`_
 How it works
 ============
 
-``ini2toml`` simply converts your |ini_cfg| files into a
-dictionary/hashtable-like data structure and then serialising this data
-structure using a `simple TOML library`_.
+``ini2toml`` converts your |ini_cfg| files into a data structure with
+an intermediate representation and then serialise this data
+structure using a TOML library.
 
 .. _pipeline:
 
 This transformation works as a 5-stage data pipeline:
 
 1. The original |ini_cfg| text file is :ref:`pre-processed <text-processing>`.
-2. ``ini2toml`` parses the |ini_cfg| file contents using |ConfigParser|_ and
-   transforms it into a plain Python ``dict`` object.
-3. The resulting object is further :ref:`processed <intermediate-processing>`.
-4. ``ini2toml`` convert the dict object into a string that uses TOML syntax.
+2. ``ini2toml`` parses the |ini_cfg| file contents using |ConfigParser|_
+   (*"lite"* flavour) or |ConfigUpdater|_ (*"full"* flavour) and
+   transforms it into an intermediate data structure.
+3. This intermediate object is further :ref:`processed <intermediate-processing>`.
+4. ``ini2toml`` convert the intermediate representation into a string that uses TOML syntax.
 5. The resulting TOML text file is :ref:`post-processed <text-processing>`.
 
 
@@ -114,7 +121,7 @@ Core Concepts
 
 The INI syntax (as supported by Python's standard library) is not very
 expressive or even clearly defined, at least in terms of data types. For
-example, while TOML have clear ways of indicating weather values are strings
+example, while TOML have clear ways of indicating whether values are strings
 and numbers (or even more complex lists and associative tables), most of the
 times it is up to the INI syntax user the responsibility of identifying the
 correct data type of a stored value and convert it according to the context.
@@ -177,29 +184,41 @@ Each text-processor is a simple Python function with the following signature:
 Intermediate representation processing
 --------------------------------------
 
-Processing the intermediate dict representation allows more powerful transformations,
-including coercing stored
-values to specific types (e.g. a INI string value to a TOML list) or combining
-several INI options into a nested TOML table.
+Processing the intermediate representation allows more powerful
+transformations, including coercing stored values to specific types (e.g. a INI
+string value to a TOML list) or combining several INI options into a nested
+TOML table.
 
 Each intermediate-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   M = TypeVar("M", bound="MutableMapping")
-
-
-   def toml_process(cfg: Mapping, toml: M) -> M:
+   def intermediate_process(intermediate: IntermediateRepr) -> IntermediateRepr:
        ...
 
-Please notice your function **SHOULD NOT** modify the ``cfg`` parameter. This
-parameter corresponds to the |ini_cfg| document.
+In turn, :class:`ini2toml.api.IntermediateRepr` is just a wrapper around a combination of
+Python :obj:`dict` and :obj:`list` objects to represent an INI document or section.
+This kind of object has two main attributes:
+
+- **order**: a list of "keys". A key is (usually) a string with the section or
+  option name ("section" and "option" here preserve the same meaning as
+  defined by ``ConfigParser``). This attribute defines the order that the
+  ``elements`` will appear in the final generated TOML.
+- **elements**: a mapping between the keys listed in ``order`` and their
+  corresponding value. In the case an entire INI document, each value is a
+  nested ``IntermediateRepr`` that represents a section. In the case a single
+  INI section, each value represents an option. Initially option values will
+  be strings, but after processing they can be any object with a valid TOML
+  correspondence (e.g. numbers, strings, booleans, etc...)
+
+Please notice that when renaming elements, it is the responsibility of the user
+to modify both the **order** and **elements** attributes.
 
 
-.. important:: All processors
-   are called in sequence, so the output of one is
-   the input of the following (also working as a pipeline).
-   Ideally processor implementations should be idempotent_.
+.. important:: All processors are called in sequence, so the output of one is
+   the input of the following (also working as a pipeline). Ideally processor
+   implementations should be idempotent_.
+
 
 
 Plugins
@@ -314,10 +333,12 @@ functions`_ that implement common operations.
 .. |basename| replace:: ``basename``
 .. |ini_cfg| replace:: ``.ini/.cfg``
 .. |ConfigParser| replace:: ``ConfigParser``
+.. |ConfigUpdater| replace:: ``ConfigUpdater``
 
 .. _AST: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 .. _atoml: https://github.com/frostming/atoml
 .. _basename: https://en.wikipedia.org/wiki/Basename
+.. _ConfigUpdater: https://github.com/pyscaffold/configupdater
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _entry-point: https://setuptools.readthedocs.io/en/stable/userguide/entry_point.html#entry-points
 .. _idempotent: https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning
