@@ -23,34 +23,35 @@ def activate(translator: Translator):
 class ISort:
     """Convert settings to 'pyproject.toml' equivalent"""
 
+    FIELDS = {
+        "force_to_top",
+        "treat_comments_as_code",
+        "no_lines_before",
+        "forced_separate",
+        "sections",
+        "length_sort_sections",
+        "sources",
+        "constants",
+        "classes",
+        "variables",
+        "namespace_packages",
+        "add_imports",
+        "remove_imports",
+    }
+
+    FIELD_ENDS = ["skip", "glob", "paths", "exclusions", "plugins"]
+    FIELD_STARTS = ["known", "extra"]
+
     # dicts? ["import_headings", "git_ignore", "know_other"]
 
     def find_list_options(self, section: Mapping) -> Set[str]:
-        fields = {
-            "force_to_top",
-            "treat_comments_as_code",
-            "no_lines_before",
-            "forced_separate",
-            "sections",
-            "length_sort_sections",
-            "sources",
-            "constants",
-            "classes",
-            "variables",
-            "namespace_packages",
-            "add_imports",
-            "remove_imports",
-        }
-
-        field_ends = ["skip", "glob", "paths", "exclusions", "plugins"]
-        field_starts = ["known", "extra"]
         dynamic_fields = (
             field
             for field in section
-            if any(field.startswith(s) for s in field_starts)
-            or any(field.endswith(s) for s in field_ends)
+            if any(field.startswith(s) for s in self.FIELD_STARTS)
+            or any(field.endswith(s) for s in self.FIELD_ENDS)
         )
-        fields = {*fields, *dynamic_fields}
+        fields = {*self.FIELDS, *dynamic_fields}
         return {*fields, *map(kebab_case, fields)}
 
     def process_values(self, doc: M, section_name="isort") -> M:
