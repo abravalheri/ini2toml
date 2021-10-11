@@ -1,5 +1,6 @@
 from textwrap import dedent
 
+from ini2toml.drivers import full_toml, lite_toml
 from ini2toml.plugins import pytest
 from ini2toml.translator import Translator
 
@@ -18,9 +19,8 @@ def test_pytest():
         .tox
     """
     expected = """\
-    [tool]
-    [tool.pytest]
-    [tool.pytest.ini_options]
+    [pytest]
+    [pytest.ini_options]
     minversion = "6.0"
     addopts = "-ra -q --cov ini2toml"
     testpaths = ["tests"]
@@ -32,9 +32,13 @@ def test_pytest():
         ".tox", 
     ]
     """  # noqa
-    translator = Translator(plugins=[pytest.activate])
-    out = translator.translate(dedent(example), "pytest.ini").strip()
-    expected = dedent(expected).strip()
-    print("expected=\n" + expected + "\n***")
-    print("out=\n" + out)
-    assert expected == out
+    for convert in (lite_toml.convert, full_toml.convert):
+        translator = Translator(plugins=[pytest.activate], toml_dumps_fn=convert)
+        out = translator.translate(dedent(example), "pytest.ini").strip()
+        expected = dedent(expected).strip()
+        print("expected=\n" + expected + "\n***")
+        print("out=\n" + out)
+        try:
+            assert expected in out
+        except AssertionError:
+            assert full_toml.loads(expected) == full_toml.loads(out)

@@ -1,61 +1,64 @@
 # https://docs.pytest.org/en/latest/reference/reference.html#configuration-options
 # https://docs.pytest.org/en/latest/reference/customize.html#config-file-formats
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from functools import partial
-from typing import Optional, TypeVar
+from typing import TypeVar
 
-from ..transformations import Transformer, coerce_scalar, split_list
-from ..types import Profile, Translator
+from ..transformations import coerce_scalar, split_list
+from ..types import IntermediateRepr, Translator
 
-M = TypeVar("M", bound=MutableMapping)
-
-LIST_VALUES = (
-    "filterwarnings",
-    "norecursedirs",
-    "python_classes",
-    "python_files",
-    "python_functions",
-    "required_plugins",
-    "testpaths",
-    "usefixtures",
-)
-DONT_TOUCH = ("minversion",)
+R = TypeVar("R", bound=IntermediateRepr)
 
 list_with_space = partial(split_list, sep=" ")
 split_markers = partial(split_list, sep="\n")
-# ^ most of the list values in pytest use whitespace sepators,
+# ^ most of the list values in pytest use whitespace separators,
 #   but markers are a special case, since they can define a help text
 
 
-def activate(translator: Translator, transformer: Optional[Transformer] = None):
-    plugin = Pytest(transformer or Transformer())
+def activate(translator: Translator):
+    plugin = Pytest()
     for file in ("setup.cfg", "tox.ini", "pytest.ini"):
-        plugin.attach_to(translator[file])
+        translator[file].intermediate_processors.append(plugin.process_values)
     translator["pytest.ini"].help_text = plugin.__doc__ or ""
 
 
 class Pytest:
     """Convert settings to 'pyproject.toml' ('ini_options' table)"""
 
-    def __init__(self, trasformer: Transformer):
-        self._tr = trasformer
+    LIST_VALUES = (
+        "filterwarnings",
+        "norecursedirs",
+        "python_classes",
+        "python_files",
+        "python_functions",
+        "required_plugins",
+        "testpaths",
+        "usefixtures",
+    )
 
-    def attach_to(self, profile: Profile):
-        profile.toml_processors.append(self.process_values)
+    DONT_TOUCH = ("minversion",)
 
-    def process_values(self, _orig: Mapping, doc: M) -> M:
-        sec = doc.get("tool", {}).pop("pytest", {})
-        sec = doc.pop("pytest", doc.pop("tool:pytest", sec))
-        for field in sec:
-            if field in DONT_TOUCH:
+    def process_values(self, doc: R) -> R:
+        candidates = [
+            (("pytest", "ini_options"), "pytest", doc),
+            (("tool", "pytest", "ini_options"), "tool:pytest", doc),
+            (("tool", "pytest", "ini_options"), ("tool", "pytest"), doc),
+            (("pytest", "ini_options"), "pytest", doc.get("tool", {})),
+        ]
+        for new_key, old_key, parent in candidates:
+            section = parent.get(old_key)
+            if section:
+                self.process_section(section)
+                parent.rename(old_key, new_key)
+        return doc
+
+    def process_section(self, section: MutableMapping):
+        for field in section:
+            if field in self.DONT_TOUCH:
                 continue
             if field == "markers":
-                self._tr.apply(sec, field, split_markers)
-            elif field in LIST_VALUES:
-                self._tr.apply(sec, field, list_with_space)
+                section[field] = split_markers(section[field])
+            elif field in self.LIST_VALUES:
+                section[field] = list_with_space(section[field])
             else:
-                self._tr.apply(sec, field, coerce_scalar)
-
-        if sec:
-            doc.setdefault("tool", {}).setdefault("pytest", {})["ini_options"] = sec
-        return doc
+                section[field] = coerce_scalar(section[field])
