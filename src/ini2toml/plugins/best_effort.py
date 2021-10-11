@@ -1,11 +1,9 @@
 import re
-from collections.abc import Mapping, MutableMapping
 from functools import partial
 from typing import TypeVar
 
-from ..access import set_nested
-from ..transformations import split_kv_pairs, split_list, split_scalar, split_comment
-from ..types import Translator, IntermediateRepr
+from ..transformations import split_comment, split_kv_pairs, split_list, split_scalar
+from ..types import IntermediateRepr, Translator
 
 M = TypeVar("M", bound=IntermediateRepr)
 
@@ -49,7 +47,7 @@ class BestEffort:
             self.apply_best_effort(section, field, value)
         return section
 
-    def apply_best_effort(self, container: M, field: str, value: str) -> M:
+    def apply_best_effort(self, container: M, field: str, value: str):
         lines = value.splitlines()
         if len(lines) > 1:
             if self.key_sep in value:
@@ -60,4 +58,3 @@ class BestEffort:
             container[field] = split_comment(value)
         else:
             container[field] = split_scalar(value)
-        return container

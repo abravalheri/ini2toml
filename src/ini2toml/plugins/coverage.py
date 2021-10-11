@@ -52,8 +52,7 @@ class Coverage:
                     self.process_section(section)
         return doc
 
-    def process_section(self, section: M) -> M:
+    def process_section(self, section: M):
         for field in section:
             fn = split_list if field in self.LIST_VALUES else coerce_scalar
             section[field] = fn(section[field])
-        return section

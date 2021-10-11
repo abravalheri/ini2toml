@@ -36,7 +36,7 @@ class Mypy:
     def process_values(self, doc: M) -> M:
         print(f"{doc=}")
         for parent in (doc, doc.get("tool", {})):
-            for key in list(parent.keys()):  # need to be eager: we will modify the list
+            for key in list(parent.keys()):  # need to be eager: we will delete elements
                 key_ = key[-1] if isinstance(key, tuple) else key
                 if not isinstance(key_, str):
                     continue
@@ -67,9 +67,8 @@ class Mypy:
         mypy = parent.setdefault("mypy", IntermediateRepr())
         return cast(MutableSequence, mypy.setdefault("overrides", ListRepr()))
 
-    def add_overrided_modules(self, section: R, name: str, modules: List[str]) -> R:
+    def add_overrided_modules(self, section: R, name: str, modules: List[str]):
         if not isinstance(section, IntermediateRepr):
             raise ValueError(f"Expecting section {name} to be an IntermediateRepr")
         if "module" not in section:
             section.insert(0, "module", modules)
-        return section

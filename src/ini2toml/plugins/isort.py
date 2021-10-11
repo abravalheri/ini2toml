@@ -65,9 +65,8 @@ class ISort:
                 self.process_section(section)
         return doc
 
-    def process_section(self, section: M) -> M:
+    def process_section(self, section: M):
         list_options = self.find_list_options(section)
         for field in section:
             fn = split_list if field in list_options else coerce_scalar
             section[field] = fn(section[field])
-        return section
