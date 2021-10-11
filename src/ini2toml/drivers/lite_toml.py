@@ -13,10 +13,9 @@ from ..types import (
     Commented,
     CommentedKV,
     CommentedList,
-    CommentKey,
+    HiddenKey,
     IntermediateRepr,
     ListRepr,
-    WhitespaceKey,
 )
 
 __all__ = [
@@ -63,7 +62,7 @@ def _collapse_list_repr(obj: ListRepr) -> list:
 
 def _convert_irepr_to_dict(irepr: IntermediateRepr, out: dict) -> dict:
     for key, value in irepr.items():
-        if isinstance(key, (WhitespaceKey, CommentKey)):
+        if isinstance(key, HiddenKey):
             continue
         elif isinstance(key, tuple):
             parent_key, *rest = key
