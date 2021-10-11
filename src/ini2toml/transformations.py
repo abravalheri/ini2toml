@@ -20,7 +20,7 @@ CP = ("#", ";")
 
 T = TypeVar("T")
 S = TypeVar("S")
-M = TypeVar("M", bound="MutableMapping")
+M = TypeVar("M", bound=MutableMapping)
 KV = Tuple[str, T]
 
 Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime

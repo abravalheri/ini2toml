@@ -1,13 +1,7 @@
-from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import (
-    CommentedKV,
-    CommentedList,
-    Commented,
-    CommentKey,
-    WhitespaceKey,
-)
 from ini2toml.drivers import lite_toml as lib
-
+from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
+from ini2toml.types import IntermediateRepr as IR
+from ini2toml.types import WhitespaceKey
 
 example_toml = """\
 [section1]
@@ -54,15 +48,15 @@ example_parsed = IR(
             ),
             "other-boolean-value": True,
             WhitespaceKey(): "",
-            CommentKey(): 'comment between options',
+            CommentKey(): "comment between options",
             "another value": CommentedKV(
                 [
                     Commented([("a", 1), ("b", 2)], "1st line comment"),
                     Commented([("c", 3), ("d", 4)], "2nd line comment"),
                 ]
             ),
-            "string-value": Commented('string', 'comment'),
-            "list-value": [True, False]
+            "string-value": Commented("string", "comment"),
+            "list-value": [True, False],
         }
     ),
     section3=IR(nested=IR(x="y", z=Commented("w", "nested"))),

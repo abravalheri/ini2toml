@@ -1,8 +1,7 @@
-from typing import Sequence, Mapping
-
 from configparser import ConfigParser
+from typing import Mapping
 
-from ..types import IntermediateRepr, EMPTY
+from ..types import EMPTY, IntermediateRepr
 
 
 def parse(text: str, opts: Mapping = EMPTY) -> IntermediateRepr:

@@ -1,13 +1,5 @@
-from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import (
-    CommentedKV,
-    CommentedList,
-    Commented,
-    CommentKey,
-    WhitespaceKey,
-)
 from ini2toml.drivers import configparser as lib
-
+from ini2toml.types import IntermediateRepr as IR
 
 example_cfg = """\
 [section1]
