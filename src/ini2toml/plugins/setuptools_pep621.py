@@ -246,9 +246,9 @@ class SetuptoolsPEP621:
             return doc
         doc.rename("options.entry-points", "project:entry-points")
         # ^ use `:` to guarantee it is split later
-        keys = (k for k in ("gui-scripts", "console-scripts") if k in entrypoints)
+        keys = (k for k in ("console-scripts", "gui-scripts") if k in entrypoints)
         for key in keys:
-            scripts = split_kv_pairs(entrypoints.pop(key))
+            scripts = split_kv_pairs(entrypoints.pop(key)).to_ir()
             doc.append(f"project:{key.replace('console-', '')}", scripts)
         if not entrypoints:
             doc.pop("options.entry-points")
@@ -294,7 +294,7 @@ class SetuptoolsPEP621:
                 out[section][option] = split_kv_pairs(value, key_sep=":")
         return out
 
-    def separate_subtables(self, out: M) -> M:
+    def split_subtables(self, out: M) -> M:
         """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
         sections = [
             k
@@ -425,7 +425,7 @@ class SetuptoolsPEP621:
             self.move_setup_requires,
             # --- final steps ---
             self.ensure_pep518,
-            self.separate_subtables,
+            self.split_subtables,
         ]
         out = self.template(doc.__class__)  # type: ignore
         out.update(doc)

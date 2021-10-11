@@ -106,6 +106,8 @@ install-requires =
     configupdater>=3,<=4
 [options.entry-points]
 # For example:
+console-scripts =
+    putup = pyscaffold.cli:run  # CLI exec
 pyscaffold.cli =
     # comment
     fibonacci = ini2toml.skeleton:run # comment
@@ -135,6 +137,9 @@ install-requires = [
 # comment
 fibonacci = "ini2toml.skeleton:run" # comment
 awesome = "pyscaffoldext.awesome.extension:AwesomeExtension"
+
+["project:scripts"]
+putup = "pyscaffold.cli:run" # CLI exec
 """
 
 
@@ -151,12 +156,13 @@ def test_move_entry_points_and_apply_value_processing(plugin, parse, convert):
 
 # ----
 
-
 example_separate_subtables = """\
 [options.packages.find]
 where = src
 [project:entry-points]
 # For example:
+[project:scripts]
+django-admin = django.core.management:execute_from_command_line
 """
 
 expected_separate_subtables = """\
@@ -169,17 +175,71 @@ where = "src"
 [project]
 [project.entry-points]
 # For example:
+
+[project.scripts]
+django-admin = "django.core.management:execute_from_command_line"
 """
 
 
-def test_separate_subtables(plugin, parse, convert):
+def test_split_subtables(plugin, parse, convert):
     doc = parse(example_separate_subtables.strip())
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.separate_subtables(doc)
+    doc = plugin.split_subtables(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_separate_subtables.strip()
+
+
+# ----
+
+example_entrypoints_and_split_subtables = """\
+[options.packages.find]
+where = src
+[options.entry-points]
+# For example:
+console-scripts =
+    django-admin = django.core.management:execute_from_command_line
+gui-scripts =
+    project = my.module:function [extra-dep]
+pyscaffold.cli =
+    config = pyscaffold.extensions.config:Config
+    interactive = pyscaffold.extensions.interactive:Interactive
+"""
+
+expected_entrypoints_and_split_subtables = """\
+[tool]
+[tool.setuptools]
+[tool.setuptools.packages]
+[tool.setuptools.packages.find]
+where = "src"
+
+[project]
+[project.entry-points]
+# For example:
+
+[project.entry-points."pyscaffold.cli"]
+config = "pyscaffold.extensions.config:Config"
+interactive = "pyscaffold.extensions.interactive:Interactive"
+
+[project.scripts]
+django-admin = "django.core.management:execute_from_command_line"
+
+[project.gui-scripts]
+project = "my.module:function [extra-dep]"
+"""
+
+
+def test_entrypoints_and_split_subtables(plugin, parse, convert):
+    doc = parse(example_entrypoints_and_split_subtables.strip())
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.move_and_split_entrypoints(doc)
+    doc = plugin.apply_value_processing(doc)
+    doc = plugin.split_subtables(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_entrypoints_and_split_subtables.strip()
 
 
 # ----

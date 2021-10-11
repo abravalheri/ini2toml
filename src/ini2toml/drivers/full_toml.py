@@ -3,8 +3,9 @@ style preserving TOML editing libraries (e.g. atoml and atoml).
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
+from collections.abc import Mapping, Sequence
 from functools import singledispatch
-from typing import Optional, TypeVar, Union, cast
+from typing import Optional, Tuple, TypeVar, Union, cast
 
 from atoml import (
     aot,
@@ -40,6 +41,10 @@ __all__ = [
 ]
 
 T = TypeVar("T", bound=Union[TOMLDocument, Table, InlineTable])
+
+MAX_INLINE_TABLE_LEN = 60
+INLINE_TABLE_LONG_ELEM = 10
+MAX_INLINE_TABLE_LONG_ELEM = 5
 
 
 def convert(irepr: IntermediateRepr) -> str:
@@ -116,13 +121,20 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
 
 @collapse.register(ListRepr)
 def _collapse_list_repr(obj: ListRepr, root=False) -> Union[AoT, Array]:
-    is_aot, max_len, has_nl, num_elem = obj.classify()
+    is_aot, max_len, has_nl, num_elem = classify_list(obj)
     # Just some heuristics which kind of array we are going to use
     if is_aot:
         out = aot()
     else:
         out = array()
-        if has_nl or max_len > 80 or (max_len > 10 and num_elem > 6):
+        if (
+            has_nl
+            or max_len > MAX_INLINE_TABLE_LEN
+            or (
+                max_len > INLINE_TABLE_LONG_ELEM
+                and num_elem > MAX_INLINE_TABLE_LONG_ELEM
+            )
+        ):
             out.multiline(True)
     for elem in obj:
         out.append(collapse(elem))
@@ -168,6 +180,29 @@ def create_item(value, comment):
     if comment is not None:
         obj.comment(comment)
     return obj
+
+
+def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
+    """Expensive method that helps to choose what is the best TOML representation
+    for a Python list.
+
+    The return value is composed by 4 values, in order:
+    - aot(bool): ``True`` if all elements are dict-like objects
+    - max_len(int): Rough (and definitely not precise) estimative of the number of
+      chars the TOML representation for the largest element would be.
+    - has_nl(bool): if any TOML representation for the elements has a ``\\n`` char.
+    - num_elements(int): number of elements in the list.
+    """
+    is_aot = True
+    has_nl = False
+    max_len = 0
+    for elem in seq:
+        is_aot = is_aot and isinstance(elem, Mapping)
+        elem_repr = repr(elem)
+        max_len = max(max_len, len(elem_repr))
+        has_nl = has_nl or "\n" in elem_repr
+
+    return is_aot, max_len, has_nl, len(seq)
 
 
 def _no_trail_comment(msg: str):

@@ -1,6 +1,5 @@
 import sys
 from collections import UserList
-from collections.abc import Mapping as _Mapping
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from enum import Enum
@@ -226,27 +225,9 @@ class IntermediateRepr(MutableMapping):
 
 
 class ListRepr(UserList):
-    def classify(self: Sequence) -> Tuple[bool, int, bool, int]:
-        """Expensive method that helps to choose what is the best TOML representation
-        for a Python list.
-        The return value is composed by 4 values, in order:
-        - aot(bool): ``True`` if all elements are dict-like objects
-        - max_len(int): Rough (and definitely not precise) estimative of the number of
-          chars the TOML representation for the largest element would be.
-        - has_nl(bool): if any TOML representation for the elements has a ``\\n`` char.
-        - num_elements(int): number of elements in the list.
-        """
-        aot = True
-        has_nl = False
-        max_len = 0
-        for elem in self:
-            if not isinstance(elem, _Mapping):
-                aot = False
-            elem_repr = repr(elem)
-            max_len = max(max_len, len(elem_repr))
-            has_nl = has_nl or "\n" in elem_repr
-
-        return aot, max_len, has_nl, len(self)
+    """Internal representation of a list value.
+    It is very useful to represent AoT TOML elements.
+    """
 
 
 # These objects hold information about the processed values + comments
@@ -295,16 +276,6 @@ class CommentedKV(Generic[T], UserList):
                     return (i, j)
         return None
 
-    def pop_key(self, key: str) -> Optional[T]:
-        idx = self.find(key)
-        if idx is None:
-            return None
-        i, j = idx
-        row = self[i]
-        value = row.value_or([])[j]
-        del row[j]
-        return value[1]
-
     def as_dict(self) -> dict:
         out = {}
         for entry in self:
@@ -312,3 +283,18 @@ class CommentedKV(Generic[T], UserList):
             for k, v in values:
                 out[k] = v
         return out
+
+    def to_ir(self) -> IntermediateRepr:
+        """:class:`CommentedKV` are usually intended to represent INI options, while
+        class:`IntermediateRepr` are usually intended to represent INI sections.
+        Therefore this function allows "promoting" an option-equivalent to a
+        section-equivalent representation.
+        """
+        irepr = IntermediateRepr()
+        for row in self:
+            for key, value in row.value_or([]):
+                irepr[key] = value
+            if row.has_comment():
+                irepr[key] = Commented(value, row.comment)
+
+        return irepr
