@@ -228,7 +228,7 @@ class CommentedKV(Generic[T], UserList):
 
     def to_ir(self) -> IntermediateRepr:
         """:class:`CommentedKV` are usually intended to represent INI options, while
-        class:`IntermediateRepr` are usually intended to represent INI sections.
+        :class:`IntermediateRepr` are usually intended to represent INI sections.
         Therefore this function allows "promoting" an option-equivalent to a
         section-equivalent representation.
         """
