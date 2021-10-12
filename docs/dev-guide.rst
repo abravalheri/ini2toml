@@ -124,13 +124,73 @@ Each intermediate-processor is a simple Python function with the following signa
 
 :class:`~ini2toml.intermediate_repr.IntermediateRepr` is a special kind of
 Python object with characteristics of both :obj:`dict` and :obj:`list`.
-It respects :class:`~collections.abc.MutableMapping` protocol, but also adds
-some handy position-dependent methods - such as
+It respects the :class:`~collections.abc.MutableMapping` protocol, but also
+adds some handy position-dependent methods - such as
 :meth:`~ini2toml.intermediate_repr.IntermediateRepr.insert`,
 :meth:`~ini2toml.intermediate_repr.IntermediateRepr.index`,
 :meth:`~ini2toml.intermediate_repr.IntermediateRepr.append`
 - and the very useful
 :meth:`~ini2toml.intermediate_repr.IntermediateRepr.rename` method.
+
+``IntermediateRepr`` can contain any kind of built-in Python object supported
+by TOML_ (e.g. numbers, strings, lists, booleans…) and also a few other
+special objects that carry comments along:
+
+- :class:`~ini2toml.intermediate_repr.Commented`: A wrapper around a Python
+  built-in value carrying an in-line comment::
+
+    Commented(42, "comment")  # => represents `42 # comment`
+
+- :class:`~ini2toml.intermediate_repr.CommentedList`: A wrapper around a list
+  of elements. The elements are organised in groups (that are equivalent to a
+  single line in the TOML document), with each group being a ``Commented[list]``.
+  For example::
+
+    ir = IntermediateRepr()
+    ir["x"] = CommentedList([Commented([0, 1], "comment"), CommentedList([2], "other")])
+
+  is equivalent to the TOML::
+
+  .. code-block:: toml
+
+    x = [
+        0, 1, # comment
+        2, # other
+    ]
+
+- :class:`~ini2toml.intermediate_repr.CommentedKV`: similar to
+  ``CommentedList``, but each element is a *key-value pair*.
+  For example::
+
+    ir = IntermediateRepr()
+    ir["x"] = CommentedKV([Commented([("a", 1), ("b", 2)], "comment")])
+    ir["y"] = CommentedKV([
+        Commented([("a", 1), ("b", 2)], "comment"),
+        Commented([("c", 3)], "other")
+    ])
+
+  is equivalent to the TOML::
+
+  .. code-block:: toml
+
+    x = { a = 1, b = 2} # comment
+    [y]
+    a = 1
+    b = 2 # comment
+    c = 3 # other
+
+  Due to TOML limitations, you can only have "one-line" inline-tables,
+  therefore ``CommentedKV`` objects with more than one group are automatically
+  converted to full-blown TOML tables.
+
+A comment or newline can be added directly to the intermediate representation,
+by using a :class:`~ini2toml.intermediate_repr.HiddenKey`::
+
+    ir = IntermediateRepr()
+    ir[CommentKey(), "comment"]  # => represents `# comment`
+    ir[WhitespaceKey(), ""]  # => represents a `"\n"` in the TOML
+
+Also notice that ``IntermediateRepr`` objects can be nested.
 
 
 .. _plugins:
