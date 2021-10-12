@@ -36,7 +36,7 @@ ini2toml
 
 Automatically translates |ini_cfg|_ files into TOML_
 
-.. warning:: This project is **experimental** and under development
+.. important:: This project is **experimental** and under development
    (so by no means production-ready).
    Issue reports and contributions are very welcome.
 
@@ -72,6 +72,18 @@ using |pipx|_:
     # OR
     $ pipx install 'ini2toml[full]'
 
+.. warning:: For the time being, if you want to use the *"full"* flavour,
+   you will also need a `patched version`_ of the supporting `TOML library`_.
+   If you have installed ``ini2toml`` with |pipx|_ as indicated above,
+   you can overwrite the dependency with the following command:
+
+   ..code-block:: bash
+
+      $ pipx runpip ini2toml install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
+
+      # OR if you are managing your own virtual environment:
+      $ pip install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
+
 Now you can use ``ini2toml`` as a command line:
 
 .. code-block:: bash
@@ -105,10 +117,12 @@ More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 .. _ConfigUpdater: https://github.com/pyscaffold/configupdater
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _our docs: https://ini2toml.readthedocs.io/en/stable/
+.. _patched version: https://github.com/abravalheri/atoml/tree/all-patches
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
 .. _pipx: https://pypa.github.io/pipx/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _TOML: https://toml.io/en/
+.. _TOML library: https://github.com/frostming/atoml
 .. _virtual environment: https://realpython.com/python-virtual-environments-a-primer/
 
 
