@@ -153,10 +153,10 @@ special objects that carry comments along:
 
   .. code-block:: toml
 
-    x = [
-        0, 1, # comment
-        2, # other
-    ]
+     x = [
+         0, 1, # comment
+         2, # other
+     ]
 
 - :class:`~ini2toml.intermediate_repr.CommentedKV`: similar to
   ``CommentedList``, but each element is a *key-value pair*.
@@ -173,11 +173,11 @@ special objects that carry comments along:
 
   .. code-block:: toml
 
-    x = { a = 1, b = 2} # comment
-    [y]
-    a = 1
-    b = 2 # comment
-    c = 3 # other
+     x = { a = 1, b = 2} # comment
+     [y]
+     a = 1
+     b = 2 # comment
+     c = 3 # other
 
   Due to TOML limitations, you can only have "one-line" inline-tables,
   therefore ``CommentedKV`` objects with more than one group are automatically
