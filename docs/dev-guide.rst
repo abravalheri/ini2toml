@@ -173,7 +173,7 @@ special objects that carry comments along:
 
   .. code-block:: toml
 
-     x = { a = 1, b = 2} # comment
+     x = { a = 1, b = 2 } # comment
      [y]
      a = 1
      b = 2 # comment
