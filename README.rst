@@ -77,7 +77,7 @@ using |pipx|_:
    If you have installed ``ini2toml`` with |pipx|_ as indicated above,
    you can overwrite the dependency with the following command:
 
-   ..code-block:: bash
+   .. code-block:: bash
 
       $ pipx runpip ini2toml install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
 
