@@ -149,7 +149,7 @@ special objects that carry comments along:
     ir = IntermediateRepr()
     ir["x"] = CommentedList([Commented([0, 1], "comment"), CommentedList([2], "other")])
 
-  is equivalent to the TOML::
+  is equivalent to the TOML:
 
   .. code-block:: toml
 
@@ -169,7 +169,7 @@ special objects that carry comments along:
         Commented([("c", 3)], "other")
     ])
 
-  is equivalent to the TOML::
+  is equivalent to the TOML:
 
   .. code-block:: toml
 
