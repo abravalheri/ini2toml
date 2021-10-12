@@ -41,24 +41,24 @@ proposed by ``ini2toml`` takes the following assumptions:
     'file: description.rst' => {file = "description.rst"}
 
 - Instead of requiring a separated/dedicated section to specify parameters, the
-  directives ``find:`` and ``find_namespace:`` just use a nested table. For example::
+  directives ``find:`` and ``find_namespace:`` just use a nested table. For example:
 
-    .. code-block:: ini
+  .. code-block:: ini
 
-       # setup.cfg
-       [options]
-       package = find_namespace:
-       [options.packages.find]
-       where = src
-       exclude =
-          tests
+     # setup.cfg
+     [options]
+     package = find_namespace:
+     [options.packages.find]
+     where = src
+     exclude =
+        tests
 
-    .. code-block:: toml
+  .. code-block:: toml
 
-       # pyproject.toml
-       [tool.setuptools.packages.find-namespace]
-       where = "src",
-       exclude = ["tests"]
+     # pyproject.toml
+     [tool.setuptools.packages.find-namespace]
+     where = "src",
+     exclude = ["tests"]
 
 - Fields set up to be dynamically resolved by setuptools_ via directives, that
   only have an static equivalent in `PEP 621`_ (e.g. ``version = attr: module.attribute``
