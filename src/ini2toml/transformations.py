@@ -13,7 +13,7 @@ from typing import (
     overload,
 )
 
-from .types import NOT_GIVEN, Commented, CommentedKV, CommentedList
+from .types import Commented, CommentedKV, CommentedList
 
 CP = ("#", ";")
 """Default Comment Prefixes"""
@@ -128,7 +128,7 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
         return Commented(coerce_fn(value))
 
     if any(value.startswith(p) for p in comment_prefixes):
-        return Commented(NOT_GIVEN, _strip_comment(value, comment_prefixes))
+        return Commented(comment=_strip_comment(value, comment_prefixes))
 
     prefix = prefixes[0]  # We can only analyse one...
     value, cmt = _split_in_2(value, prefix)

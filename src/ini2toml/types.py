@@ -4,7 +4,6 @@ from typing import Any, Callable, List, Optional, TypeVar, Union
 
 from .intermediate_repr import (
     KV,
-    NOT_GIVEN,
     Commented,
     CommentedKV,
     CommentedList,
@@ -98,7 +97,6 @@ __all__ = [
     "IntermediateRepr",
     "Key",
     "KV",
-    "NOT_GIVEN",
     "Plugin",
     "Profile",
     "ProfileAugmentation",
