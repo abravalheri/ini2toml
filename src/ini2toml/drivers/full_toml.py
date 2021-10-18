@@ -22,6 +22,7 @@ from atoml import (
 from atoml.items import AoT, Array, InlineTable, Item, Table, Whitespace
 from atoml.toml_document import TOMLDocument
 
+from ..errors import InvalidTOMLKey
 from ..types import (
     KV,
     Commented,
@@ -158,14 +159,6 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             else:
                 out[key] = collapse(value)
     return out
-
-
-class InvalidTOMLKey(ValueError):
-    """{key!r} is not a valid key in the intermediate TOML representation"""
-
-    def __init__(self, key):
-        msg = self.__doc__.format(key=key)
-        super().__init__(msg)
 
 
 # --- Helpers ---
