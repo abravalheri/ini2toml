@@ -79,6 +79,17 @@ def coerce_bool(value: str) -> bool:
 
 
 def coerce_scalar(value: str) -> Scalar:
+    """Try to convert the given string to a proper "scalar" type (e.g. integer, float,
+    bool, ...) with an direct TOML equivalent.
+    If the conversion is unknown or not possible, it will return the same input value
+    (as string).
+
+    .. note:: This function "guesses" the value type based in heuristics and/or regular
+       expressions, therefore there is no guarantee the output has the same type as
+       intended by the original author.
+
+    .. note:: Currently date/time-related types are not supported.
+    """
     value = value.strip()
     if value.isdecimal():
         return int(value)

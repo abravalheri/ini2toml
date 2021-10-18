@@ -207,7 +207,7 @@ new processors for different profiles, as shown in the example bellow.
 
 .. code-block:: python
 
-   from ini2toml import Translator
+   from ini2toml.types import Translator
 
 
    def activate(translator: Translator):
@@ -236,7 +236,7 @@ shown in the following example:
 
 .. code-block:: python
 
-   from ini2toml import Translator, Profile
+   from ini2toml.types import Translator, Profile
 
 
    def activate(translator: Translator):
