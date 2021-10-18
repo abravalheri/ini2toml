@@ -1,7 +1,10 @@
 from configparser import ConfigParser
+from types import MappingProxyType
 from typing import Mapping
 
-from ..types import EMPTY, IntermediateRepr
+from ..types import IntermediateRepr
+
+EMPTY: Mapping = MappingProxyType({})
 
 
 def parse(text: str, opts: Mapping = EMPTY) -> IntermediateRepr:

@@ -3,7 +3,6 @@ from collections.abc import MutableMapping
 from typing import Any, Callable, List, Optional, TypeVar, Union
 
 from .intermediate_repr import (
-    EMPTY,
     KV,
     NOT_GIVEN,
     Commented,
@@ -94,7 +93,6 @@ __all__ = [
     "Commented",
     "CommentedKV",
     "CommentedList",
-    "EMPTY",
     "HiddenKey",
     "IntermediateProcessor",
     "IntermediateRepr",

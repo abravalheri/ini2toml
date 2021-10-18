@@ -1,11 +1,13 @@
+from types import MappingProxyType
 from typing import Mapping
 
 from configupdater import Comment, ConfigUpdater, Option, Section, Space
 
 from ..errors import InvalidCfgBlock
 from ..transformations import remove_prefixes
-from ..types import EMPTY, CommentKey, IntermediateRepr, WhitespaceKey
+from ..types import CommentKey, IntermediateRepr, WhitespaceKey
 
+EMPTY: Mapping = MappingProxyType({})
 COMMENT_PREFIXES = ("#", ";")
 
 
