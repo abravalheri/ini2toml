@@ -1,5 +1,5 @@
 import sys
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 from typing import Any, Callable, List, Optional, TypeVar, Union
 
 from .intermediate_repr import (
@@ -31,6 +31,10 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 
 TextProcessor = Callable[[str], str]
 IntermediateProcessor = Callable[[R], R]
+
+
+IniLoadsFn = Callable[[str, Mapping], IntermediateRepr]
+TomlDumpsFn = Callable[[IntermediateRepr], str]
 
 
 class CLIChoice(Protocol):
@@ -93,6 +97,7 @@ __all__ = [
     "CommentedKV",
     "CommentedList",
     "HiddenKey",
+    "IniLoadsFn",
     "IntermediateProcessor",
     "IntermediateRepr",
     "Key",
@@ -103,6 +108,7 @@ __all__ = [
     "ProfileAugmentationFn",
     "TextProcessor",
     "Translator",
+    "TomlDumpsFn",
     "WhitespaceKey",
     "Scalar",
     "CoerceFn",

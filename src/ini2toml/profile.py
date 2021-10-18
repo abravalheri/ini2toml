@@ -1,7 +1,10 @@
-from dataclasses import dataclass, field, replace
-from typing import List, Optional
+from dataclasses import dataclass, field
+from dataclasses import replace as _replace
+from typing import List, Optional, TypeVar
 
 from .types import IntermediateProcessor, ProfileAugmentationFn, TextProcessor
+
+P = TypeVar("P", bound="Profile")
 
 
 @dataclass
@@ -17,8 +20,9 @@ class Profile:
     post_processors: List[TextProcessor] = field(default_factory=list)
     ini_parser_opts: Optional[dict] = None
 
-    replace = replace
-    """See :func:`dataclasses.replace`"""
+    def replace(self: P, **changes) -> P:
+        """See :func:`dataclasses.replace`"""
+        return _replace(self, **changes)
 
 
 @dataclass

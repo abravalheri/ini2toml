@@ -2,7 +2,8 @@ from textwrap import dedent
 
 import pytest
 
-from ini2toml.translator import Translator, UndefinedProfile
+from ini2toml.errors import UndefinedProfile
+from ini2toml.translator import Translator
 
 
 def test_simple_example():
