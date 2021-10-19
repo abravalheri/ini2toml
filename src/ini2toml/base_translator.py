@@ -35,13 +35,20 @@ class BaseTranslator(Generic[T]):
 
     toml_dumps_fn:
         function to convert the :class:`intermediate representation
-        <ini2toml.intermediate_repr.IntermediateRepr>` object into a TOML string.
+        <ini2toml.intermediate_repr.IntermediateRepr>` object into (ideally)
+        a TOML string.
+        If you don't exactly need a TOML string (maybe you want your TOML to
+        be represented by :class:`bytes` or simply the equivalent :obj:`dict`) you can
+        also pass a ``Callable[[IntermediateRepr], T]`` function for any desired ``T``.
+
         Possible values for this argument include:
 
         - :func:`ini2toml.drivers.lite_toml.convert` (when comments can be simply
           removed)
         - :func:`ini2toml.drivers.full_toml.convert` (when you wish to preserve
           comments in the TOML output)
+        - :func:`ini2toml.drivers.plain_builtins.convert` (when you wish to retrieve a
+          :class:`dict` equivalent to the TOML, instead of string with the TOML syntax)
 
     plugins:
         list of plugins activation functions. By default no plugin will be activated.
