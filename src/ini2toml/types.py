@@ -34,7 +34,8 @@ IntermediateProcessor = Callable[[R], R]
 
 
 IniLoadsFn = Callable[[str, Mapping], IntermediateRepr]
-TomlDumpsFn = Callable[[IntermediateRepr], str]
+IReprCollapseFn = Callable[[IntermediateRepr], T]
+TomlDumpsFn = IReprCollapseFn[str]
 
 
 class CLIChoice(Protocol):

@@ -8,7 +8,7 @@ from .plugins import list_from_entry_points as list_all_plugins
 _logger = logging.getLogger(__name__)
 
 
-class Translator(BaseTranslator):
+class Translator(BaseTranslator[str]):
     """``Translator`` is the main public Python API exposed by the ``ini2toml``,
     to convert strings represeting ``.ini/.cfg`` files into the ``TOML`` syntax.
 

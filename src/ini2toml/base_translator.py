@@ -1,6 +1,6 @@
 from functools import reduce
 from types import MappingProxyType
-from typing import Callable, Dict, List, Mapping, Sequence
+from typing import Dict, Generic, List, Mapping, Sequence, TypeVar
 
 from . import types  # Structural/Abstract types
 from .errors import (
@@ -11,10 +11,11 @@ from .errors import (
 from .profile import Profile, ProfileAugmentation
 from .transformations import apply
 
+T = TypeVar("T")
 EMPTY = MappingProxyType({})  # type: ignore
 
 
-class BaseTranslator:
+class BaseTranslator(Generic[T]):
     """Translator object that follows the public API defined in
     :class:`ini2toml.types.Translator`. See :doc:`dev-guide` for a quick explanation of
     concepts such as plugins, profiles, profile augmentations, etc.
@@ -69,8 +70,8 @@ class BaseTranslator:
 
     def __init__(
         self,
-        ini_loads_fn: Callable[[str, Mapping], types.IntermediateRepr],
-        toml_dumps_fn: Callable[[types.IntermediateRepr], str],
+        ini_loads_fn: types.IniLoadsFn,
+        toml_dumps_fn: types.IReprCollapseFn[T],
         plugins: Sequence[types.Plugin] = (),
         profiles: Sequence[types.Profile] = (),
         profile_augmentations: Sequence[types.ProfileAugmentation] = (),
@@ -92,7 +93,7 @@ class BaseTranslator:
     def loads(self, text: str) -> types.IntermediateRepr:
         return self._loads_fn(text, self.ini_parser_opts)
 
-    def dumps(self, irepr: types.IntermediateRepr) -> str:
+    def dumps(self, irepr: types.IntermediateRepr) -> T:
         return self._dumps_fn(irepr)
 
     def __getitem__(self, profile_name: str) -> types.Profile:
@@ -134,7 +135,7 @@ class BaseTranslator:
         ini: str,
         profile_name: str,
         active_augmentations: Mapping[str, bool] = EMPTY,
-    ) -> str:
+    ) -> T:
         UndefinedProfile.check(profile_name, list(self.profiles.keys()))
         profile = self._add_augmentations(self[profile_name], active_augmentations)
 
