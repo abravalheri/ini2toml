@@ -27,7 +27,7 @@ def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
     the plugins before actually loading them.
 
 
-    .. _setuptools: https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
+    .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/entry_point.html
     """  # noqa
     entries = entry_points()
     if hasattr(entries, "select"):
@@ -63,7 +63,7 @@ def list_from_entry_points(
             loaded and included (or not) in the final list. A ``True`` return means the
             plugin should be included.
 
-    .. _setuptools: https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
+    .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/entry_point.html
     """  # noqa
     return [
         load_from_entry_point(e) for e in iterate_entry_points(group) if filtering(e)

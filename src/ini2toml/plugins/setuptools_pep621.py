@@ -81,7 +81,7 @@ class SetuptoolsPEP621:
 
     def setupcfg_aliases(self):
         """``setup.cfg`` aliases as defined in:
-        https://setuptools.readthedocs.io/en/stable/userguide/declarative_config.html
+        https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
         """
         return {
             "classifier": "classifiers",
@@ -93,7 +93,7 @@ class SetuptoolsPEP621:
 
     def setupcfg_directives(self):
         """``setup.cfg`` directives, as defined in:
-        https://setuptools.readthedocs.io/en/stable/userguide/declarative_config.html
+        https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
         """
         return {
             ("metadata", "version"): ("file", "attr"),
@@ -106,7 +106,7 @@ class SetuptoolsPEP621:
 
     def processing_rules(self) -> ProcessingRules:
         """Value type processing, as defined in:
-        https://setuptools.readthedocs.io/en/stable/userguide/declarative_config.html
+        https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
         """
         return {
             ("metadata", "classifiers"): split_list_comma,

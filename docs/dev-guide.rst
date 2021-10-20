@@ -316,12 +316,12 @@ functions`_ that implement common operations.
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
 .. _ConfigUpdater: https://github.com/pyscaffold/configupdater
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
-.. _entry-point: https://setuptools.readthedocs.io/en/stable/userguide/entry_point.html#entry-points
+.. _entry-point: https://setuptools.pypa.io/en/stable/userguide/entry_point.html#entry-points
 .. _idempotent: https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning
 .. _our docs: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
 .. _our library of helper functions: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
 .. _PyPI: https://pypi.org
 .. _Python package: https://packaging.python.org/
-.. _setuptools: https://setuptools.readthedocs.io/en/stable/
+.. _setuptools: https://setuptools.pypa.io/en/stable/
 .. _TOML: https://toml.io/en/

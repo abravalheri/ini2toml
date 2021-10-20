@@ -93,6 +93,6 @@ changes.
 
 .. _PEP 517: https://www.python.org/dev/peps/pep-0517/
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
-.. _setuptools: https://setuptools.readthedocs.io/en/stable/
+.. _setuptools: https://setuptools.pypa.io/en/stable/
 .. _TOML: https://toml.io/en/
-.. _setuptools own configuration file: https://setuptools.readthedocs.io/en/latest/userguide/declarative_config.html
+.. _setuptools own configuration file: https://setuptools.pypa.io/en/latest/userguide/declarative_config.html
