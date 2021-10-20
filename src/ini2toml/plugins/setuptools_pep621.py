@@ -1,3 +1,4 @@
+import logging
 import re
 from functools import partial, reduce
 from itertools import chain
@@ -22,6 +23,9 @@ R = TypeVar("R", bound=IR)
 RenameRules = Dict[Tuple[str, ...], Union[Tuple[Union[str, int], ...], None]]
 ProcessingRules = Dict[Tuple[str, ...], Transformation]
 
+
+_logger = logging.getLogger(__name__)
+
 chain_iter = chain.from_iterable
 
 # Functions that split values from comments and parse those values
@@ -44,6 +48,7 @@ SETUPTOOLS_COMMAND_SECTIONS = (
     "egg_info",
 )
 SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
+SKIP_CHILD_NORMALISATION = ("options.entry_points",)
 
 
 def activate(translator: Translator):
@@ -251,10 +256,13 @@ class SetuptoolsPEP621:
             return doc
         doc.rename("options.entry-points", "project:entry-points")
         # ^ use `:` to guarantee it is split later
-        keys = (k for k in ("console-scripts", "gui-scripts") if k in entrypoints)
+        script_keys = ["console-scripts", "gui-scripts"]
+        script_keys += [k.replace("-", "_") for k in script_keys]
+        keys = (k for k in script_keys if k in entrypoints)
         for key in keys:
             scripts = split_kv_pairs(entrypoints.pop(key)).to_ir()
-            doc.append(f"project:{key.replace('console-', '')}", scripts)
+            new_key = key.replace("_", "-").replace("console-", "")
+            doc.append(f"project:{new_key}", scripts)
         if not entrypoints:
             doc.pop("project:entry-points")
         return doc
@@ -342,9 +350,17 @@ class SetuptoolsPEP621:
         metadata, options = doc["metadata"], doc["options"]
 
         fields = [f for f in potential if isdirective(metadata.get(f, None))]
-        dynamic = {f: split_directive(metadata.pop(f)) for f in fields}
-        extras: List[str] = []
+        dynamic = {f: split_directive(metadata.pop(f, None)) for f in fields}
+        if "version" not in metadata and "version" not in dynamic:
+            msg = (
+                "No `version` was found in `[metadata]`, `ini2toml` will assume it is "
+                "defined by tools like `setuptools-scm` or in `setup.py`. "
+                "Automatically adding it to `dynamic` (in accordance with PEP 621)"
+            )
+            _logger.debug(msg)
+            fields.insert(0, "version")
 
+        extras: List[str] = []
         ep = options.pop("entry-points", None)
         if isdirective(ep, valid=("file",)):
             fields.append("entry-points")
@@ -353,8 +369,10 @@ class SetuptoolsPEP621:
         if not fields:
             return doc
         metadata.setdefault("dynamic", []).extend(fields + extras)
-        doc.setdefault("options.dynamic", IR()).update(dynamic)
-        # ^ later `options.dynamic` is converted to `tool.setuptools.dynamic`
+
+        if dynamic:
+            doc.setdefault("options.dynamic", IR()).update(dynamic)
+            # ^ later `options.dynamic` is converted to `tool.setuptools.dynamic`
         return doc
 
     def fix_packages(self, doc: R) -> R:
@@ -468,6 +486,8 @@ class SetuptoolsPEP621:
                 continue
             section = cfg[section_name]
             cfg.rename(section_name, kebab_case(section_name))
+            if any(section_name.startswith(s) for s in SKIP_CHILD_NORMALISATION):
+                continue
             for j in range(len(section.order)):
                 option_name = section.order[j]
                 if not isinstance(option_name, str):

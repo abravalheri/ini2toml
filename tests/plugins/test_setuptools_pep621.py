@@ -393,6 +393,7 @@ def test_fix_dynamic(plugin, parse, convert):
 
 expected_empty = """\
 [project]
+dynamic = ["version"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
