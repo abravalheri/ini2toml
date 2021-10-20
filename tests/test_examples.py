@@ -1,8 +1,8 @@
 import re
-import sys
 from itertools import chain
 from pathlib import Path
 
+import pytest
 import tomli
 
 from ini2toml import cli
@@ -11,6 +11,7 @@ from ini2toml.translator import Translator
 
 
 def examples():
+    here = Path(".").resolve()
     parent = Path(__file__).parent / "examples"
     for folder in parent.glob("*/"):
         cfg = chain(folder.glob("*.cfg"), folder.glob("*.ini"))
@@ -18,64 +19,62 @@ def examples():
         for orig in cfg:
             expected = orig.with_suffix(".toml")
             if expected.is_file():
-                yield orig, expected
+                yield str(orig.relative_to(here)), str(expected.relative_to(here))
             else:
                 try:
-                    yield orig, next(toml)
+                    yield str(orig.relative_to(here)), str(next(toml).relative_to(here))
                 except:  # noqa
                     print(f"Missing TOML file to compare to {orig}")
                     raise
 
 
-def test_examples_api():
+@pytest.mark.parametrize(("original", "expected"), list(examples()))
+def test_examples_api(original, expected):
     translator = Translator()
     available_profiles = list(translator.profiles.keys())
-    for orig, expected in examples():
-        print(f"---------------------------- {orig} ----------------------------")
-        profile = cli.guess_profile(None, str(orig), available_profiles)
-        out = translator.translate(orig.read_text(), profile)
-        expected_text = expected.read_text().strip()
-        assert out == expected_text
-        # Make sure they can be parsed
-        assert tomli.loads(out) == tomli.loads(expected_text)
+    profile = cli.guess_profile(None, original, available_profiles)
+    out = translator.translate(Path(original).read_text(), profile)
+    expected_text = Path(expected).read_text().strip()
+    assert out == expected_text
+    # Make sure they can be parsed
+    assert tomli.loads(out) == tomli.loads(expected_text)
 
 
 COMMENT_LINE = re.compile(r"^\s*#[^\n]*\n", re.M)
 INLINE_COMMENT = re.compile(r'#\s[^\n"]*$', re.M)
 
 
-def test_examples_api_lite():
+@pytest.mark.parametrize(("original", "expected"), list(examples()))
+def test_examples_api_lite(original, expected):
     opts = {"ini_loads_fn": configparser.parse, "toml_dumps_fn": lite_toml.convert}
     translator = Translator(**opts)
     available_profiles = list(translator.profiles.keys())
-    for orig, expected in examples():
-        print(f"---------------------------- {orig} ----------------------------")
-        profile = cli.guess_profile(None, str(orig), available_profiles)
-        # We cannot compare "flake8" sections (currently not handled)
-        # (ConfigParser automatically strips comments, contrary to ConfigUpdater)
-        out = remove_flake8_from_toml(translator.translate(orig.read_text(), profile))
-        expected_text = remove_flake8_from_toml(expected.read_text().strip())
-        # At least the Python-equivalents should be the same when parsing
-        assert tomli.loads(out) == tomli.loads(expected_text)
-        without_comments = COMMENT_LINE.sub("", expected_text)
-        without_comments = INLINE_COMMENT.sub("", without_comments)
-        try:
-            assert out == without_comments
-        except AssertionError:
-            # We can ignore some minor formatting differences, as long as the parsed
-            # dict is the same
-            pass
+    profile = cli.guess_profile(None, original, available_profiles)
+    # We cannot compare "flake8" sections (currently not handled)
+    # (ConfigParser automatically strips comments, contrary to ConfigUpdater)
+    orig = Path(original)
+    out = remove_flake8_from_toml(translator.translate(orig.read_text(), profile))
+    expected_text = remove_flake8_from_toml(Path(expected).read_text().strip())
+    # At least the Python-equivalents should be the same when parsing
+    assert tomli.loads(out) == tomli.loads(expected_text)
+    without_comments = COMMENT_LINE.sub("", expected_text)
+    without_comments = INLINE_COMMENT.sub("", without_comments)
+    try:
+        assert out == without_comments
+    except AssertionError:
+        # We can ignore some minor formatting differences, as long as the parsed
+        # dict is the same
+        pass
 
 
-def test_examples_cli(capsys):
-    for orig, expected in examples():
-        print(f"---------------------- {orig} ----------------------", file=sys.stderr)
-        cli.run([str(orig)])
-        (out, err) = capsys.readouterr()
-        expected_text = expected.read_text().strip()
-        assert out == expected_text
-        # Make sure they can be parsed
-        assert tomli.loads(out) == tomli.loads(expected_text)
+@pytest.mark.parametrize(("original", "expected"), list(examples()))
+def test_examples_cli(original, expected, capsys):
+    cli.run([original])
+    (out, err) = capsys.readouterr()
+    expected_text = Path(expected).read_text().strip()
+    assert out == expected_text
+    # Make sure they can be parsed
+    assert tomli.loads(out) == tomli.loads(expected_text)
 
 
 def remove_flake8_from_toml(text: str) -> str:
