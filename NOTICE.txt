@@ -1,4 +1,8 @@
-'ini2toml' is licensed under the MPL-2.0 license; see the LICENSE.txt file for details.
+'ini2toml' is licensed under the MPL-2.0 license, with the following copyright notice:
+
+  Copyright (c) 2021, Anderson Bravalheri
+
+see the LICENSE.txt file for details.
 
 A few extra files are collocated in this code base ('tests/examples') exclusively for testing
 purposes during development:
