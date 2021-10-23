@@ -7,7 +7,7 @@ from ..types import Profile, Translator
 
 NEWLINES = re.compile(r"\n+", re.M)
 TABLE_START = re.compile(r"^\[(.*)\]", re.M)
-EMPTY_TABLES = re.compile(r"^\[.*\]\n+\[(.*)\]", re.M)
+EMPTY_TABLES = re.compile(r"^\[(.*)\]\n+\[(\1\.(?:.*))\]", re.M)
 TRAILING_SPACES = re.compile(r"[ \t]+$", re.M)
 
 
@@ -40,4 +40,4 @@ def normalise_newlines(text: str) -> str:
 
 def remove_empty_table_headers(text: str) -> str:
     """Remove empty TOML table headers"""
-    return EMPTY_TABLES.sub(r"[\1]", text).strip()
+    return EMPTY_TABLES.sub(r"[\2]", text).strip()

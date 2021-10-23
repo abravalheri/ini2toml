@@ -1,5 +1,8 @@
+import logging
+
 import pytest
 
+from ini2toml.plugins import profile_independent_tasks as tasks
 from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate, isdirective
 from ini2toml.translator import Translator
 
@@ -117,8 +120,8 @@ expected_apply_value_processing = """\
 [metadata]
 version = "5.3" # comment
 classifiers = [
-    "Development Status :: 4 - Beta", 
-    "Programming Language :: Python", 
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
 ]
 keywords = ["python", "module"]
 
@@ -126,8 +129,8 @@ keywords = ["python", "module"]
 zip-safe = false # comment
 package-dir = {"*" = "src"} # TODO: tomlkit/atoml bug with empty keys
 install-requires = [
-    "importlib-metadata; python_version<\\"3.8\\"", 
-    "configupdater>=3,<=4", 
+    "importlib-metadata; python_version<\\"3.8\\"",
+    "configupdater>=3,<=4",
 ]
 
 ["project:entry-points"]
@@ -151,7 +154,8 @@ def test_move_entry_points_and_apply_value_processing(plugin, parse, convert):
     doc = plugin.apply_value_processing(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_apply_value_processing.strip()
+    text = tasks.remove_trailing_spaces(convert(doc)).strip()
+    assert text == expected_apply_value_processing.strip()
 
 
 # ----
@@ -313,9 +317,9 @@ setup-requires =
 expected_fix_setup_requires = """\
 [build-system]
 requires = [
-    "setuptools>=46.1.0", 
-    "setuptools_scm>=5", 
-    "wheel", 
+    "setuptools>=46.1.0",
+    "setuptools_scm>=5",
+    "wheel",
 ]
 build-backend = "setuptools.build_meta"
 """
@@ -334,7 +338,8 @@ def test_fix_setup_requires(plugin, parse, convert):
     doc.pop("metadata", None)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_fix_setup_requires.strip()
+    text = tasks.remove_trailing_spaces(convert(doc)).strip()
+    assert text == expected_fix_setup_requires.strip()
 
 
 example_dynamic = """\
@@ -417,3 +422,33 @@ def test_empty(translator, plugin, parse, convert):
     # Same thing but with the higher level API:
     text = translator.translate("", profile_name="setup.cfg")
     assert text.strip() == expected_empty.strip()
+
+
+# ----
+example_data_files = """
+[options]
+data-files =
+    a = b
+"""
+
+expected_data_files = """\
+[project]
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool]
+[tool.setuptools]
+data-files = {a = ["b"]}
+"""
+
+
+def test_data_files(translator, caplog):
+    # Same thing but with the higher level API:
+    with caplog.at_level(logging.DEBUG):
+        text = translator.translate(example_data_files, profile_name="setup.cfg")
+        assert text.strip() == expected_data_files.strip()
+
+    assert "'data-files' is deprecated" in caplog.text

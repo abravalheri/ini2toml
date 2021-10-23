@@ -1,6 +1,7 @@
 """Reusable value and type casting transformations"""
 import logging
 from collections.abc import MutableMapping
+from functools import reduce, wraps
 from typing import (
     Any,
     Callable,
@@ -18,10 +19,16 @@ from .types import Commented, CommentedKV, CommentedList
 CP = ("#", ";")
 """Default Comment Prefixes"""
 
-T = TypeVar("T")
 S = TypeVar("S")
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+X = TypeVar("X")
+Y = TypeVar("Y")
 M = TypeVar("M", bound=MutableMapping)
 KV = Tuple[str, T]
+
+FN = Callable[[X], Y]
 
 Scalar = Union[int, float, bool, str]  # TODO: missing time and datetime
 """Simple data types with TOML correspondence"""
@@ -43,6 +50,8 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
 In a higher level we can also consider an ensemble of transformations that transform an
 entire table of the TOML document.
 """
+
+TF = TypeVar("TF", bound=Transformation)
 
 _logger = logging.getLogger(__name__)
 
@@ -109,6 +118,18 @@ def coerce_scalar(value: str) -> Scalar:
 
 def kebab_case(field: str) -> str:
     return field.lower().replace("_", "-")
+
+
+def deprecated(name: str, fn: TF = noop, instead: str = "") -> TF:
+    """Wrapper around the ``fn`` transformation to warn user about deprecation."""
+    extra = f". Use {instead!r} instead" if instead else ""
+
+    @wraps(fn)
+    def _fn(*args, **kwargs):
+        _logger.warning(f"{name!r} is deprecated{extra}.")
+        return fn(*args, **kwargs)
+
+    return _fn
 
 
 # ---- Complex value processors ----
@@ -288,6 +309,50 @@ def remove_prefixes(text: str, prefixes: Sequence[str]):
 def apply(x, fn):
     """Useful to reduce over a list of functions"""
     return fn(x)
+
+
+@overload
+def pipe(fn1: FN[S, T], fn2: FN[T, U]) -> FN[S, U]:
+    ...
+
+
+@overload
+def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V]) -> FN[S, V]:
+    ...
+
+
+@overload
+def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V], fn4: FN[V, X]) -> FN[S, X]:
+    ...
+
+
+@overload
+def pipe(
+    fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V], fn4: FN[V, X], fn5: FN[X, Y]
+) -> FN[S, Y]:
+    ...
+
+
+@overload
+def pipe(
+    fn1: FN[S, T],
+    fn2: FN[T, U],
+    fn3: FN[U, V],
+    fn4: FN[V, X],
+    fn5: FN[X, Y],
+    *fn: FN[Y, Y],
+) -> FN[S, Y]:
+    ...
+
+
+def pipe(*fns):
+    """Compose 1-argument functions respecting the sequence they should be applied:
+
+    .. code-block:: python
+
+        pipe(fn1, fn2, fn3, ..., fnN)(x) == fnN(...(fn3(fn2(fn1(x)))))
+    """
+    return lambda x: reduce(apply, fns, x)
 
 
 # ---- Private Helpers ----

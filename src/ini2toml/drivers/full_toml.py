@@ -45,6 +45,7 @@ T = TypeVar("T", bound=Union[TOMLDocument, Table, InlineTable])
 MAX_INLINE_TABLE_LEN = 60
 INLINE_TABLE_LONG_ELEM = 10
 MAX_INLINE_TABLE_LONG_ELEM = 5
+LONG = 120
 
 
 def convert(irepr: IntermediateRepr) -> str:
@@ -73,7 +74,7 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
         if multiline:
             cast(list, out).append(Whitespace("\n" + 4 * " "))
         for value in values:
-            cast(list, out).append(value)
+            cast(list, out).append(collapse(value))
         if entry.has_comment():
             if multiline:
                 cast(list, out).append(_no_trail_comment(entry.comment))
@@ -95,7 +96,7 @@ def _collapse_commented_kv(obj: CommentedKV, root=False) -> Union[Table, InlineT
         k: Optional[str] = None  # if the for loop is empty, k = None
         for value in values:
             k, v = value
-            out[cast(str, k)] = v
+            out[cast(str, k)] = collapse(v)
         if not entry.has_comment():
             continue
         if not multiline:
@@ -115,12 +116,27 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
     if root:
         return _convert_irepr_to_toml(obj, document())
     rough_repr = repr(obj).replace(obj.__class__.__name__, "").strip()
-    out = table() if len(rough_repr) > 120 or "\n" in rough_repr else inline_table()
+    out = table() if len(rough_repr) > LONG or "\n" in rough_repr else inline_table()
     return _convert_irepr_to_toml(obj, cast(Union[Table, InlineTable], out))
 
 
+@collapse.register(dict)
+def _collapse_dict(obj: dict, root=False) -> Union[Table, InlineTable]:
+    if not obj:
+        return inline_table()
+    out = (
+        table()
+        if any(v and isinstance(v, (list, dict)) for v in obj.values())
+        or len(repr(obj)) > LONG  # simple heuristic
+        else inline_table()
+    )
+    for key, value in obj.items():
+        out.append(key, collapse(value))
+    return out
+
+
 @collapse.register(list)
-def _collapse_list_repr(obj: list, root=False) -> Union[AoT, Array]:
+def _collapse_list(obj: list, root=False) -> Union[AoT, Array]:
     is_aot, max_len, has_nl, num_elem = classify_list(obj)
     # Just some heuristics which kind of array we are going to use
     if is_aot:
@@ -150,14 +166,29 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             parent_key, *rest = key
             if not isinstance(parent_key, str):
                 raise InvalidTOMLKey(key)
-            p = out.setdefault(parent_key, {})
-            nested_key = rest[0] if len(rest) == 1 else tuple(rest)
-            _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
-        elif isinstance(key, str):
-            if isinstance(value, IntermediateRepr):
-                _convert_irepr_to_toml(value, out.setdefault(key, {}))
+            if len(rest) == 1:
+                nested_key = rest[0]
+                collapsed_value = collapse(value)
+                collapsed_str = f"{nested_key} = {dumps(collapsed_value)}"
+                # Force inline table for the simplest cases
+                if (
+                    not isinstance(collapsed_value, (Table, AoT))
+                    and len(collapsed_str) < LONG
+                    and "\n" not in collapsed_str.strip()
+                ):
+                    child = inline_table()
+                    child[nested_key] = collapsed_value
+                    out[parent_key] = child
+                    continue
             else:
-                out[key] = collapse(value)
+                nested_key = tuple(rest)
+            p = out.setdefault(parent_key, {})
+            _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
+        elif isinstance(key, (int, str)):
+            if isinstance(value, IntermediateRepr):
+                _convert_irepr_to_toml(value, out.setdefault(str(key), {}))
+            else:
+                out[str(key)] = collapse(value)
     return out
 
 

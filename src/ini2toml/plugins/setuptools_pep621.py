@@ -2,11 +2,12 @@ import logging
 import re
 from functools import partial, reduce
 from itertools import chain
-from typing import Dict, List, Mapping, Sequence, Tuple, Type, TypeVar, Union, cast
+from typing import Dict, List, Mapping, Sequence, Set, Tuple, Type, TypeVar, Union, cast
 
 from ..transformations import (
     apply,
     coerce_bool,
+    deprecated,
     kebab_case,
     remove_prefixes,
     split_comment,
@@ -15,8 +16,13 @@ from ..transformations import (
 )
 from ..types import CommentKey, HiddenKey
 from ..types import IntermediateRepr as IR
-from ..types import Transformation, Translator
+from ..types import Transformation, Translator, WhitespaceKey
 from .best_effort import BestEffort
+
+try:
+    from setuptools._distutils import command as distutils_commands
+except ImportError:  # pragma: no cover
+    from distutils import command as distutils_commands
 
 R = TypeVar("R", bound=IR)
 
@@ -29,26 +35,27 @@ _logger = logging.getLogger(__name__)
 chain_iter = chain.from_iterable
 
 # Functions that split values from comments and parse those values
+split_directive = partial(split_kv_pairs, key_sep=":")
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
 split_bool = partial(split_comment, coerce_fn=coerce_bool)
 split_kv_nocomments = partial(split_kv_pairs, comment_prefixes="")
-split_directive = partial(split_kv_pairs, key_sep=":")
+split_kv_of_lists = partial(split_kv_pairs, coerce_fn=split_list_comma)
 
 SECTION_SPLITTER = re.compile(r"\.|:")
-SETUPTOOLS_COMMAND_SECTIONS = (
+SETUPTOOLS_SECTIONS = ("metadata", "options")
+SKIP_CHILD_NORMALISATION = ("options.entry_points",)
+COMMAND_SECTIONS = (
+    "global",
     "alias",
-    "bdist",
-    "sdist",
-    "build",
     "install",
     "develop",
-    "dist_info",
-    "egg_info",
+    "sdist",
+    "bdist",
+    "bdist_wheel",
+    *getattr(distutils_commands, "__all__", []),
 )
-SETUPTOOLS_SECTIONS = ("metadata", "options", *SETUPTOOLS_COMMAND_SECTIONS)
-SKIP_CHILD_NORMALISATION = ("options.entry_points",)
 
 
 def activate(translator: Translator):
@@ -118,11 +125,15 @@ class SetuptoolsPEP621:
             # => ("metadata", "license_files",): in PEP621 should be a single file
             ("metadata", "keywords"): split_list_comma,
             # => ("metadata", "project-urls") => merge_and_rename_urls
-            ("metadata", "provides"): split_list_comma,
-            ("metadata", "requires"): split_list_comma,
-            ("metadata", "obsoletes"): split_list_comma,
             # ("metadata", "long-description-content-type") =>
             #     merge_and_rename_long_description_and_content_type
+            # ---- the following options are originally part of `metadata`,
+            #      but we move it to "options" because they are not part of PEP 621
+            ("options", "provides"): split_list_comma,
+            ("options", "requires"): split_list_comma,
+            ("options", "obsoletes"): split_list_comma,
+            ("options", "platforms"): split_list_comma,
+            # ----
             ("options", "zip-safe"): split_bool,
             ("options", "setup-requires"): split_list_semi,
             ("options", "install-requires"): split_list_semi,
@@ -135,7 +146,7 @@ class SetuptoolsPEP621:
             ("options", "package-dir"): split_kv_pairs,
             ("options", "namespace-packages"): split_list_comma,
             ("options", "py-modules"): split_list_comma,
-            ("options", "data-files"): split_kv_pairs,
+            ("options", "data-files"): deprecated("data-files", split_kv_of_lists),
             ("options.packages.find", "include"): split_list_comma,
             ("options.packages.find", "exclude"): split_list_comma,
             ("options.packages.find-namespace", "include"): split_list_comma,
@@ -263,7 +274,7 @@ class SetuptoolsPEP621:
             scripts = split_kv_pairs(entrypoints.pop(key)).to_ir()
             new_key = key.replace("_", "-").replace("console-", "")
             doc.append(f"project:{new_key}", scripts)
-        if not entrypoints:
+        if not entrypoints or all(isinstance(k, WhitespaceKey) for k in entrypoints):
             doc.pop("project:entry-points")
         return doc
 
@@ -294,13 +305,15 @@ class SetuptoolsPEP621:
     def parse_setup_py_command_options(self, doc: R) -> R:
         # ---- distutils/setuptools command specifics outside of "options" ----
         sections = list(doc.keys())
-        extras = {
-            k: self._be.apply_best_effort_to_section(doc.pop(k))
-            for k in sections
-            for p in SETUPTOOLS_COMMAND_SECTIONS
-            if isinstance(k, str) and k.startswith(p) and k != "build-system"
-        }
-        doc["options"].update(extras)
+        commands = _distutils_commands()
+        for k in sections:
+            if isinstance(k, str) and k in commands:
+                section = self._be.apply_best_effort_to_section(doc[k])
+                for option in section:
+                    if isinstance(option, str):
+                        section.rename(option, self.normalise_key(option))
+                doc[k] = section
+                doc.rename(k, ("distutils", k))
         return doc
 
     def convert_directives(self, out: R) -> R:
@@ -384,12 +397,12 @@ class SetuptoolsPEP621:
         prefix = next((p for p in prefixes if packages.startswith(f"{p}:")), None)
         if not prefix:
             return doc
+        kebab_prefix = prefix.replace("_", "-")
         if "options.packages.find" not in doc:
-            options["packages"] = split_kv_pairs(packages, key_sep=":")
+            options["packages"] = {kebab_prefix: {}}
             return doc
         options.pop("packages")
-        prefix = prefix.replace("_", "-")
-        doc.rename("options.packages.find", f"options.packages.{prefix}")
+        doc.rename("options.packages.find", f"options.packages.{kebab_prefix}")
         return doc
 
     def fix_setup_requires(self, doc: R) -> R:
@@ -492,7 +505,7 @@ class SetuptoolsPEP621:
                 option_name = section.order[j]
                 if not isinstance(option_name, str):
                     continue
-                section.rename(option_name, kebab_case(option_name))
+                section.rename(option_name, self.normalise_key(option_name))
         # Normalise aliases
         metadata = cfg.get("metadata")
         if not metadata:
@@ -502,9 +515,23 @@ class SetuptoolsPEP621:
                 metadata.rename(alias, cannonic)
         return cfg
 
+    def normalise_key(self, key: str) -> str:
+        """Normalise a single key for option"""
+        return kebab_case(key)
+
 
 # ---- Helpers ----
 
 
 def isdirective(value, valid=("file", "attr")) -> bool:
     return isinstance(value, str) and any(value.startswith(f"{p}:") for p in valid)
+
+
+def _distutils_commands() -> Set[str]:
+    try:
+        from . import iterate_entry_points
+
+        commands = [ep.name for ep in iterate_entry_points("distutils.commands")]
+    except Exception:
+        commands = []
+    return {*commands, *COMMAND_SECTIONS}

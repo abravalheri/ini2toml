@@ -113,13 +113,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 package-dir = {"" = "src"}
 zip-safe = true
-platforms = "any"
-
-[tool.setuptools.sdist]
-formats = "gztar"
-
-[tool.setuptools.bdist-wheel]
-universal = true
+platforms = ["any"]
 
 [tool.setuptools.packages.find]
 where = "src"
@@ -132,6 +126,12 @@ where = "src"
 "virtualenv.activation.nushell" = ["*.nu"]
 "virtualenv.activation.powershell" = ["*.ps1"]
 "virtualenv.seed.wheels.embed" = ["*.whl"]
+
+[tool.distutils.sdist]
+formats = "gztar"
+
+[tool.distutils.bdist_wheel]
+universal = true
 
 [tool.pytest.ini_options]
 markers = ["slow"]

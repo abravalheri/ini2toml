@@ -56,16 +56,16 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = {find = ""}
+packages = {find = {}}
 include-package-data = true
 zip-safe = false
 
-[tool.setuptools.bdist-rpm]
-doc-files = "docs extras AUTHORS INSTALL LICENSE README.rst"
-install-script = "scripts/rpm-install.sh"
-
 [tool.setuptools.dynamic]
 version = {attr = "django.__version__"}
+
+[tool.distutils.bdist_rpm]
+doc-files = "docs extras AUTHORS INSTALL LICENSE README.rst"
+install-script = "scripts/rpm-install.sh"
 
 [tool.flake8]
 exclude = "build,.git,.tox,./tests/.env"

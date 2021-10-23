@@ -57,10 +57,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 include-package-data = true
 zip-safe = false
-platforms = "any"
-
-[tool.setuptools.build-ext]
-inplace = true
+platforms = ["any"]
 
 [tool.setuptools.package-data]
 "*" = ["templates/*", "_libs/**/*.dll"]
@@ -70,6 +67,9 @@ include = ["pandas", "pandas.*"]
 # See the docstring in versioneer.py for instructions. Note that you must
 # re-run 'versioneer.py setup' after changing this section, and commit the
 # resulting files.
+
+[tool.distutils.build_ext]
+inplace = true
 
 [tool.versioneer]
 vcs = "git"
