@@ -163,6 +163,7 @@ class SetuptoolsPEP621:
             "options.extras-require": split_list_semi,
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
+            "options.data-files": split_list_comma,
             # ----
             # "options.entry-points" => moved to project
             # console-scripts and gui-scripts already handled in
@@ -398,11 +399,10 @@ class SetuptoolsPEP621:
         if not prefix:
             return doc
         kebab_prefix = prefix.replace("_", "-")
-        if "options.packages.find" not in doc:
-            options["packages"] = {kebab_prefix: {}}
-            return doc
-        options.pop("packages")
-        doc.rename("options.packages.find", f"options.packages.{kebab_prefix}")
+        options["packages"] = {kebab_prefix: {}}
+        if "options.packages.find" in doc:
+            options.pop("packages")
+            doc.rename("options.packages.find", f"options.packages.{kebab_prefix}")
         return doc
 
     def fix_setup_requires(self, doc: R) -> R:

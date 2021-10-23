@@ -61,6 +61,9 @@ def _convert_irepr_to_dict(irepr: Mapping, out: dict) -> dict:
             if not isinstance(parent_key, str):
                 raise InvalidTOMLKey(key)
             p = out.setdefault(parent_key, {})
+            if not isinstance(p, Mapping):
+                msg = f"Value for `{parent_key}` expected to be Mapping, found {p!r}"
+                raise ValueError(msg)
             nested_key = rest[0] if len(rest) == 1 else tuple(rest)
             _convert_irepr_to_dict({nested_key: value}, p)
         elif isinstance(key, (int, str)):

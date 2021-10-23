@@ -13,6 +13,7 @@ purposes during development:
 - 'pyscaffold/setup.cfg' from https://github.com/pyscaffold/pyscaffold, licensed under MIT
 - 'setuptools_scm/setup.cfg' from https://github.com/pypa/setuptools_scm, licensed under MIT
 - 'virtualenv/setup.cfg' from https://github.com/pypa/virtualenv, licensed under MIT
+- 'setuptools_docs/**/*.cfg' from https://github.com/pypa/setuptools, licensed under MIT
 
 These files are not part of the 'ini2toml' project and not meant
 for distribution (as part of the 'ini2toml' software package).

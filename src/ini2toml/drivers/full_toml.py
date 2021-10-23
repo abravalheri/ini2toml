@@ -183,6 +183,9 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             else:
                 nested_key = tuple(rest)
             p = out.setdefault(parent_key, {})
+            if not isinstance(p, Mapping):
+                msg = f"Value for `{parent_key}` expected to be Mapping, found {p!r}"
+                raise ValueError(msg)
             _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
         elif isinstance(key, (int, str)):
             if isinstance(value, IntermediateRepr):
