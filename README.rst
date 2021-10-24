@@ -39,6 +39,10 @@ ini2toml
 .. important:: This project is **experimental** and under active development
    Issue reports and contributions are very welcome.
 
+
+Description
+===========
+
 The original purpose of this project is to help migrating ``setup.cfg`` files
 to `PEP 621`_, but by extension it can also be used to convert any compatible |ini_cfg|_
 file to TOML_.
