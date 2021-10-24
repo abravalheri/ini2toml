@@ -11,6 +11,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -120,7 +121,9 @@ def kebab_case(field: str) -> str:
     return field.lower().replace("_", "-")
 
 
-def deprecated(name: str, fn: TF = noop, instead: str = "") -> TF:
+def deprecated(
+    name: str, fn: TF = noop, instead: str = ""  # type: ignore[assignment]
+) -> TF:
     """Wrapper around the ``fn`` transformation to warn user about deprecation."""
     extra = f". Use {instead!r} instead" if instead else ""
 
@@ -129,7 +132,7 @@ def deprecated(name: str, fn: TF = noop, instead: str = "") -> TF:
         _logger.warning(f"{name!r} is deprecated{extra}.")
         return fn(*args, **kwargs)
 
-    return _fn
+    return cast(TF, _fn)
 
 
 # ---- Complex value processors ----

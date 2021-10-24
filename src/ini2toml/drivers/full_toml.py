@@ -124,7 +124,7 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
 def _collapse_dict(obj: dict, root=False) -> Union[Table, InlineTable]:
     if not obj:
         return inline_table()
-    out = (
+    out: Union[Table, InlineTable] = (
         table()
         if any(v and isinstance(v, (list, dict)) for v in obj.values())
         or len(repr(obj)) > LONG  # simple heuristic
@@ -183,8 +183,8 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             else:
                 nested_key = tuple(rest)
             p = out.setdefault(parent_key, {})
-            if not isinstance(p, Mapping):
-                msg = f"Value for `{parent_key}` expected to be Mapping, found {p!r}"
+            if not isinstance(p, (Table, InlineTable)):
+                msg = f"Value for `{parent_key}` expected to be a table, found {p!r}"
                 raise ValueError(msg)
             _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
         elif isinstance(key, (int, str)):

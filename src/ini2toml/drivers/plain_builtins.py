@@ -4,9 +4,9 @@ document into Python buitin data types (mainly a composition of :class:`dict`,
 
 This is **not a loss-less** process, since comments are not preserved.
 """
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from functools import singledispatch
-from typing import Any
+from typing import Any, TypeVar
 
 from ..errors import InvalidTOMLKey
 from ..types import Commented, CommentedKV, CommentedList, HiddenKey, IntermediateRepr
@@ -15,6 +15,8 @@ __all__ = [
     "convert",
     "collapse",
 ]
+
+M = TypeVar("M", bound=MutableMapping)
 
 
 def convert(irepr: IntermediateRepr) -> dict:
@@ -52,7 +54,7 @@ def _collapse_list(obj: list) -> list:
     return [collapse(e) for e in obj]
 
 
-def _convert_irepr_to_dict(irepr: Mapping, out: dict) -> dict:
+def _convert_irepr_to_dict(irepr: Mapping, out: M) -> M:
     for key, value in irepr.items():
         if isinstance(key, HiddenKey):
             continue
@@ -61,7 +63,7 @@ def _convert_irepr_to_dict(irepr: Mapping, out: dict) -> dict:
             if not isinstance(parent_key, str):
                 raise InvalidTOMLKey(key)
             p = out.setdefault(parent_key, {})
-            if not isinstance(p, Mapping):
+            if not isinstance(p, MutableMapping):
                 msg = f"Value for `{parent_key}` expected to be Mapping, found {p!r}"
                 raise ValueError(msg)
             nested_key = rest[0] if len(rest) == 1 else tuple(rest)
