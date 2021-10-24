@@ -34,14 +34,10 @@ ini2toml
 ========
 
 
-Automatically translates |ini_cfg|_ files into TOML_
+    Automatically translates |ini_cfg|_ files into TOML_
 
-.. important:: This project is **experimental** and under development
-   (so by no means production-ready).
+.. important:: This project is **experimental** and under active development
    Issue reports and contributions are very welcome.
-
-Description
-===========
 
 The original purpose of this project is to help migrating ``setup.cfg`` files
 to `PEP 621`_, but by extension it can also be used to convert any compatible |ini_cfg|_
@@ -108,6 +104,21 @@ To do so, don't forget to add it to your `virtual environment`_ or specify it as
 More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 
 
+.. _pyscaffold-notes:
+
+.. tip::
+   If you consider contributing to this project, have a look on our
+   `contribution guides`_.
+
+Note
+====
+
+This project was created in the context of PyScaffold, with the purpose of
+helping migrating existing project to PEP 621 when it is made available on
+``setuptools``.
+For details and usage information on PyScaffold see https://pyscaffold.org/.
+
+
 .. |ini_cfg| replace:: ``.ini/.cfg``
 .. |ConfigParser| replace:: ``ConfigParser``
 .. |ConfigUpdater| replace:: ``ConfigUpdater``
@@ -115,6 +126,7 @@ More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html
 .. _ConfigUpdater: https://github.com/pyscaffold/configupdater
+.. _contribution guides: https://ini2toml.readthedocs.io/en/latest/contributing.html
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _our docs: https://ini2toml.readthedocs.io/en/stable/
 .. _patched version: https://github.com/abravalheri/atoml/tree/all-patches
@@ -124,30 +136,3 @@ More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 .. _TOML: https://toml.io/en/
 .. _TOML library: https://github.com/frostming/atoml
 .. _virtual environment: https://realpython.com/python-virtual-environments-a-primer/
-
-
-.. _pyscaffold-notes:
-
-Making Changes & Contributing
-=============================
-
-This project uses `pre-commit`_, please make sure to install it before making any
-changes::
-
-    pip install pre-commit
-    cd ini2toml
-    pre-commit install
-
-It is a good idea to update the hooks to the latest version::
-
-    pre-commit autoupdate
-
-Don't forget to tell your contributors to also install and use pre-commit.
-
-.. _pre-commit: https://pre-commit.com/
-
-Note
-====
-
-This project has been set up using PyScaffold 4.1rc1. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
