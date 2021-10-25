@@ -72,7 +72,7 @@ specific file names for their use cases.
 
 For example, the Python community uses the ``setup.cfg`` file to store packaging metadata.
 Therefore, ``ini2toml`` built-in profile named ``"setup.cfg"`` is responsible for converting
-``"setup.cfg"`` files into `PEP 621`_-compliant TOML documents.
+``"setup.cfg"`` files into :pep:`621`-compliant TOML documents.
 
 Each profile will correspond to a specific :ref:`pipeline <pipeline>` being
 selected for execution.
@@ -273,8 +273,8 @@ Distributing Plugins
 To distribute ``ini2toml`` plugins, it is necessary to create a `Python package`_ with
 a ``ini2toml.processing`` entry-point_.
 
-For the time being, if using setuptools_, this can be achieved by adding the following to your
-``setup.cfg`` file:
+For the time being, if using :pypi:`setuptools`, this can be achieved by adding
+the following to your ``setup.cfg`` file:
 
 .. code-block:: cfg
 
@@ -283,7 +283,7 @@ For the time being, if using setuptools_, this can be achieved by adding the fol
    ini2toml.processing =
        your_plugin = your_package.your_module:your_activate_function
 
-When using a `PEP 621`_-compliant backend, the following can be add to your
+When using a :pep:`621`-compliant backend, the following can be add to your
 ``pyproject.toml`` file:
 
 .. code-block:: toml
@@ -320,8 +320,6 @@ functions`_ that implement common operations.
 .. _idempotent: https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning
 .. _our docs: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
 .. _our library of helper functions: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
-.. _PEP 621: https://www.python.org/dev/peps/pep-0621/
 .. _PyPI: https://pypi.org
 .. _Python package: https://packaging.python.org/
-.. _setuptools: https://setuptools.pypa.io/en/stable/
 .. _TOML: https://toml.io/en/
