@@ -91,7 +91,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 try:
-    from validate_pyproject import __version__, dist_name
+    from ini2toml import __version__, dist_name
 except ImportError:
     __version__, dist_name = "", "ini2toml"
 
