@@ -8,8 +8,8 @@
 # serve to show the default.
 
 import os
-import sys
 import shutil
+import sys
 
 # -- Path setup --------------------------------------------------------------
 
@@ -90,8 +90,14 @@ source_suffix = ".rst"
 # The master toctree document.
 master_doc = "index"
 
+try:
+    from validate_pyproject import __version__, dist_name
+except ImportError:
+    __version__, dist_name = "", "ini2toml"
+
+
 # General information about the project.
-project = "ini2toml"
+project = dist_name
 copyright = "2021, Anderson Bravalheri"
 repository = "https://github.com/abravalheri/ini2toml"
 
@@ -103,10 +109,7 @@ repository = "https://github.com/abravalheri/ini2toml"
 # release: The full version, including alpha/beta/rc tags.
 # If you don’t need the separation provided between version and release,
 # just set them both to the same value.
-try:
-    from ini2toml import __version__ as version
-except ImportError:
-    version = ""
+version = __version__
 
 if not version or version.lower() == "unknown":
     version = os.getenv("READTHEDOCS_VERSION", "unknown")  # automatically set by RTD
@@ -143,7 +146,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
-# pygments_dark_style = "monokai"
+pygments_dark_style = "monokai"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -159,22 +162,35 @@ todo_emit_warnings = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "alabaster"
+# html_theme = "alabaster"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"sidebar_width": "300px", "page_width": "1200px"}
+html_theme_options = {
+    "navigation_with_keys": True,
+    "light_css_variables": {
+        "color-brand-primary": "#2980B9",
+        "color-brand-content": "#005CA0",
+        "color-brand-muted": "#E7F2FA",
+        "color-brand-logo-background": "#156EAD",
+    },
+    "dark_css_variables": {
+        "color-brand-content": "#0A93FB",
+        "color-brand-muted": "#00091A",
+    },
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-# html_title = None
+html_title = project
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
+html_short_title = project
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -189,6 +205,10 @@ html_theme_options = {"sidebar_width": "300px", "page_width": "1200px"}
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+html_css_files = [
+    "custom-adjustments.css",  # Avoid name clashes with the theme
+]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -295,7 +315,8 @@ extlinks = {
     "issue": (f"{repository}/issues/%s", "issue #%s"),
     "pr": (f"{repository}/pull/%s", "PR #%s"),
     "discussion": (f"{repository}/discussions/%s", "discussion #%s"),
-    "pypi": ("https://pypi.org/project/%s", "``%s``"),
+    "pypi": ("https://pypi.org/project/%s", "%s"),
+    "github": ("https://github.com/%s", "%s"),
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
