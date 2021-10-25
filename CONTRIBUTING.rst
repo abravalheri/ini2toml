@@ -10,7 +10,7 @@ appreciated.
 
 If you are new to using git_ or have never collaborated in a project previously,
 please have a look at `contribution-guide.org`_. Other resources are also
-listed in the excellent `guide created by FreeCodeCamp`_ [#contrib1]_.
+listed in the excellent `guide created by FreeCodeCamp`_.
 
 Please notice, all users and contributors are expected to be **open,
 considerate, reasonable, and respectful**. When in doubt, `Python Software
@@ -44,9 +44,9 @@ You can help improve ``ini2toml`` docs by making them more readable and coherent
 by adding missing information and correcting mistakes.
 
 ``ini2toml`` documentation uses Sphinx_ as its main documentation compiler.
-This means that the docs are kept in the same repository as the project code, and
-that any documentation update is done in the same way was a code contribution,
-via reStructuredText_ files.
+This means that the docs are kept in the same repository as the
+project code, in the form of reStructuredText_ files, and that any
+documentation update is done in the same way was a code contribution.
 
 .. tip::
   Please notice that the `GitHub web interface`_ provides a quick way of
@@ -79,8 +79,9 @@ Code Contributions
 Understanding how the project works
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have a change in mind, but don't know how to implement it, please have a
-look in our :doc:`/dev-guide`.
+If you have a change in mind, please have a look in our :doc:`dev-guide`.
+It explains the main aspects of the project and provide a brief overview on how
+it is organised and how to implement :ref:`plugins`.
 
 Submit an issue
 ---------------
@@ -119,7 +120,7 @@ Clone the repository
 
     pip install -U pip setuptools -e .
 
-   to be able run ``putup --help``.
+   to be able import the package under development in the Python REPL.
 
 #. Install |pre-commit|_::
 
@@ -136,7 +137,7 @@ Implement your changes
 
     git checkout -b my-feature
 
-   and start making changes. Never work on the master branch!
+   and start making changes. Never work on the main branch!
 
 #. Start your work on this branch. Don't forget to add docstrings_ to new
    functions, modules and classes, especially if they are part of public APIs.
@@ -260,13 +261,6 @@ on PyPI_, the following steps can be used to release a new version for
    uploaded to PyPI_ correctly.
 
 
-
-.. [#contrib1] Even though, these resources focus on open source projects and
-   communities, the general ideas behind collaborating with other developers
-   to collectively create software are general and can be applied to all sorts
-   of environments, including private companies and proprietary code bases.
-
-
 .. <-- strart -->
 .. |the repository service| replace:: GitHub
 .. |contribute button| replace:: "Create pull request"
@@ -282,8 +276,7 @@ on PyPI_, the following steps can be used to release a new version for
 
 
 .. _black: https://pypi.org/project/black/
-.. _CommonMark: https://commonmark.org/
-.. _contribution-guide.org: http://www.contribution-guide.org/
+.. _contribution-guide.org: https://www.contribution-guide.org/
 .. _creating a PR: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 .. _descriptive commit message: https://chris.beams.io/posts/git-commit
 .. _docstrings: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
@@ -302,9 +295,9 @@ on PyPI_, the following steps can be used to release a new version for
 .. _Python Software Foundation's Code of Conduct: https://www.python.org/psf/conduct/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/
 .. _Sphinx: https://www.sphinx-doc.org/en/master/
-.. _tox: https://tox.readthedocs.io/en/stable/
+.. _tox: https://tox.wiki/en/stable/
 .. _virtual environment: https://realpython.com/python-virtual-environments-a-primer/
 .. _virtualenv: https://virtualenv.pypa.io/en/stable/
 
-.. _GitHub web interface: https://docs.github.com/en/github/managing-files-in-a-repository/managing-files-on-github/editing-files-in-your-repository
-.. _GitHub's code editor: https://docs.github.com/en/github/managing-files-in-a-repository/managing-files-on-github/editing-files-in-your-repository
+.. _GitHub web interface: https://docs.github.com/en/repositories/working-with-files/managing-files/editing-files
+.. _GitHub's code editor: https://docs.github.com/en/repositories/working-with-files/managing-files/editing-files
