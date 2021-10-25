@@ -138,7 +138,8 @@ class SetuptoolsPEP621:
             ("options", "setup-requires"): split_list_semi,
             ("options", "install-requires"): split_list_semi,
             ("options", "tests-require"): split_list_semi,
-            ("options", "scripts"): split_list_comma,
+            ("options", "script-files"): split_list_comma,
+            # ^ --> We rename scripts to script-files
             ("options", "eager-resources"): split_list_comma,
             ("options", "dependency-links"): split_list_comma,
             ("options", "include-package-data"): split_bool,
@@ -294,6 +295,14 @@ class SetuptoolsPEP621:
         naming = {"extras-require": "optional-dependencies"}
         for src, target in naming.items():
             doc.rename(f"options.{src}", f"project:{target}", ignore_missing=True)
+        return doc
+
+    def rename_script_files(self, doc: R) -> R:
+        # setuptools define a ``options.scripts`` parameters that refer to
+        # script files, not created via enty-points
+        # To avoid confution with PEP621 scripts (generated via entry-points)
+        # let's rename this field to `script-files`
+        doc["options"].rename("scripts", "script-files", ignore_missing=True)
         return doc
 
     def remove_metadata_not_in_pep621(self, doc: R) -> R:
@@ -458,6 +467,7 @@ class SetuptoolsPEP621:
             self.merge_and_rename_long_description_and_content_type,
             self.move_and_split_entrypoints,
             # --- General fixes
+            self.rename_script_files,
             self.remove_metadata_not_in_pep621,
             self.fix_packages,
             self.fix_setup_requires,

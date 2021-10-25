@@ -85,6 +85,11 @@ proposed by ``ini2toml`` takes the following assumptions:
      classifiers = { file = "classifiers.txt" }
 
 
+- The ``options.scripts`` field is renamed to ``script-files`` and resides
+  inside the ``tool.setuptools`` table. This is done to avoid confusion with
+  the ``project.scripts`` field defined by :pep:`621`.
+
+
 Please notice these conventions are part of a proposal and will probably
 change as soon as a pattern is established by the setuptools_ project.
 The implementation in ``ini2toml`` is flexible to quickly adapt to these

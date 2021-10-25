@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import tomli
+from validate_pyproject.api import Validator
 
 from ini2toml import cli
 from ini2toml.drivers import configparser, full_toml, lite_toml
@@ -28,8 +29,14 @@ def examples():
                     raise
 
 
+@pytest.fixture(scope="module")
+def validate():
+    """Use ``validate-pyproject`` to validate the generated TOML"""
+    return Validator()
+
+
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
-def test_examples_api(original, expected):
+def test_examples_api(original, expected, validate):
     translator = Translator()
     available_profiles = list(translator.profiles.keys())
     profile = cli.guess_profile(None, original, available_profiles)
@@ -37,7 +44,9 @@ def test_examples_api(original, expected):
     expected_text = Path(expected).read_text().strip()
     assert out == expected_text
     # Make sure they can be parsed
-    assert tomli.loads(out) == tomli.loads(expected_text)
+    dict_equivalent = tomli.loads(out)
+    assert dict_equivalent == tomli.loads(expected_text)
+    assert validate(remove_deprecated(dict_equivalent)) is not None
 
 
 COMMENT_LINE = re.compile(r"^\s*#[^\n]*\n", re.M)
@@ -45,7 +54,7 @@ INLINE_COMMENT = re.compile(r'#\s[^\n"]*$', re.M)
 
 
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
-def test_examples_api_lite(original, expected):
+def test_examples_api_lite(original, expected, validate):
     opts = {"ini_loads_fn": configparser.parse, "toml_dumps_fn": lite_toml.convert}
     translator = Translator(**opts)
     available_profiles = list(translator.profiles.keys())
@@ -55,8 +64,12 @@ def test_examples_api_lite(original, expected):
     orig = Path(original)
     out = remove_flake8_from_toml(translator.translate(orig.read_text(), profile))
     expected_text = remove_flake8_from_toml(Path(expected).read_text().strip())
+
     # At least the Python-equivalents should be the same when parsing
-    assert tomli.loads(out) == tomli.loads(expected_text)
+    dict_equivalent = tomli.loads(out)
+    assert dict_equivalent == tomli.loads(expected_text)
+    assert validate(remove_deprecated(dict_equivalent)) is not None
+
     without_comments = COMMENT_LINE.sub("", expected_text)
     without_comments = INLINE_COMMENT.sub("", without_comments)
     try:
@@ -86,3 +99,10 @@ def remove_flake8_from_toml(text: str) -> str:
         if key.startswith("flake8"):
             tool.pop(key)
     return full_toml.dumps(doc)
+
+
+def remove_deprecated(dict_equivalent):
+    setuptools = dict_equivalent.get("tool", {}).get("setuptools", {})
+    # The usage of ``data-files`` is deprecated in setuptools and not supported by pip
+    setuptools.pop("data-files", None)
+    return dict_equivalent
