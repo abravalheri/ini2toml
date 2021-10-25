@@ -2,9 +2,14 @@
 Changelog
 =========
 
-Version 0.1
-===========
+Version 0.0.2
+=============
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+- Small improvements
+- Documentation updates
+- Fix virtualenv test example.
+
+Version 0.0.1
+=============
+
+- Initial release with basic functionalities

@@ -16,7 +16,7 @@
     :target: https://cirrus-ci.com/github/abravalheri/ini2toml
 .. image:: https://readthedocs.org/projects/ini2toml/badge/?version=latest
     :alt: ReadTheDocs
-    :target: https://ini2toml.readthedocs.io/en/stable/
+    :target: https://ini2toml.readthedocs.io
 .. image:: https://img.shields.io/coveralls/github/abravalheri/ini2toml/main.svg
     :alt: Coveralls
     :target: https://coveralls.io/r/abravalheri/ini2toml
@@ -84,7 +84,7 @@ using |pipx|_:
       # OR if you are managing your own virtual environment:
       $ pip install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
 
-Now you can use ``ini2toml`` as a command line:
+Now you can use ``ini2toml`` as a command line tool:
 
 .. code-block:: bash
 
@@ -117,9 +117,9 @@ More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 Note
 ====
 
-This project was created in the context of PyScaffold, with the purpose of
-helping migrating existing project to PEP 621 when it is made available on
-``setuptools``.
+This project was initially created in the context of PyScaffold, with the
+purpose of helping migrating existing projects to `PEP 621`_-style
+configuration when it is made available on ``setuptools``.
 For details and usage information on PyScaffold see https://pyscaffold.org/.
 
 
@@ -132,7 +132,7 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _ConfigUpdater: https://github.com/pyscaffold/configupdater
 .. _contribution guides: https://ini2toml.readthedocs.io/en/latest/contributing.html
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
-.. _our docs: https://ini2toml.readthedocs.io/en/stable/
+.. _our docs: https://ini2toml.readthedocs.io
 .. _patched version: https://github.com/abravalheri/atoml/tree/all-patches
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
 .. _pipx: https://pypa.github.io/pipx/
