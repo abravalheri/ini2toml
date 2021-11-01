@@ -72,18 +72,6 @@ using |pipx|_:
     # OR
     $ pipx install 'ini2toml[full]'
 
-.. warning:: For the time being, if you want to use the *"full"* flavour,
-   you will also need a `patched version`_ of the supporting `TOML library`_.
-   If you have installed ``ini2toml`` with |pipx|_ as indicated above,
-   you can overwrite the dependency with the following command:
-
-   .. code-block:: bash
-
-      $ pipx runpip ini2toml install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
-
-      # OR if you are managing your own virtual environment:
-      $ pip install -I 'git+https://github.com/abravalheri/atoml@all-patches#egg=atoml'
-
 Now you can use ``ini2toml`` as a command line tool:
 
 .. code-block:: bash
@@ -133,7 +121,6 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _contribution guides: https://ini2toml.readthedocs.io/en/latest/contributing.html
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _our docs: https://ini2toml.readthedocs.io
-.. _patched version: https://github.com/abravalheri/atoml/tree/all-patches
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
 .. _pipx: https://pypa.github.io/pipx/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
