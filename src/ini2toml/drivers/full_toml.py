@@ -101,7 +101,6 @@ def _collapse_commented_kv(obj: CommentedKV, root=False) -> Union[Table, InlineT
             continue
         if not multiline:
             cast(Item, out).comment(entry.comment)
-            obj.comment = entry.comment
             return out
         if k:
             out[k].comment(entry.comment)
@@ -243,9 +242,3 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
         has_nl = has_nl or "\n" in elem_repr
 
     return is_aot, max_len, has_nl, len(seq)
-
-
-def _no_trail_comment(msg: str):
-    cmt = comment(str(msg))
-    cmt.trivia.trail = ""
-    return cmt

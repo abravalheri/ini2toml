@@ -195,7 +195,6 @@ class Commented(Generic[T]):
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[T]]]):
         super().__init__(data)
-        self.comment: Optional[str] = None  # TODO: remove this workaround
 
     def as_list(self) -> list:
         out = []
@@ -209,7 +208,6 @@ class CommentedList(Generic[T], UserList):
 class CommentedKV(Generic[T], UserList):
     def __init__(self, data: List[Commented[List[KV[T]]]]):
         super().__init__(data)
-        self.comment: Optional[str] = None  # TODO: remove this workaround
 
     def find(self, key: str) -> Optional[Tuple[int, int]]:
         for i, row in enumerate(self):

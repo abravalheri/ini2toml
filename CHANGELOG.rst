@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.1
+===========
+
+- Adopt ``atoml>=1.1.0`` as a dependency and stabilise the list conversion.
+
 Version 0.0.3
 =============
 
