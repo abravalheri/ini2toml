@@ -73,7 +73,11 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
         values = entry.value_or([])
 
         if multiline:
-            out.add_line(*[collapse(v) for v in values], comment=entry.comment)
+            collapsed_values = [collapse(v) for v in values]
+            if collapsed_values or entry.comment:
+                out.add_line(*collapsed_values, comment=entry.comment)
+            else:
+                out.add_line(indent="")  # Empty line
         else:
             for value in values:
                 cast(list, out).append(collapse(value))
@@ -81,7 +85,7 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
                 cast(Item, out).comment(entry.comment)
 
     if multiline:
-        out.add_line(indent="")
+        out.add_line(indent="")  # New line before closing brackets
 
     return out
 

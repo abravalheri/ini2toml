@@ -2,7 +2,6 @@ import logging
 
 import pytest
 
-from ini2toml.plugins import profile_independent_tasks as tasks
 from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate, isdirective
 from ini2toml.translator import Translator
 
@@ -154,7 +153,7 @@ def test_move_entry_points_and_apply_value_processing(plugin, parse, convert):
     doc = plugin.apply_value_processing(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    text = tasks.remove_trailing_spaces(convert(doc)).strip()
+    text = convert(doc).strip()
     assert text == expected_apply_value_processing.strip()
 
 
@@ -338,7 +337,7 @@ def test_fix_setup_requires(plugin, parse, convert):
     doc.pop("metadata", None)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    text = tasks.remove_trailing_spaces(convert(doc)).strip()
+    text = convert(doc).strip()
     assert text == expected_fix_setup_requires.strip()
 
 
