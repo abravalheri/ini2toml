@@ -19,7 +19,7 @@ from atoml import (
     nl,
     table,
 )
-from atoml.items import AoT, Array, InlineTable, Item, Table, Whitespace
+from atoml.items import AoT, Array, InlineTable, Item, Table
 from atoml.toml_document import TOMLDocument
 
 from ..errors import InvalidTOMLKey
@@ -71,17 +71,17 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
 
     for entry in obj.data:
         values = entry.value_or([])
+
         if multiline:
-            cast(list, out).append(Whitespace("\n" + 4 * " "))
-        for value in values:
-            cast(list, out).append(collapse(value))
-        if entry.has_comment():
-            if multiline:
-                cast(list, out).append(_no_trail_comment(entry.comment))
-            else:
+            out.add_line(*[collapse(v) for v in values], comment=entry.comment)
+        else:
+            for value in values:
+                out.append(collapse(value))
+            if entry.has_comment():
                 cast(Item, out).comment(entry.comment)
+
     if multiline:
-        cast(list, out).append(Whitespace("\n"))
+        out.add_line(indent="")
 
     return out
 
