@@ -76,7 +76,7 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
             out.add_line(*[collapse(v) for v in values], comment=entry.comment)
         else:
             for value in values:
-                out.append(collapse(value))
+                cast(list, out).append(collapse(value))
             if entry.has_comment():
                 cast(Item, out).comment(entry.comment)
 
