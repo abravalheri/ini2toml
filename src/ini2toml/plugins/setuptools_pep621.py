@@ -196,27 +196,25 @@ class SetuptoolsPEP621:
             metadata.replace_first_remove_others(keys, "urls", urls_kv)
         return doc
 
-    def merge_authors_maintainers_and_emails(self, doc: R) -> R:
-        # author OR maintainer => author.name
-        # author-email OR maintainer-email => author.email
+    def process_authors_maintainers_and_emails(self, doc: R) -> R:
+        # author OR maintainer => <author/maintainer>.name
+        # author-email OR maintainer-email => <author/maintainer>.email
         metadata: IR = doc["metadata"]
-        author_ = split_comment(metadata.get("author", ""))
-        maintainer_ = split_comment(metadata.get("maintainer", ""))
-        names_ = (author_, maintainer_)
-        names = chain_iter(n.value_or("").strip().split(",") for n in names_)
-        a_email_ = split_comment(metadata.get("author-email", ""))
-        m_email_ = split_comment(metadata.get("maintainer-email", ""))
-        emails_ = (a_email_, m_email_)
-        emails = chain_iter(n.value_or("").strip().split(",") for n in emails_)
-        comments = [o.comment for o in chain(names_, emails_) if o.has_comment()]
+        for key in ("author", "maintainer"):
+            name_field = split_comment(metadata.get(key, ""))
+            names = name_field.value_or("").strip().split(",")
+            email_field = split_comment(metadata.get(f"{key}-email", ""))
+            emails = email_field.value_or("").strip().split(",")
+            fields = (name_field, email_field)
+            comments = [f.comment for f in fields if f.has_comment()]
 
-        combined_ = {e: n for n, e in zip(names, emails) if n}  # deduplicate
-        out = [{"name": n, "email": e} for e, n in combined_.items()]
-        if out:
-            keys = ("author", "maintainer", "author-email", "maintainer-email")
-            i = metadata.replace_first_remove_others(keys, "author", out)
-            for j, cmt in enumerate(comments):
-                metadata.insert(j + i + 1, CommentKey(), cmt)
+            combined = {e: n for n, e in zip(names, emails) if n}  # deduplicate
+            out = [{"name": n, "email": e} for e, n in combined.items()]
+            if out:
+                keys = (key, f"{key}-email")
+                i = metadata.replace_first_remove_others(keys, key, out)
+                for j, cmt in enumerate(comments):
+                    metadata.insert(j + i + 1, CommentKey(), cmt)
         return doc
 
     def merge_and_rename_long_description_and_content_type(self, doc: R) -> R:
@@ -462,7 +460,7 @@ class SetuptoolsPEP621:
         transformations = [
             # --- transformations mainly focusing on PEP 621 ---
             self.merge_and_rename_urls,
-            self.merge_authors_maintainers_and_emails,
+            self.process_authors_maintainers_and_emails,
             self.merge_license_and_files,
             self.merge_and_rename_long_description_and_content_type,
             self.move_and_split_entrypoints,

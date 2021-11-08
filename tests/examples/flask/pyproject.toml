@@ -34,7 +34,7 @@ text = "BSD-3-Clause"
 name = "Armin Ronacher"
 email = "armin.ronacher@active-4.com"
 
-[[project.author]]
+[[project.maintainer]]
 name = "Pallets"
 email = "contact@palletsprojects.com"
 
