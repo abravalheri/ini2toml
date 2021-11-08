@@ -2,7 +2,19 @@ import logging
 import re
 from functools import partial, reduce
 from itertools import chain
-from typing import Dict, List, Mapping, Sequence, Set, Tuple, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from ..transformations import (
     apply,
@@ -35,7 +47,6 @@ _logger = logging.getLogger(__name__)
 chain_iter = chain.from_iterable
 
 # Functions that split values from comments and parse those values
-split_directive = partial(split_kv_pairs, key_sep=":")
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
@@ -127,21 +138,20 @@ class SetuptoolsPEP621:
             # => ("metadata", "project-urls") => merge_and_rename_urls
             # ("metadata", "long-description-content-type") =>
             #     merge_and_rename_long_description_and_content_type
-            # ---- the following options are originally part of `metadata`,
-            #      but we move it to "options" because they are not part of PEP 621
-            ("options", "provides"): split_list_comma,
-            ("options", "requires"): split_list_comma,
-            ("options", "obsoletes"): split_list_comma,
-            ("options", "platforms"): split_list_comma,
+            ("metadata", "provides"): split_list_comma,
+            ("metadata", "requires"): split_list_comma,
+            ("metadata", "obsoletes"): split_list_comma,
+            ("metadata", "platforms"): split_list_comma,
             # ----
             ("options", "zip-safe"): split_bool,
             ("options", "setup-requires"): split_list_semi,
             ("options", "install-requires"): split_list_semi,
             ("options", "tests-require"): split_list_semi,
-            ("options", "script-files"): split_list_comma,
-            # ^ --> We rename scripts to script-files
+            ("options", "script"): split_list_comma,
             ("options", "eager-resources"): split_list_comma,
-            ("options", "dependency-links"): split_list_comma,
+            ("options", "dependency-links"): deprecated(
+                "dependency-links", split_list_comma
+            ),  # noqa
             ("options", "include-package-data"): split_bool,
             ("options", "packages"): split_list_comma,
             ("options", "package-dir"): split_kv_pairs,
@@ -150,8 +160,6 @@ class SetuptoolsPEP621:
             ("options", "data-files"): deprecated("data-files", split_kv_of_lists),
             ("options.packages.find", "include"): split_list_comma,
             ("options.packages.find", "exclude"): split_list_comma,
-            ("options.packages.find-namespace", "include"): split_list_comma,
-            ("options.packages.find-namespace", "exclude"): split_list_comma,
         }
         # See also dependent_processing_rules
         # Everything else should use split_comment
@@ -165,11 +173,7 @@ class SetuptoolsPEP621:
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             "options.data-files": split_list_comma,
-            # ----
-            # "options.entry-points" => moved to project
-            # console-scripts and gui-scripts already handled in
-            # move_and_split_entrypoints
-            "project:entry-points": split_kv_pairs,
+            "options.entry-points": split_kv_pairs,
         }
         return {
             (g, k): fn
@@ -247,6 +251,20 @@ class SetuptoolsPEP621:
         # license-files => license.file
         # license => license.text
         metadata: IR = doc["metadata"]
+
+        # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
+        if "license-files" in metadata and any(
+            char in metadata["license-files"] for char in ",*?["  # file list or glob
+        ):
+            files = split_list_comma(metadata["license-files"].strip())
+            metadata.setdefault("dynamic", []).append("license")
+            dynamic = doc.setdefault("options.dynamic", IR())
+            dynamic.append("license", {"file": files})
+            # 'file' and 'text' are mutually exclusive in PEP 621
+            metadata.pop("license", None)
+            metadata.pop("license-files", None)
+            return doc
+
         naming = {"license-files": "file", "license": "text"}
         items = [
             (v, split_comment(metadata[k])) for k, v in naming.items() if k in metadata
@@ -327,10 +345,9 @@ class SetuptoolsPEP621:
     def convert_directives(self, out: R) -> R:
         for (section, option), directives in self.setupcfg_directives().items():
             value = out.get(section, {}).get(option, None)
-            if isinstance(value, str) and any(
-                value.strip().startswith(f"{d}:") for d in directives
-            ):
-                out[section][option] = split_directive(value)
+            if not isinstance(value, str):
+                continue
+            out[section][option] = split_directive(value, directives)
         return out
 
     def split_subtables(self, out: R) -> R:
@@ -368,10 +385,13 @@ class SetuptoolsPEP621:
 
     def fix_dynamic(self, doc: R) -> R:
         potential = ["version", "classifiers", "description"]
+        directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
         metadata, options = doc["metadata"], doc["options"]
 
-        fields = [f for f in potential if isdirective(metadata.get(f, None))]
-        dynamic = {f: split_directive(metadata.pop(f, None)) for f in fields}
+        field_falues = ((f, metadata.get(f)) for f in potential)
+        fields = [f for f, v in field_falues if isdirective(v, directives[f])]
+
+        dynamic = {f: metadata.pop(f, None) for f in fields}
         if "version" not in metadata and "version" not in dynamic:
             msg = (
                 "No `version` was found in `[metadata]`, `ini2toml` will assume it is "
@@ -383,9 +403,9 @@ class SetuptoolsPEP621:
 
         extras: List[str] = []
         ep = options.pop("entry-points", None)
-        if isdirective(ep, valid=("file",)):
+        if isdirective(ep, ("file",)):
             fields.append("entry-points")
-            dynamic["entry-points"] = split_directive(ep)
+            dynamic["entry-points"] = ep
             extras = ["scripts", "gui-scripts"]
         if not fields:
             return doc
@@ -458,6 +478,9 @@ class SetuptoolsPEP621:
         ones. Please notice that renaming is applied after value processing.
         """
         transformations = [
+            # --- value processing and type changes ---
+            self.convert_directives,
+            self.apply_value_processing,
             # --- transformations mainly focusing on PEP 621 ---
             self.merge_and_rename_urls,
             self.process_authors_maintainers_and_emails,
@@ -471,8 +494,8 @@ class SetuptoolsPEP621:
             self.fix_setup_requires,
             self.fix_dynamic,
             # --- value processing and type changes ---
-            self.convert_directives,
-            self.apply_value_processing,
+            # self.convert_directives,
+            # self.apply_value_processing,
             self.parse_setup_py_command_options,
             # --- steps that depend on the values being processed ---
             self.move_setup_requires,
@@ -531,8 +554,20 @@ class SetuptoolsPEP621:
 # ---- Helpers ----
 
 
-def isdirective(value, valid=("file", "attr")) -> bool:
-    return isinstance(value, str) and any(value.startswith(f"{p}:") for p in valid)
+def isdirective(value: Any, directives: Sequence[str] = ("file", "attr")) -> bool:
+    return (
+        isinstance(value, Mapping)
+        and len(value) == 1
+        and next(iter(value)) in directives
+    )
+
+
+def split_directive(value: str, directives: Sequence[str] = ("file", "attr")) -> dict:
+    directive = next(d for d in directives if value.strip().startswith(f"{d}:"))
+    raw_value = value.lstrip()[len(directive) + 1 :].strip()
+    if directive == "file":
+        return {directive: split_list_comma(raw_value)}
+    return {directive: split_comment(raw_value)}
 
 
 def _distutils_commands() -> Set[str]:

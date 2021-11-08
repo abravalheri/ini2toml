@@ -365,14 +365,15 @@ dynamic = [
 
 ["options.dynamic"]
 version = {attr = "django.__version__"}
-classifiers = {file = "classifiers.txt"}
-description = {file = "readme.txt"}
-entry-points = {file = "entry-points.txt"}
+classifiers = {file = ["classifiers.txt"]}
+description = {file = ["readme.txt"]}
+entry-points = {file = ["entry-points.txt"]}
 """  # noqa
 
 
 def test_isdirective(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
+    doc = plugin.convert_directives(doc)
     assert isdirective(doc["metadata"]["version"], ("attr",))
     assert isdirective(doc["metadata"]["classifiers"])
     assert isdirective(doc["metadata"]["description"], ("file",))
@@ -383,6 +384,7 @@ def test_isdirective(plugin, parse, convert):
 
 def test_fix_dynamic(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
+    doc = plugin.convert_directives(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.fix_dynamic(doc)
