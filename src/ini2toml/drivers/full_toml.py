@@ -118,9 +118,14 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
     # guess a good repr
     if root:
         return _convert_irepr_to_toml(obj, document())
-    rough_repr = repr(obj).replace(obj.__class__.__name__, "").strip()
-    out = table() if len(rough_repr) > LONG or "\n" in rough_repr else inline_table()
-    return _convert_irepr_to_toml(obj, cast(Union[Table, InlineTable], out))
+
+    rough_repr = repr(obj.elements)[1:-1].replace("{}", "")
+    # ^-- empty nested inline-tables are negligible
+
+    heuristic = len(rough_repr) > LONG or any(c in rough_repr for c in "{(\n")
+    out = table() if heuristic else inline_table()
+
+    return _convert_irepr_to_toml(obj, out)
 
 
 @collapse.register(dict)
@@ -140,18 +145,21 @@ def _collapse_dict(obj: dict, root=False) -> Union[Table, InlineTable]:
 
 @collapse.register(list)
 def _collapse_list(obj: list, root=False) -> Union[AoT, Array]:
-    is_aot, max_len, has_nl, num_elem = classify_list(obj)
-    # Just some heuristics which kind of array we are going to use
-    if is_aot:
+    is_aot, max_len, total_len, has_nl, has_nested, num_elem = classify_list(obj)
+
+    # Just some heuristics for which kind of array we are going to use
+    not_singleline = (
+        has_nl
+        or max_len > LONG
+        or (max_len > INLINE_TABLE_LONG_ELEM and num_elem > MAX_INLINE_TABLE_LONG_ELEM)
+    )
+
+    if is_aot and (not_singleline or has_nested):
         return create_aot(collapse(e) for e in obj)
 
     out = array()
     cast(MutableSequence, out).extend(collapse(e) for e in obj)
-    if (
-        has_nl
-        or max_len > MAX_INLINE_TABLE_LEN
-        or (max_len > INLINE_TABLE_LONG_ELEM and num_elem > MAX_INLINE_TABLE_LONG_ELEM)
-    ):
+    if not_singleline or total_len > LONG:
         out.multiline(True)
     return out
 
@@ -173,11 +181,15 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
                 nested_key = rest[0]
                 collapsed_value = collapse(value)
                 collapsed_str = f"{nested_key} = {dumps(collapsed_value)}"
+                simplified_str = collapsed_str.replace("= {}", "").replace("= []", "")
                 # Force inline table for the simplest cases
                 if (
                     not isinstance(collapsed_value, (Table, AoT))
                     and len(collapsed_str) < LONG
                     and "\n" not in collapsed_str.strip()
+                    and "{" not in simplified_str
+                    and simplified_str.count("=") <= 1
+                    # ^-- avoid nested inline-table, unless it is empty
                 ):
                     child = inline_table()
                     child[nested_key] = collapsed_value
@@ -225,24 +237,36 @@ def create_aot(elements: Iterable[Mapping]) -> AoT:
     return out
 
 
-def classify_list(seq: Sequence) -> Tuple[bool, int, bool, int]:
+def classify_list(seq: Sequence) -> Tuple[bool, int, int, bool, bool, int]:
     """Expensive method that helps to choose what is the best TOML representation
     for a Python list.
 
-    The return value is composed by 4 values, in order:
+    The return value is composed by 6 values, in order:
     - aot(bool): ``True`` if all elements are dict-like objects
     - max_len(int): Rough (and definitely not precise) estimative of the number of
       chars the TOML representation for the largest element would be.
+    - total_len(int): Rough (and definitely not precise) estimate of the total number of
+      chars in the TOML representation if it was a sinlge line
     - has_nl(bool): if any TOML representation for the elements has a ``\\n`` char.
+    - has_nested(bool): if any element has a nested table or array
     - num_elements(int): number of elements in the list.
     """
     is_aot = True
     has_nl = False
+    has_nested = False
     max_len = 0
+    total_len = 0
     for elem in seq:
-        is_aot = is_aot and isinstance(elem, Mapping)
-        elem_repr = repr(elem)
-        max_len = max(max_len, len(elem_repr))
+        if not isinstance(elem, Mapping):
+            is_aot, elem_repr = False, repr(elem)
+        else:
+            elem_repr = repr(dict(elem.items()))
+            simplified_str = elem_repr[1:-1].replace("{}", "").replace("[]", "")
+            # ^-- ignore empty inline tables / arrays
+            has_nested = has_nested or any(c in simplified_str for c in "{[")
+        len_elem = len(elem_repr)
+        total_len += len_elem + 2
+        max_len = max(max_len, len_elem)
         has_nl = has_nl or "\n" in elem_repr
 
-    return is_aot, max_len, has_nl, len(seq)
+    return is_aot, max_len, total_len, has_nl, has_nested, len(seq)

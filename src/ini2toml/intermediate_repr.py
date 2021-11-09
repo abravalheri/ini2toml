@@ -226,6 +226,7 @@ class CommentedKV(Generic[T], UserList):
         values = list(values)
         if values or comment:
             self.insert(i, Commented(values, comment))
+        return self
 
     def as_dict(self) -> dict:
         out = {}
