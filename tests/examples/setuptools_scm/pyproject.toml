@@ -18,13 +18,13 @@ classifiers = [
     "Topic :: Utilities",
 ]
 urls = {Homepage = "https://github.com/pypa/setuptools_scm/"}
-dynamic = ["version"]
 requires-python = ">=3.6"
 dependencies = [
     "packaging>=20.0",
     "setuptools",
     "tomli>=1.0.0", # keep in sync
 ]
+dynamic = ["version"]
 
 [project.readme]
 file = "README.rst"

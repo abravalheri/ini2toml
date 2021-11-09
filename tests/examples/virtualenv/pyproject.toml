@@ -24,7 +24,6 @@ classifiers = [
     "Topic :: Utilities",
 ]
 keywords = ["virtual", "environments", "isolated"]
-dynamic = ["version"]
 requires-python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 dependencies = [
     "backports.entry_points_selectable>=1.0.4",
@@ -36,6 +35,7 @@ dependencies = [
     "importlib-resources>=1.0;python_version<\"3.7\"",
     "pathlib2>=2.3.3,<3;python_version < '3.4' and sys.platform != 'win32'",
 ]
+dynamic = ["version"]
 
 [project.readme]
 file = "README.md"

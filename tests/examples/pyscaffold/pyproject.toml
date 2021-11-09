@@ -15,7 +15,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
 ]
-dynamic = ["version"]
 requires-python = ">=3.6"
 dependencies = [
     "importlib-metadata; python_version<\"3.8\"",
@@ -32,6 +31,7 @@ dependencies = [
     # However we specify a higher version so we encourage users to update the
     # version they have installed...
 ]
+dynamic = ["version"]
 
 [[project.author]]
 name = "Florian Wilhelm"

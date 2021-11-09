@@ -214,7 +214,7 @@ class SetuptoolsPEP621:
             metadata.replace_first_remove_others(keys, "urls", urls)
         return doc
 
-    def process_authors_maintainers_and_emails(self, doc: R) -> R:
+    def merge_authors_maintainers_and_emails(self, doc: R) -> R:
         # author OR maintainer => <author/maintainer>.name
         # author-email OR maintainer-email => <author/maintainer>.email
         metadata: IR = doc["metadata"]
@@ -330,7 +330,7 @@ class SetuptoolsPEP621:
         return doc
 
     def move_options_missing_in_pep621(self, doc: R) -> R:
-        # ---- Things in "options" that are covered by PEP 621 ----
+        # ---- Parts of "options" that are covered by PEP 621 ----
         # First we handle simple options
         naming = {
             "python-requires": "requires-python",
@@ -346,19 +346,19 @@ class SetuptoolsPEP621:
             doc.rename(f"options.{src}", f"project:{target}", ignore_missing=True)
         return doc
 
+    def remove_metadata_not_in_pep621(self, doc: R) -> R:
+        # ---- setuptools metadata without correspondence in PEP 621 ----
+        specific = ["platforms", "provides", "obsoletes"]
+        metadata, options = doc["metadata"], doc["options"]
+        options.update({k: metadata.pop(k) for k in specific if k in metadata})
+        return doc
+
     def rename_script_files(self, doc: R) -> R:
         # setuptools define a ``options.scripts`` parameters that refer to
         # script files, not created via enty-points
         # To avoid confution with PEP 621 scripts (generated via entry-points)
         # let's rename this field to `script-files`
         doc["options"].rename("scripts", "script-files", ignore_missing=True)
-        return doc
-
-    def remove_metadata_not_in_pep621(self, doc: R) -> R:
-        # ---- setuptools metadata without correspondence in PEP 621 ----
-        specific = ["platforms", "provides", "obsoletes"]
-        metadata, options = doc["metadata"], doc["options"]
-        options.update({k: metadata.pop(k) for k in specific if k in metadata})
         return doc
 
     def parse_setup_py_command_options(self, doc: R) -> R:
@@ -502,20 +502,19 @@ class SetuptoolsPEP621:
             self.apply_value_processing,
             # --- transformations mainly focusing on PEP 621 ---
             self.merge_and_rename_urls,
-            self.process_authors_maintainers_and_emails,
+            self.merge_authors_maintainers_and_emails,
             self.merge_license_and_files,
             self.merge_and_rename_long_description_and_content_type,
             self.move_and_split_entrypoints,
+            self.move_options_missing_in_pep621,
+            self.remove_metadata_not_in_pep621,
             # --- General fixes
             self.rename_script_files,
-            self.remove_metadata_not_in_pep621,
             self.fix_packages,
             self.fix_dynamic,
+            self.move_setup_requires,
             # --- distutils ---
             self.parse_setup_py_command_options,
-            # --- steps that depend on the values being processed ---
-            self.move_setup_requires,
-            self.move_options_missing_in_pep621,
             # --- final steps ---
             self.split_subtables,
             self.ensure_pep518,
@@ -534,8 +533,9 @@ class SetuptoolsPEP621:
         and replacing the snake case with kebab case.
 
         .. note:: Although setuptools recently deprecated kebab case in ``setup.cfg``
-           ``pyproject.toml`` seems to use it as a convention, so this normalisation
-           makes more sense for the translation.
+           ``pyproject.toml`` use it as a convention (as established in :pep:`517`,
+           :pep:`518` and :pep:`621`) so this normalisation makes more sense for the
+           translation.
         """
         # Normalise for the same convention as pyproject
         for i in range(len(cfg.order)):

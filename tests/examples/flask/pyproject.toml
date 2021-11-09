@@ -14,8 +14,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dynamic = ["version"]
 requires-python = ">= 3.6"
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://palletsprojects.com/p/flask"
