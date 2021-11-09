@@ -238,9 +238,9 @@ class SetuptoolsPEP621:
         # author-email OR maintainer-email => <author/maintainer>.email
         metadata: IR = doc["metadata"]
         for key in ("author", "maintainer"):
-            name_field = split_comment(metadata.get(key, ""))
+            name_field: Commented[str] = metadata.get(key, Commented())
             names = name_field.value_or("").strip().split(",")
-            email_field = split_comment(metadata.get(f"{key}-email", ""))
+            email_field: Commented[str] = metadata.get(f"{key}-email", Commented())
             emails = email_field.value_or("").strip().split(",")
             fields = (name_field, email_field)
             comments = [f.comment for f in fields if f.has_comment()]
