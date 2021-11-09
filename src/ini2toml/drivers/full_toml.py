@@ -124,11 +124,9 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
         v and isinstance(v, (list, Mapping, UserList)) or isinstance(k, CommentKey)
         for k, v in obj.items()
     ):
-        out = table()
+        return _convert_irepr_to_toml(obj, table())
     else:
-        out = inline_table()
-
-    return _convert_irepr_to_toml(obj, out)
+        return _convert_irepr_to_toml(obj, inline_table())
 
 
 @collapse.register(dict)

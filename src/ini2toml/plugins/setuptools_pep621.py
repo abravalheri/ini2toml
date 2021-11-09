@@ -14,6 +14,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 from packaging.requirements import Requirement
@@ -299,7 +300,7 @@ class SetuptoolsPEP621:
         if len(list(readme.keys())) == 1 and "file" in readme:
             metadata["long-description"] = readme["file"]
         else:
-            metadata["long-description"] = IR(readme)
+            metadata["long-description"] = IR(readme)  # type: ignore[arg-type]
         metadata.rename("long-description", "readme")
         return doc
 
@@ -325,6 +326,7 @@ class SetuptoolsPEP621:
             return doc
 
         if files_as_list:
+            files = cast(CommentedList[str], files)
             license = IR(file=Commented(files_as_list[0], files[0].comment))
         elif "license" in metadata:
             license = IR(text=metadata["license"])
