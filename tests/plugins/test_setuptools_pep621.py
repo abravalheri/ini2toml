@@ -159,7 +159,7 @@ def test_move_entry_points_and_apply_value_processing(plugin, parse, convert):
 
 # ----
 
-example_separate_subtables = """\
+example_split_subtables = """\
 [options.packages.find]
 where = src
 [project:entry-points]
@@ -168,7 +168,7 @@ where = src
 django-admin = django.core.management:execute_from_command_line
 """
 
-expected_separate_subtables = """\
+expected_split_subtables = """\
 [tool]
 [tool.setuptools]
 [tool.setuptools.packages]
@@ -185,13 +185,13 @@ django-admin = "django.core.management:execute_from_command_line"
 
 
 def test_split_subtables(plugin, parse, convert):
-    doc = parse(example_separate_subtables.strip())
+    doc = parse(example_split_subtables.strip())
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.split_subtables(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_separate_subtables.strip()
+    assert convert(doc).strip() == expected_split_subtables.strip()
 
 
 # ----
