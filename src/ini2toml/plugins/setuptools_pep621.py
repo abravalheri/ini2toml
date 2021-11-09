@@ -7,13 +7,13 @@ from typing import (
     Dict,
     List,
     Mapping,
+    Optional,
     Sequence,
     Set,
     Tuple,
     Type,
     TypeVar,
     Union,
-    cast,
 )
 
 from ..transformations import (
@@ -21,12 +21,12 @@ from ..transformations import (
     coerce_bool,
     deprecated,
     kebab_case,
-    remove_prefixes,
+    noop,
     split_comment,
     split_kv_pairs,
     split_list,
 )
-from ..types import CommentedList, CommentKey, HiddenKey
+from ..types import Commented, CommentedKV, CommentedList, CommentKey, HiddenKey
 from ..types import IntermediateRepr as IR
 from ..types import Transformation, Translator, WhitespaceKey
 from .best_effort import BestEffort
@@ -51,8 +51,10 @@ split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
 split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
 split_bool = partial(split_comment, coerce_fn=coerce_bool)
-split_kv_nocomments = partial(split_kv_pairs, comment_prefixes="")
 split_kv_of_lists = partial(split_kv_pairs, coerce_fn=split_list_comma)
+# URLs can contain the # symbol
+split_kv_urls = partial(split_kv_pairs, comment_prefixes=(" #",))
+split_url = partial(split_comment, comment_prefixes=(" #",))
 
 SECTION_SPLITTER = re.compile(r"\.|:")
 SETUPTOOLS_SECTIONS = ("metadata", "options")
@@ -114,50 +116,59 @@ class SetuptoolsPEP621:
             "home-page": "url",
         }
 
-    def setupcfg_directives(self):
-        """``setup.cfg`` directives, as defined in:
-        https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
-        """
-        return {
-            ("metadata", "version"): ("file", "attr"),
-            ("metadata", "classifiers"): ("file",),
-            ("metadata", "description"): ("file",),
-            ("metadata", "long-description"): ("file",),
-            ("options", "entry-points"): ("file",),
-            ("options", "packages"): ("find", "find_namespace"),
-        }
-
     def processing_rules(self) -> ProcessingRules:
         """Value type processing, as defined in:
         https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
         """
+        # If not present bellow will be transformed via split_comment by default
         return {
-            ("metadata", "classifiers"): split_list_comma,
-            # => ("metadata", "license_files",): in PEP621 should be a single file
+            ("metadata", "version"): directive("file", "attr"),
+            ("metadata", "classifiers"): directive("file", orelse=split_list_comma),
             ("metadata", "keywords"): split_list_comma,
-            # => ("metadata", "project-urls") => merge_and_rename_urls
-            # ("metadata", "long-description-content-type") =>
-            #     merge_and_rename_long_description_and_content_type
+            ("metadata", "description"): directive("file"),
+            # ---
+            ("metadata", "long-description"): directive("file", orelse=noop),
+            ("metadata", "long-description-content-type"): split_hash_comment,
+            # => NOTICE: further processed via
+            #            `merge_and_rename_long_description_and_content_type`
+            # ---
+            ("metadata", "license"): split_comment,
+            ("metadata", "license-files"): split_list_comma,
+            # => NOTICE: in PEP 621, it should be a single file
+            #            further processed via `merge_license_and_files`
+            # ---
+            ("metadata", "url"): split_url,
+            ("metadata", "download-url"): split_url,
+            ("metadata", "project-urls"): split_kv_urls,
+            # => NOTICE: further processed via `merge_and_rename_urls`
+            # ---- Not covered by PEP 621 ----
+            ("metadata", "platforms"): split_list_comma,
+            # ---
             ("metadata", "provides"): split_list_comma,
             ("metadata", "requires"): split_list_comma,
             ("metadata", "obsoletes"): split_list_comma,
-            ("metadata", "platforms"): split_list_comma,
-            # ----
+            # => NOTICE: not supported by pip
+            # ---- Options ----
             ("options", "zip-safe"): split_bool,
             ("options", "setup-requires"): split_list_semi,
             ("options", "install-requires"): split_list_semi,
             ("options", "tests-require"): split_list_semi,
-            ("options", "script"): split_list_comma,
+            ("options", "scripts"): split_list_comma,
             ("options", "eager-resources"): split_list_comma,
             ("options", "dependency-links"): deprecated(
                 "dependency-links", split_list_comma
             ),  # noqa
+            ("options", "entry-points"): directive(
+                "file", orelse=value_error("option.entry-points")
+            ),
             ("options", "include-package-data"): split_bool,
-            ("options", "packages"): split_list_comma,
             ("options", "package-dir"): split_kv_pairs,
             ("options", "namespace-packages"): split_list_comma,
             ("options", "py-modules"): split_list_comma,
             ("options", "data-files"): deprecated("data-files", split_kv_of_lists),
+            ("options", "packages"): directive(
+                "find", "find_namespace", orelse=split_list_comma
+            ),
             ("options.packages.find", "include"): split_list_comma,
             ("options.packages.find", "exclude"): split_list_comma,
         }
@@ -186,18 +197,19 @@ class SetuptoolsPEP621:
         #  url => urls.homepage
         #  download-url => urls.download
         #  project-urls => urls
-        metadata = cast(IR, doc["metadata"])
-        new_urls = (
-            f"{dest} = {metadata.pop(orig)}"
+        metadata: IR = doc["metadata"]
+        new_urls = [
+            (dest, metadata.pop(orig))
             for orig, dest in [("url", "Homepage"), ("download-url", "Download")]
             if orig in metadata
-        )
-        urls = "\n".join(chain(new_urls, [metadata.get("project-urls", "")]))
-        urls = urls.strip()
-        if urls:
-            urls_kv = split_kv_nocomments(urls)
+        ]
+        urls = metadata.get("project-urls", CommentedKV())
+        for k, v in reversed(new_urls):
+            urls.insert_line(0, [(k, v.value)], v.comment)
+
+        if urls.as_dict():
             keys = ("project-urls", "url", "download-url")
-            metadata.replace_first_remove_others(keys, "urls", urls_kv)
+            metadata.replace_first_remove_others(keys, "urls", urls)
         return doc
 
     def process_authors_maintainers_and_emails(self, doc: R) -> R:
@@ -226,23 +238,40 @@ class SetuptoolsPEP621:
         # long_description => readme.text
         # long-description-content-type => readme.content-type
         metadata: IR = doc["metadata"]
-        if "long-description" not in metadata:
+        long_desc: Union[Directive, str, None] = metadata.get("long-description")
+        if not long_desc:
+            metadata.pop("long-description", None)
             metadata.pop("long-description-content-type", None)
             return doc
-        long_desc = metadata["long-description"].strip()
-        readme: dict = {}
-        if long_desc.startswith("file:"):
-            readme = {"file": remove_prefixes(long_desc, ("file:",)).strip()}
-        elif long_desc:
-            readme = {"text": long_desc}
+
+        readme: Dict[str, Any] = {}
+        dynamic = False
+        if isinstance(long_desc, Directive):
+            # In PEP 621 "readme" should be a single file
+            files: CommentedList[str] = long_desc["file"]
+            files_list = files.as_list()
+            if len(files_list) == 1:
+                readme = {"file": Commented(files_list[0], files[0].comment)}
+            else:
+                readme = dict(long_desc)
+                dynamic = True
+        else:
+            readme = {"text": long_desc.strip()}
+
         content_type = metadata.pop("long-description-content-type", None)
         if content_type:
-            readme["content-type"] = split_hash_comment(content_type)
+            readme["content-type"] = content_type
+
+        if dynamic:
+            metadata.setdefault("dynamic", []).append("readme")
+            doc.setdefault("options.dynamic", IR()).append("readme", readme)
+            metadata.pop("long-description")
+            return doc
+
         if len(list(readme.keys())) == 1 and "file" in readme:
-            metadata["long-description"] = split_comment(readme["file"])
+            metadata["long-description"] = readme["file"]
         else:
-            readme_ = IR({k: split_comment(v) for k, v in readme.items()})
-            metadata["long-description"] = readme_
+            metadata["long-description"] = IR(readme)
         metadata.rename("long-description", "readme")
         return doc
 
@@ -251,29 +280,31 @@ class SetuptoolsPEP621:
         # license-files => license.file
         # license => license.text
         metadata: IR = doc["metadata"]
+        files: Optional[CommentedList[str]] = metadata.get("license-files")
+        files_as_list = files and files.as_list()
 
         # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
-        if "license-files" in metadata and any(
-            char in metadata["license-files"] for char in ",*?["  # file list or glob
+        if files_as_list and (
+            len(files_as_list) > 1
+            or any(char in files_as_list[0] for char in "*?[")  # glob pattern
         ):
-            files = split_list_comma(metadata["license-files"].strip())
             metadata.setdefault("dynamic", []).append("license")
             dynamic = doc.setdefault("options.dynamic", IR())
-            dynamic.append("license", {"file": files})
+            dynamic.append("license", {"file": files_as_list})
             # 'file' and 'text' are mutually exclusive in PEP 621
             metadata.pop("license", None)
             metadata.pop("license-files", None)
             return doc
 
-        naming = {"license-files": "file", "license": "text"}
-        items = [
-            (v, split_comment(metadata[k])) for k, v in naming.items() if k in metadata
-        ]
-        if not metadata or not items:
+        if files_as_list:
+            license = IR(file=Commented(files_as_list[0], files[0].comment))
+        elif "license" in metadata:
+            license = IR(text=metadata["license"])
+        else:
             return doc
-        # 'file' and 'text' are mutually exclusive in PEP 621
-        license = IR(dict(items[:1]))
-        metadata.replace_first_remove_others(list(naming.keys()), "license", license)
+
+        fields = ("license-files", "license")
+        metadata.replace_first_remove_others(fields, "license", license)
         return doc
 
     def move_and_split_entrypoints(self, doc: R) -> R:
@@ -289,9 +320,9 @@ class SetuptoolsPEP621:
         script_keys += [k.replace("-", "_") for k in script_keys]
         keys = (k for k in script_keys if k in entrypoints)
         for key in keys:
-            scripts = split_kv_pairs(entrypoints.pop(key)).to_ir()
+            scripts: CommentedKV = entrypoints.pop(key)
             new_key = key.replace("_", "-").replace("console-", "")
-            doc.append(f"project:{new_key}", scripts)
+            doc.append(f"project:{new_key}", scripts.to_ir())
         if not entrypoints or all(isinstance(k, WhitespaceKey) for k in entrypoints):
             doc.pop("project:entry-points")
         return doc
@@ -316,7 +347,7 @@ class SetuptoolsPEP621:
     def rename_script_files(self, doc: R) -> R:
         # setuptools define a ``options.scripts`` parameters that refer to
         # script files, not created via enty-points
-        # To avoid confution with PEP621 scripts (generated via entry-points)
+        # To avoid confution with PEP 621 scripts (generated via entry-points)
         # let's rename this field to `script-files`
         doc["options"].rename("scripts", "script-files", ignore_missing=True)
         return doc
@@ -341,17 +372,6 @@ class SetuptoolsPEP621:
                 doc[k] = section
                 doc.rename(k, ("distutils", k))
         return doc
-
-    def convert_directives(self, out: R) -> R:
-        for (section, option), directives in self.setupcfg_directives().items():
-            value = out.get(section, {}).get(option, None)
-            if not (
-                isinstance(value, str)
-                and any(value.startswith(directive) for directive in directives)
-            ):
-                continue
-            out[section][option] = split_directive(value, directives)
-        return out
 
     def split_subtables(self, out: R) -> R:
         """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
@@ -388,11 +408,11 @@ class SetuptoolsPEP621:
 
     def fix_dynamic(self, doc: R) -> R:
         potential = ["version", "classifiers", "description"]
-        directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
+        # directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
         metadata, options = doc["metadata"], doc["options"]
 
         field_falues = ((f, metadata.get(f)) for f in potential)
-        fields = [f for f, v in field_falues if isdirective(v, directives[f])]
+        fields = [f for f, v in field_falues if isinstance(v, Directive)]
 
         dynamic = {f: metadata.pop(f, None) for f in fields}
         if "version" not in metadata and "version" not in dynamic:
@@ -406,7 +426,7 @@ class SetuptoolsPEP621:
 
         extras: List[str] = []
         ep = options.pop("entry-points", None)
-        if isdirective(ep, ("file",)):
+        if isinstance(ep, Directive):
             fields.append("entry-points")
             dynamic["entry-points"] = ep
             extras = ["scripts", "gui-scripts"]
@@ -421,44 +441,31 @@ class SetuptoolsPEP621:
 
     def fix_packages(self, doc: R) -> R:
         options = doc["options"]
-        packages = options.get("packages", CommentedList()).as_list()
-
         # Abort when not using find or find_namespace
-        if not packages or len(packages) > 1:
+        packages = options.get("packages")
+        if not isinstance(packages, Directive):
             return doc
-        prefixes = ["find", *[f"find{_}namespace" for _ in "_-"]]
-        prefix = next((p for p in prefixes if packages[0] == f"{p}:"), None)
-        if not prefix:
-            return doc
-
-        kebab_prefix = prefix.replace("_", "-")
-        options["packages"] = {kebab_prefix: {}}
+        prefix = packages.kind.replace("_", "-")
+        options["packages"] = {prefix: {}}
         if "options.packages.find" in doc:
             options.pop("packages")
-            doc.rename("options.packages.find", f"options.packages.{kebab_prefix}")
-        return doc
-
-    def fix_setup_requires(self, doc: R) -> R:
-        """Add mandatory dependencies if they are missing"""
-        options = doc["options"]
-        requirements = options.get("setup-requires", "")
-        if not requirements:
-            return doc
-        req = requirements.splitlines()
-        if len(req) > 1:
-            joiner = "\n"
-        else:
-            joiner = "; "
-            req = req[0].split(";")
-        build_req = doc["build-system"]["requires"]
-        req.extend(d for d in build_req if d not in requirements)
-        options["setup-requires"] = joiner.join(req)
+            doc.rename("options.packages.find", f"options.packages.{prefix}")
         return doc
 
     def move_setup_requires(self, doc: R) -> R:
+        """Add mandatory dependencies if they are missing and move setup_requires to
+        PEP 518 compatible field.
+        """
         options = doc["options"]
+        build_system = doc["build-system"]
         if "setup-requires" in options:
-            doc["build-system"]["requires"] = options.pop("setup-requires")
+            requirements: CommentedList[str] = options.pop("setup-requires")
+            req = "\n".join(requirements.as_list())
+            for mandatory in reversed(self.BUILD_REQUIRES):
+                if mandatory not in req:
+                    requirements.insert_line(0, [mandatory])
+            build_system["requires"] = requirements
+
         return doc
 
     def ensure_pep518(self, doc: R) -> R:
@@ -485,7 +492,6 @@ class SetuptoolsPEP621:
         """
         transformations = [
             # --- value processing and type changes ---
-            self.convert_directives,
             self.apply_value_processing,
             # --- transformations mainly focusing on PEP 621 ---
             self.merge_and_rename_urls,
@@ -497,11 +503,8 @@ class SetuptoolsPEP621:
             self.rename_script_files,
             self.remove_metadata_not_in_pep621,
             self.fix_packages,
-            self.fix_setup_requires,
             self.fix_dynamic,
-            # --- value processing and type changes ---
-            # self.convert_directives,
-            # self.apply_value_processing,
+            # --- distutils ---
             self.parse_setup_py_command_options,
             # --- steps that depend on the values being processed ---
             self.move_setup_requires,
@@ -560,20 +563,48 @@ class SetuptoolsPEP621:
 # ---- Helpers ----
 
 
-def isdirective(value: Any, directives: Sequence[str] = ("file", "attr")) -> bool:
-    return (
-        isinstance(value, Mapping)
-        and len(value) == 1
-        and next(iter(value)) in directives
-    )
+class Directive(dict):
+    """Represent a setuptools' setup.cfg directive (e.g 'file:', 'attr:')
+
+    In TOML these directives can be represented as dict-like objects, however in the
+    conversion algorithm we need to be able to differentiate between them.
+    By inheriting from dict, we can use directive classes interchangeably but also check
+    using `isinstance(obj, Directive)`.
+    """
+
+    def __init__(self, kind: str, args: Any):
+        self.kind = kind
+        self.args = Any
+        super().__init__(((kind, args),))
 
 
-def split_directive(value: str, directives: Sequence[str] = ("file", "attr")) -> dict:
-    directive = next(d for d in directives if value.strip().startswith(f"{d}:"))
+def directive(*directives: str, orelse=split_comment):
+    """:obj:`~functools.partial` form of :func:`split_directive`"""
+    directives = directives or ("file", "attr")
+    return partial(split_directive, directives=directives, orelse=orelse)
+
+
+def split_directive(
+    value: str, directives: Sequence[str] = ("file", "attr"), orelse=split_comment
+):
+    candidates = (d for d in directives if value.strip().startswith(f"{d}:"))
+    directive = next(candidates, None)
+    if directive is None:
+        return orelse(value)
+
     raw_value = value.lstrip()[len(directive) + 1 :].strip()
     if directive == "file":
-        return {directive: split_list_comma(raw_value)}
-    return {directive: split_comment(raw_value)}
+        return Directive(directive, split_list_comma(raw_value))
+    return Directive(directive, split_comment(raw_value))
+
+
+def value_error(field: str):
+    """Simply raise a :exc:`ValueError` when used as a transformation function"""
+
+    def _fn(value):
+        raise ValueError(f"Invalid value for {field!r}: {value!r}")
+
+    return _fn
 
 
 def _distutils_commands() -> Set[str]:

@@ -1,7 +1,6 @@
 [project]
 name = "my_package"
 description = "My package description"
-readme = "README.rst, CHANGELOG.rst, LICENSE.rst"
 keywords = ["one", "two"]
 classifiers = [
     "Framework :: Django",
@@ -9,7 +8,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.5",
 ]
-dynamic = ["version"]
+dynamic = ["readme", "version"]
 dependencies = [
     "requests",
     "importlib; python_version == \"2.6\"",
@@ -56,4 +55,5 @@ data = ["data/img/logo.png", "data/svg/icon.svg"]
 fonts = ["data/fonts/*.ttf", "data/fonts/*.otf"]
 
 [tool.setuptools.dynamic]
+readme = {file = ["README.rst", "CHANGELOG.rst", "LICENSE.rst"]}
 version = {attr = "src.VERSION"}

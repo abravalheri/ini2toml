@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from ini2toml.plugins.setuptools_pep621 import SetuptoolsPEP621, activate, isdirective
+from ini2toml.plugins.setuptools_pep621 import Directive, SetuptoolsPEP621, activate
 from ini2toml.translator import Translator
 
 
@@ -70,11 +70,11 @@ packages = find_namespace:
 expected_convert_directives = """\
 [metadata]
 version = {attr = "mymodule.myfunc"}
-classifiers = {file = "CLASSIFIERS.txt"}
-description = {file = "README.txt"}
+classifiers = {file = ["CLASSIFIERS.txt"]}
+description = {file = ["README.txt"]}
 
 [options]
-entry-points = {file = "ENTRYPOINTS.txt"}
+entry-points = {file = ["ENTRYPOINTS.txt"]}
 packages = {find_namespace = ""}
 """
 
@@ -83,7 +83,7 @@ def test_convert_directives(plugin, parse, convert):
     doc = parse(example_convert_directives)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.convert_directives(doc)
+    doc = plugin.apply_value_processing(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc) == expected_convert_directives
@@ -147,10 +147,10 @@ putup = "pyscaffold.cli:run" # CLI exec
 
 def test_move_entry_points_and_apply_value_processing(plugin, parse, convert):
     doc = parse(example_apply_value_processing)
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.move_and_split_entrypoints(doc)
-    doc = plugin.apply_value_processing(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     text = convert(doc).strip()
@@ -235,10 +235,10 @@ project = "my.module:function [extra-dep]"
 
 def test_entrypoints_and_split_subtables(plugin, parse, convert):
     doc = parse(example_entrypoints_and_split_subtables.strip())
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.move_and_split_entrypoints(doc)
-    doc = plugin.apply_value_processing(doc)
     doc = plugin.split_subtables(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
@@ -263,6 +263,7 @@ file = "LICENSE.txt"
 
 def test_merge_license_and_files(plugin, parse, convert):
     doc = parse(example_fix_license.strip())
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.merge_license_and_files(doc)
@@ -276,7 +277,7 @@ def test_merge_license_and_files(plugin, parse, convert):
 
 example_fix_packages = """\
 [options]
-packages = find-namespace:
+packages = find_namespace:
 [options.packages.find]
 where = src
 exclude =
@@ -306,31 +307,30 @@ def test_fix_packages(plugin, parse, convert):
 # ----
 
 
-example_fix_setup_requires = """\
+example_move_setup_requires = """\
 [options]
 setup-requires =
     setuptools>=46.1.0
     setuptools_scm>=5
 """
 
-expected_fix_setup_requires = """\
+expected_move_setup_requires = """\
 [build-system]
 requires = [
+    "wheel",
     "setuptools>=46.1.0",
     "setuptools_scm>=5",
-    "wheel",
 ]
 build-backend = "setuptools.build_meta"
 """
 
 
-def test_fix_setup_requires(plugin, parse, convert):
+def test_move_setup_requires(plugin, parse, convert):
     doc = plugin.template()
-    doc.update(parse(example_fix_setup_requires.strip()))
+    doc.update(parse(example_move_setup_requires.strip()))
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.fix_setup_requires(doc)
-    doc = plugin.apply_value_processing(doc)
     doc = plugin.move_setup_requires(doc)
     doc.pop("tool", None)
     doc.pop("options", None)
@@ -338,7 +338,7 @@ def test_fix_setup_requires(plugin, parse, convert):
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     text = convert(doc).strip()
-    assert text == expected_fix_setup_requires.strip()
+    assert text == expected_move_setup_requires.strip()
 
 
 example_dynamic = """\
@@ -371,20 +371,23 @@ entry-points = {file = ["entry-points.txt"]}
 """  # noqa
 
 
-def test_isdirective(plugin, parse, convert):
+def test_directives(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
-    doc = plugin.convert_directives(doc)
-    assert isdirective(doc["metadata"]["version"], ("attr",))
-    assert isdirective(doc["metadata"]["classifiers"])
-    assert isdirective(doc["metadata"]["description"], ("file",))
-    assert isdirective(doc["options"]["entry-points"])
-    assert not isdirective("")
-    assert not isdirective("some value")
+    doc = plugin.apply_value_processing(doc)
+    assert isinstance(doc["metadata"]["version"], Directive)
+    assert doc["metadata"]["version"].kind == "attr"
+
+    assert isinstance(doc["metadata"]["classifiers"], Directive)
+
+    assert isinstance(doc["metadata"]["description"], Directive)
+    assert doc["metadata"]["description"].kind == "file"
+
+    assert isinstance(doc["options"]["entry-points"], Directive)
 
 
 def test_fix_dynamic(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
-    doc = plugin.convert_directives(doc)
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.fix_dynamic(doc)

@@ -12,6 +12,7 @@ from typing import (
     Any,
     Dict,
     Generic,
+    Iterable,
     List,
     Mapping,
     MutableMapping,
@@ -204,6 +205,11 @@ class CommentedList(Generic[T], UserList):
                 out.append(value)
         return out
 
+    def insert_line(self, i, values: Iterable[T], comment: Optional[str] = None):
+        values = list(values)
+        if values or comment:
+            self.insert(i, Commented(values, comment))
+
 
 class CommentedKV(Generic[T], UserList):
     def __init__(self, data: Sequence[Commented[List[KV[T]]]] = ()):
@@ -215,6 +221,11 @@ class CommentedKV(Generic[T], UserList):
                 if item[0] == key:
                     return (i, j)
         return None
+
+    def insert_line(self, i, values: Iterable[KV[T]], comment: Optional[str] = None):
+        values = list(values)
+        if values or comment:
+            self.insert(i, Commented(values, comment))
 
     def as_dict(self) -> dict:
         out = {}
