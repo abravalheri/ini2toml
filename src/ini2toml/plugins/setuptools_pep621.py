@@ -195,6 +195,25 @@ class SetuptoolsPEP621:
             if isinstance(k, str)
         }
 
+    def apply_value_processing(self, doc: R) -> R:
+        default = {
+            (name, option): split_comment
+            for name, section in doc.items()
+            if name in ("metadata", "options")
+            for option in section
+            if isinstance(option, (str, tuple))
+        }
+        transformations: dict = {
+            **default,
+            **self.processing_rules(),
+            **self.dependent_processing_rules(doc),
+        }
+        for (section, option), fn in transformations.items():
+            value = doc.get(section, {}).get(option, None)
+            if value is not None:
+                doc[section][option] = fn(value)
+        return doc
+
     def merge_and_rename_urls(self, doc: R) -> R:
         #  url => urls.homepage
         #  download-url => urls.download
@@ -361,51 +380,17 @@ class SetuptoolsPEP621:
         doc["options"].rename("scripts", "script-files", ignore_missing=True)
         return doc
 
-    def parse_setup_py_command_options(self, doc: R) -> R:
-        # ---- distutils/setuptools command specifics outside of "options" ----
-        sections = list(doc.keys())
-        commands = _distutils_commands()
-        for k in sections:
-            if isinstance(k, str) and k in commands:
-                section = self._be.apply_best_effort_to_section(doc[k])
-                for option in section:
-                    if isinstance(option, str):
-                        section.rename(option, self.normalise_key(option))
-                doc[k] = section
-                doc.rename(k, ("distutils", k))
-        return doc
-
-    def split_subtables(self, out: R) -> R:
-        """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
-        sections = [
-            k
-            for k in out.keys()
-            if isinstance(k, str) and (k.startswith("options.") or ":" in k)
-        ]
-        for section in sections:
-            new_key = SECTION_SPLITTER.split(section)
-            if section.startswith("options."):
-                new_key = ["tool", "setuptools", *new_key[1:]]
-            out.rename(section, tuple(new_key))
-        return out
-
-    def apply_value_processing(self, doc: R) -> R:
-        default = {
-            (name, option): split_comment
-            for name, section in doc.items()
-            if name in ("metadata", "options")
-            for option in section
-            if isinstance(option, (str, tuple))
-        }
-        transformations: dict = {
-            **default,
-            **self.processing_rules(),
-            **self.dependent_processing_rules(doc),
-        }
-        for (section, option), fn in transformations.items():
-            value = doc.get(section, {}).get(option, None)
-            if value is not None:
-                doc[section][option] = fn(value)
+    def fix_packages(self, doc: R) -> R:
+        options = doc["options"]
+        # Abort when not using find or find_namespace
+        packages = options.get("packages")
+        if not isinstance(packages, Directive):
+            return doc
+        prefix = packages.kind.replace("_", "-")
+        options["packages"] = {prefix: {}}
+        if "options.packages.find" in doc:
+            options.pop("packages")
+            doc.rename("options.packages.find", f"options.packages.{prefix}")
         return doc
 
     def fix_dynamic(self, doc: R) -> R:
@@ -441,19 +426,6 @@ class SetuptoolsPEP621:
             # ^ later `options.dynamic` is converted to `tool.setuptools.dynamic`
         return doc
 
-    def fix_packages(self, doc: R) -> R:
-        options = doc["options"]
-        # Abort when not using find or find_namespace
-        packages = options.get("packages")
-        if not isinstance(packages, Directive):
-            return doc
-        prefix = packages.kind.replace("_", "-")
-        options["packages"] = {prefix: {}}
-        if "options.packages.find" in doc:
-            options.pop("packages")
-            doc.rename("options.packages.find", f"options.packages.{prefix}")
-        return doc
-
     def move_setup_requires(self, doc: R) -> R:
         """Add mandatory dependencies if they are missing and move setup_requires to
         PEP 518 compatible field.
@@ -474,6 +446,34 @@ class SetuptoolsPEP621:
             build_system["requires"] = requirements
 
         return doc
+
+    def parse_setup_py_command_options(self, doc: R) -> R:
+        # ---- distutils/setuptools command specifics outside of "options" ----
+        sections = list(doc.keys())
+        commands = _distutils_commands()
+        for k in sections:
+            if isinstance(k, str) and k in commands:
+                section = self._be.apply_best_effort_to_section(doc[k])
+                for option in section:
+                    if isinstance(option, str):
+                        section.rename(option, self.normalise_key(option))
+                doc[k] = section
+                doc.rename(k, ("distutils", k))
+        return doc
+
+    def split_subtables(self, out: R) -> R:
+        """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
+        sections = [
+            k
+            for k in out.keys()
+            if isinstance(k, str) and (k.startswith("options.") or ":" in k)
+        ]
+        for section in sections:
+            new_key = SECTION_SPLITTER.split(section)
+            if section.startswith("options."):
+                new_key = ["tool", "setuptools", *new_key[1:]]
+            out.rename(section, tuple(new_key))
+        return out
 
     def ensure_pep518(self, doc: R) -> R:
         """PEP 518 specifies that any other tool adding configuration under
@@ -503,8 +503,8 @@ class SetuptoolsPEP621:
             # --- transformations mainly focusing on PEP 621 ---
             self.merge_and_rename_urls,
             self.merge_authors_maintainers_and_emails,
-            self.merge_license_and_files,
             self.merge_and_rename_long_description_and_content_type,
+            self.merge_license_and_files,
             self.move_and_split_entrypoints,
             self.move_options_missing_in_pep621,
             self.remove_metadata_not_in_pep621,
