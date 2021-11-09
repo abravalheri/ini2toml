@@ -134,7 +134,6 @@ class SetuptoolsPEP621:
             # => NOTICE: further processed via
             #            `merge_and_rename_long_description_and_content_type`
             # ---
-            ("metadata", "license"): split_comment,
             ("metadata", "license-files"): split_list_comma,
             # => NOTICE: in PEP 621, it should be a single file
             #            further processed via `merge_license_and_files`
@@ -175,10 +174,9 @@ class SetuptoolsPEP621:
             ("options.packages.find", "exclude"): split_list_comma,
         }
         # See also dependent_processing_rules
-        # Everything else should use split_comment
 
     def dependent_processing_rules(self, doc: IR) -> ProcessingRules:
-        """Dynamically create processing rules, such as :func:`value_processing` based
+        """Dynamically create processing rules, such as :func:`processing_rules` based
         on the existing document.
         """
         groups: Mapping[str, Transformation] = {
