@@ -380,7 +380,7 @@ class SetuptoolsPEP621:
         doc["options"].rename("scripts", "script-files", ignore_missing=True)
         return doc
 
-    def fix_packages(self, doc: R) -> R:
+    def handle_packages(self, doc: R) -> R:
         options = doc["options"]
         # Abort when not using find or find_namespace
         packages = options.get("packages")
@@ -393,7 +393,7 @@ class SetuptoolsPEP621:
             doc.rename("options.packages.find", f"options.packages.{prefix}")
         return doc
 
-    def fix_dynamic(self, doc: R) -> R:
+    def handle_dynamic(self, doc: R) -> R:
         potential = ["version", "classifiers", "description"]
         # directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
         metadata, options = doc["metadata"], doc["options"]
@@ -510,8 +510,8 @@ class SetuptoolsPEP621:
             self.remove_metadata_not_in_pep621,
             # --- General fixes
             self.rename_script_files,
-            self.fix_packages,
-            self.fix_dynamic,
+            self.handle_packages,
+            self.handle_dynamic,
             self.move_setup_requires,
             # --- distutils ---
             self.parse_setup_py_command_options,

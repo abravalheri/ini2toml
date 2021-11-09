@@ -248,13 +248,13 @@ def test_entrypoints_and_split_subtables(plugin, parse, convert):
 # ----
 
 
-example_fix_license = """\
+example_merge_license = """\
 [metadata]
 license = MPL-2.0
 license-files = LICENSE.txt
 """
 
-expected_fix_license = """\
+expected_merge_license = """\
 [metadata]
 [metadata.license]
 file = "LICENSE.txt"
@@ -262,20 +262,20 @@ file = "LICENSE.txt"
 
 
 def test_merge_license_and_files(plugin, parse, convert):
-    doc = parse(example_fix_license.strip())
+    doc = parse(example_merge_license.strip())
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.merge_license_and_files(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_fix_license.strip()
+    assert convert(doc).strip() == expected_merge_license.strip()
 
 
 # ----
 
 
-example_fix_packages = """\
+example_handle_packages = """\
 [options]
 packages = find_namespace:
 [options.packages.find]
@@ -284,7 +284,7 @@ exclude =
     tests
 """
 
-expected_fix_packages = """\
+expected_handle_packages = """\
 [options]
 
 ["options.packages.find-namespace"]
@@ -293,15 +293,15 @@ exclude = ["tests"]
 """
 
 
-def test_fix_packages(plugin, parse, convert):
-    doc = parse(example_fix_packages.strip())
+def test_handle_packages(plugin, parse, convert):
+    doc = parse(example_handle_packages.strip())
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.fix_packages(doc)
+    doc = plugin.handle_packages(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_fix_packages.strip()
+    assert convert(doc).strip() == expected_handle_packages.strip()
 
 
 # ----
@@ -385,12 +385,12 @@ def test_directives(plugin, parse, convert):
     assert isinstance(doc["options"]["entry-points"], Directive)
 
 
-def test_fix_dynamic(plugin, parse, convert):
+def test_handle_dynamic(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.fix_dynamic(doc)
+    doc = plugin.handle_dynamic(doc)
     doc.pop("tool", None)
     doc.pop("options", None)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
