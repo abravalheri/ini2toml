@@ -1,6 +1,7 @@
 [project]
 name = "setuptools_scm"
 description = "the blessed package to manage your versions by scm tags"
+authors = [{name = "Ronny Pfannschmidt", email = "opensource@ronnypfannschmidt.de"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -29,10 +30,6 @@ dynamic = ["version"]
 [project.readme]
 file = "README.rst"
 content-type = "text/x-rst"
-
-[[project.author]]
-name = "Ronny Pfannschmidt"
-email = "opensource@ronnypfannschmidt.de"
 
 [project.license]
 file = "LICENSE"

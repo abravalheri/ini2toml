@@ -1,6 +1,7 @@
 [project]
 name = "PyScaffold"
 description = "Template tool for putting up the scaffold of a Python project"
+authors = [{name = "Florian Wilhelm", email = "Florian.Wilhelm@gmail.com"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Utilities",
@@ -32,10 +33,6 @@ dependencies = [
     # version they have installed...
 ]
 dynamic = ["version"]
-
-[[project.author]]
-name = "Florian Wilhelm"
-email = "Florian.Wilhelm@gmail.com"
 
 [project.license]
 text = "MIT"

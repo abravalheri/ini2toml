@@ -1,6 +1,7 @@
 [project]
 name = "pandas"
 description = "Powerful data structures for data analysis, time series, and statistics"
+authors = [{name = "The Pandas Development Team", email = "pandas-dev@python.org"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -26,10 +27,6 @@ dynamic = ["version"]
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
-
-[[project.author]]
-name = "The Pandas Development Team"
-email = "pandas-dev@python.org"
 
 [project.license]
 file = "LICENSE"

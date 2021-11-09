@@ -1,5 +1,6 @@
 [project]
 name = "Django"
+authors = [{name = "Django Software Foundation", email = "foundation@djangoproject.com"}]
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 readme = "README.rst"
 classifiers = [
@@ -28,10 +29,6 @@ dependencies = [
     "tzdata; sys_platform == 'win32'",
 ]
 dynamic = ["version"]
-
-[[project.author]]
-name = "Django Software Foundation"
-email = "foundation@djangoproject.com"
 
 [project.license]
 text = "BSD-3-Clause"

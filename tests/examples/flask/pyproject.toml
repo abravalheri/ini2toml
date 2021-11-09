@@ -1,5 +1,7 @@
 [project]
 name = "Flask"
+authors = [{name = "Armin Ronacher", email = "armin.ronacher@active-4.com"}]
+maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
 description = "A simple framework for building complex web applications."
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -29,14 +31,6 @@ Chat = "https://discord.gg/pallets"
 
 [project.license]
 text = "BSD-3-Clause"
-
-[[project.author]]
-name = "Armin Ronacher"
-email = "armin.ronacher@active-4.com"
-
-[[project.maintainer]]
-name = "Pallets"
-email = "contact@palletsprojects.com"
 
 [project.readme]
 file = "README.rst"

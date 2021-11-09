@@ -408,8 +408,7 @@ dynamic = ["version"]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool]
-[tool.setuptools]
+tool = {setuptools = {}}
 """
 
 
