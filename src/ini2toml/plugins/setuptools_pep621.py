@@ -194,6 +194,11 @@ class SetuptoolsPEP621:
         }
 
     def apply_value_processing(self, doc: R) -> R:
+        """Process ``setup.cfg`` values according to :meth:`processing_rules` and
+        :meth:`dependent_processing_rules`.
+
+        This function assumes all field names were normalised by :meth:`normalise_keys`.
+        """
         default = {
             (name, option): split_comment
             for name, section in doc.items()
@@ -213,9 +218,13 @@ class SetuptoolsPEP621:
         return doc
 
     def merge_and_rename_urls(self, doc: R) -> R:
-        #  url => urls.homepage
-        #  download-url => urls.download
-        #  project-urls => urls
+        """The following renames can be applied when comparing setuptools metadata and
+        :pep:`621`::
+
+            url => urls.homepage
+            download-url => urls.download
+            project-urls.* => urls.*
+        """
         metadata: IR = doc["metadata"]
         new_urls = [
             (dest, metadata.pop(orig))
@@ -232,23 +241,23 @@ class SetuptoolsPEP621:
         return doc
 
     def merge_authors_maintainers_and_emails(self, doc: R) -> R:
-        # author OR maintainer => <author/maintainer>.name
-        # author-email OR maintainer-email => <author/maintainer>.email
+        """When transforming setuptools metadata and :pep:`621`, we have to merge
+        ``author/maintainer`` and ``author-email/maintainer-email`` into a single
+        dict-like object with 2 keys.
+        """
         metadata: IR = doc["metadata"]
-        for key in ("author", "maintainer"):
-            name_field: Commented[str] = metadata.get(key, Commented())
-            names = name_field.value_or("").strip().split(",")
-            email_field: Commented[str] = metadata.get(f"{key}-email", Commented())
-            emails = email_field.value_or("").strip().split(",")
-            fields = (name_field, email_field)
-            comments = [f.comment for f in fields if f.has_comment()]
 
-            combined = {e: n for n, e in zip(names, emails) if n}  # deduplicate
-            out = [{"name": n, "email": e} for e, n in combined.items()]
-            if out:
-                keys = (key, f"{key}-email")
-                i = metadata.replace_first_remove_others(keys, key, out)
-                for j, cmt in enumerate(comments):
+        def _values(field):
+            commented: Commented[str] = metadata.get(field, Commented())
+            return commented.value_or("").strip().split(","), commented.comment
+
+        for key in ("author", "maintainer"):
+            fields = (key, f"{key}-email")
+            values, comments = zip(*(_values(f) for f in fields))
+            combined = [IR(name=n, email=e) for n, e in zip(*values) if n]
+            if combined:
+                i = metadata.replace_first_remove_others(fields, f"{key}s", combined)
+                for j, cmt in enumerate(c for c in comments if c):
                     metadata.insert(j + i + 1, CommentKey(), cmt)
         return doc
 
