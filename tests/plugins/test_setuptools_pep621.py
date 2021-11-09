@@ -294,10 +294,10 @@ exclude = ["tests"]
 
 def test_fix_packages(plugin, parse, convert):
     doc = parse(example_fix_packages.strip())
+    doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.fix_packages(doc)
-    doc = plugin.apply_value_processing(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_fix_packages.strip()

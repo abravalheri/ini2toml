@@ -193,7 +193,7 @@ class Commented(Generic[T]):
 
 
 class CommentedList(Generic[T], UserList):
-    def __init__(self, data: List[Commented[List[T]]]):
+    def __init__(self, data: Sequence[Commented[List[T]]] = ()):
         super().__init__(data)
 
     def as_list(self) -> list:
@@ -206,7 +206,7 @@ class CommentedList(Generic[T], UserList):
 
 
 class CommentedKV(Generic[T], UserList):
-    def __init__(self, data: List[Commented[List[KV[T]]]]):
+    def __init__(self, data: Sequence[Commented[List[KV[T]]]] = ()):
         super().__init__(data)
 
     def find(self, key: str) -> Optional[Tuple[int, int]]:

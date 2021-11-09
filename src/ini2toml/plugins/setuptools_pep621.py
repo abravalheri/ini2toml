@@ -26,7 +26,7 @@ from ..transformations import (
     split_kv_pairs,
     split_list,
 )
-from ..types import CommentKey, HiddenKey
+from ..types import CommentedList, CommentKey, HiddenKey
 from ..types import IntermediateRepr as IR
 from ..types import Transformation, Translator, WhitespaceKey
 from .best_effort import BestEffort
@@ -345,7 +345,10 @@ class SetuptoolsPEP621:
     def convert_directives(self, out: R) -> R:
         for (section, option), directives in self.setupcfg_directives().items():
             value = out.get(section, {}).get(option, None)
-            if not isinstance(value, str):
+            if not (
+                isinstance(value, str)
+                and any(value.startswith(directive) for directive in directives)
+            ):
                 continue
             out[section][option] = split_directive(value, directives)
         return out
@@ -418,13 +421,16 @@ class SetuptoolsPEP621:
 
     def fix_packages(self, doc: R) -> R:
         options = doc["options"]
-        packages = options.get("packages", "").strip()
-        if not packages:
+        packages = options.get("packages", CommentedList()).as_list()
+
+        # Abort when not using find or find_namespace
+        if not packages or len(packages) > 1:
             return doc
         prefixes = ["find", *[f"find{_}namespace" for _ in "_-"]]
-        prefix = next((p for p in prefixes if packages.startswith(f"{p}:")), None)
+        prefix = next((p for p in prefixes if packages[0] == f"{p}:"), None)
         if not prefix:
             return doc
+
         kebab_prefix = prefix.replace("_", "-")
         options["packages"] = {kebab_prefix: {}}
         if "options.packages.find" in doc:
