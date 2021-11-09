@@ -3,6 +3,7 @@ style preserving TOML editing libraries (e.g. atoml and atoml).
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
+from collections import UserList
 from collections.abc import Mapping, MutableSequence, Sequence
 from functools import singledispatch
 from typing import Iterable, Optional, Tuple, TypeVar, Union, cast
@@ -119,11 +120,13 @@ def _collapse_irepr(obj: IntermediateRepr, root=False):
     if root:
         return _convert_irepr_to_toml(obj, document())
 
-    rough_repr = repr(obj.elements)[1:-1].replace("{}", "")
-    # ^-- empty nested inline-tables are negligible
-
-    heuristic = len(rough_repr) > LONG or any(c in rough_repr for c in "{(\n")
-    out = table() if heuristic else inline_table()
+    if any(
+        v and isinstance(v, (list, Mapping, UserList)) or isinstance(k, CommentKey)
+        for k, v in obj.items()
+    ):
+        out = table()
+    else:
+        out = inline_table()
 
     return _convert_irepr_to_toml(obj, out)
 
@@ -204,7 +207,8 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
         elif isinstance(key, (int, str)):
             if isinstance(value, IntermediateRepr):
-                _convert_irepr_to_toml(value, out.setdefault(str(key), {}))
+                p = out.setdefault(str(key), {})
+                _convert_irepr_to_toml(value, p)
             else:
                 out[str(key)] = collapse(value)
     return out
