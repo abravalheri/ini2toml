@@ -16,6 +16,8 @@ from typing import (
     Union,
 )
 
+from packaging.requirements import Requirement
+
 from ..transformations import (
     apply,
     coerce_bool,
@@ -460,10 +462,15 @@ class SetuptoolsPEP621:
         build_system = doc["build-system"]
         if "setup-requires" in options:
             requirements: CommentedList[str] = options.pop("setup-requires")
-            req = "\n".join(requirements.as_list())
-            for mandatory in reversed(self.BUILD_REQUIRES):
-                if mandatory not in req:
-                    requirements.insert_line(0, [mandatory])
+            # Deduplicate
+            existing = {Requirement(r).name: r for r in requirements.as_list()}
+            mandatory = {
+                Requirement(r).name: r
+                for r in chain(build_system.get("requires", []), self.BUILD_REQUIRES)
+            }
+            new = [r for name, r in mandatory.items() if name not in existing]
+            for req in reversed(new):
+                requirements.insert_line(0, (req,))
             build_system["requires"] = requirements
 
         return doc
