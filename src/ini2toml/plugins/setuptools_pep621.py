@@ -1,7 +1,7 @@
 import logging
 import re
 from functools import partial, reduce
-from itertools import chain
+from itertools import chain, zip_longest
 from typing import (
     Any,
     Dict,
@@ -245,19 +245,30 @@ class SetuptoolsPEP621:
         """When transforming setuptools metadata and :pep:`621`, we have to merge
         ``author/maintainer`` and ``author-email/maintainer-email`` into a single
         dict-like object with 2 keys.
+        Some projects also provide multiple, comma separated, values for each field.
+        In that case we assume that the value for the i-th author/maintainer should be
+        paired with to the i-th author-email/maintainer-email value.
         """
         metadata: IR = doc["metadata"]
 
-        def _values(field):
+        def _split_values(field):
             commented: Commented[str] = metadata.get(field, Commented())
-            return commented.value_or("").strip().split(","), commented.comment
+            values = commented.value_or("").strip().split(",")
+            return (v.strip() for v in values), commented.comment
 
         for key in ("author", "maintainer"):
             fields = (key, f"{key}-email")
-            values, comments = zip(*(_values(f) for f in fields))
-            combined = [IR(name=n, email=e) for n, e in zip(*values) if n]
-            if combined:
-                i = metadata.replace_first_remove_others(fields, f"{key}s", combined)
+            values, comments = zip(*(_split_values(f) for f in fields))
+            combined = (
+                {k: v for k, v in zip(("name", "email"), person_data) if v}
+                # ^-- Remove empty fields
+                for person_data in zip_longest(*values, fillvalue="")
+            )
+            people = [IR(c) for c in combined if c]  # type: ignore[arg-type]
+
+            if people:
+                # author/maintainer => author**S**/maintainer**S**
+                i = metadata.replace_first_remove_others(fields, f"{key}s", people)
                 for j, cmt in enumerate(c for c in comments if c):
                     metadata.insert(j + i + 1, CommentKey(), cmt)
         return doc
