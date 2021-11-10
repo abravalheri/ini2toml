@@ -275,7 +275,7 @@ def test_merge_license_and_files(plugin, parse, convert):
 # ----
 
 
-example_handle_packages = """\
+example_handle_packages_find = """\
 [options]
 packages = find_namespace:
 [options.packages.find]
@@ -284,7 +284,7 @@ exclude =
     tests
 """
 
-expected_handle_packages = """\
+expected_handle_packages_find = """\
 [options]
 
 ["options.packages.find-namespace"]
@@ -293,15 +293,15 @@ exclude = ["tests"]
 """
 
 
-def test_handle_packages(plugin, parse, convert):
-    doc = parse(example_handle_packages.strip())
+def test_handle_packages_find(plugin, parse, convert):
+    doc = parse(example_handle_packages_find.strip())
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.handle_packages(doc)
+    doc = plugin.handle_packages_find(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_handle_packages.strip()
+    assert convert(doc).strip() == expected_handle_packages_find.strip()
 
 
 # ----

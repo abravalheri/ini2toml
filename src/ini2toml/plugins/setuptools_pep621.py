@@ -82,7 +82,7 @@ def activate(translator: Translator):
 
 
 class SetuptoolsPEP621:
-    """Convert settings to 'pyproject.toml' based on PEP 621"""
+    """Convert settings to ``pyproject.toml`` based on :pep:`621`"""
 
     BUILD_REQUIRES = ("setuptools", "wheel")
 
@@ -274,9 +274,17 @@ class SetuptoolsPEP621:
         return doc
 
     def merge_and_rename_long_description_and_content_type(self, doc: R) -> R:
-        # long_description.file => readme.file
-        # long_description => readme.text
-        # long-description-content-type => readme.content-type
+        """:pep:`621` offers a single field (``readme``) to cover things present in two
+        fields in ``setup.cfg``::
+
+            long_description.file => readme.file
+            long_description => readme.text
+            long-description-content-type => readme.content-type
+
+        We also have to be aware that :pep:`621` accepts a single file, so the option of
+        combining multiple files as presented in ``setup.cfg`` have to be handled via
+        ``dynamic``.
+        """
         metadata: IR = doc["metadata"]
         long_desc: Union[Directive, str, None] = metadata.get("long-description")
         if not long_desc:
@@ -316,9 +324,16 @@ class SetuptoolsPEP621:
         return doc
 
     def merge_license_and_files(self, doc: R) -> R:
-        # Prepare license before pep621_renaming
-        # license-files => license.file
-        # license => license.text
+        """In :pep:`621` we have a single field for license, which might have a single
+        value (file path) or a dict-like structure::
+
+            license-files => license.file
+            license => license.text
+
+        We also have to be aware that :pep:`621` accepts a single file, so the option of
+        combining multiple files as presented in ``setup.cfg`` have to be handled via
+        ``dynamic``.
+        """
         metadata: IR = doc["metadata"]
         files: Optional[CommentedList[str]] = metadata.get("license-files")
         files_as_list = files and files.as_list()
@@ -349,9 +364,14 @@ class SetuptoolsPEP621:
         return doc
 
     def move_and_split_entrypoints(self, doc: R) -> R:
-        # This is part of pep621_renaming
-        # "entry-points"."console-scripts" => "scripts"
-        # "entry-points"."gui-scripts" => "gui-scripts"
+        """In ``setup.cfg`` there is no special treatment for entry-points that will be
+        transformed in console/GUI scripts. On the other hand :pep:`621` defines
+        separated fields::
+
+            entry-points.console-scripts => scripts
+            entry-points.gui-scripts => gui-scripts
+            entry-points.* => "entry-points".*
+        """
         entrypoints: IR = doc.get("options.entry-points", IR())
         if not entrypoints:
             return doc
@@ -369,7 +389,9 @@ class SetuptoolsPEP621:
         return doc
 
     def move_options_missing_in_pep621(self, doc: R) -> R:
-        # ---- Parts of "options" that are covered by PEP 621 ----
+        """:pep:`621` specifies as project metadata values that are covered
+        in ``setup.cfg "options"`` section.
+        """
         # First we handle simple options
         naming = {
             "python-requires": "requires-python",
@@ -386,21 +408,30 @@ class SetuptoolsPEP621:
         return doc
 
     def remove_metadata_not_in_pep621(self, doc: R) -> R:
-        # ---- setuptools metadata without correspondence in PEP 621 ----
+        """:pep:`621` does not cover all project metadata in ``setup.cfg "metadata"``
+        section. That is left as "tool" specific configuration.
+        """
         specific = ["platforms", "provides", "obsoletes"]
         metadata, options = doc["metadata"], doc["options"]
         options.update({k: metadata.pop(k) for k in specific if k in metadata})
         return doc
 
     def rename_script_files(self, doc: R) -> R:
-        # setuptools define a ``options.scripts`` parameters that refer to
-        # script files, not created via enty-points
-        # To avoid confution with PEP 621 scripts (generated via entry-points)
-        # let's rename this field to `script-files`
+        """``setuptools`` define a ``options.scripts`` parameters that refer to
+        script files, not created via entry-points.
+        To avoid confusion with :pep:`621` scripts (generated via entry-points)
+        let's rename this field to ``script-files``
+        """
         doc["options"].rename("scripts", "script-files", ignore_missing=True)
         return doc
 
-    def handle_packages(self, doc: R) -> R:
+    def handle_packages_find(self, doc: R) -> R:
+        """``setup.cfg`` uses a option + a section to define ``options.packages.find``
+        and its ``find_namespace`` variant. This does not work very well with the
+        convention used for the TOML encoding, since the option and the section would
+        end up with the same name (and overwriting each other). Therefore we need to
+        "merge" them.
+        """
         options = doc["options"]
         # Abort when not using find or find_namespace
         packages = options.get("packages")
@@ -414,6 +445,15 @@ class SetuptoolsPEP621:
         return doc
 
     def handle_dynamic(self, doc: R) -> R:
+        """All the configuration fields in :pep:`621` that are dynamically discovered at
+        build time have to be explicitly list in ``dynamic``.
+        This function moves directive usages (e.g. ``file:`` and ``attr:``) to a
+        tool-specific subtable (``tool.setuptools.dynamic``), and add the corresponding
+        field to ``dynamic``.
+        Since ``version`` is a mandatory core metadata, it will be added to ``dynamic``
+        when not explicitly set (in that case plugins such as ``setuptools_scm`` are
+        expected to provide a value at runtime).
+        """
         potential = ["version", "classifiers", "description"]
         # directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
         metadata, options = doc["metadata"], doc["options"]
@@ -447,8 +487,8 @@ class SetuptoolsPEP621:
         return doc
 
     def move_setup_requires(self, doc: R) -> R:
-        """Add mandatory dependencies if they are missing and move setup_requires to
-        PEP 518 compatible field.
+        """Move ``setup_requires`` to the equivalent field in :pep:`518`, and add
+        mandatory build dependencies if they are missing and
         """
         options = doc["options"]
         build_system = doc["build-system"]
@@ -468,7 +508,10 @@ class SetuptoolsPEP621:
         return doc
 
     def parse_setup_py_command_options(self, doc: R) -> R:
-        # ---- distutils/setuptools command specifics outside of "options" ----
+        """``distutils`` commands can accept arguments from ``setup.cfg`` files.
+        This function moves these arguments to their own ``distutils``
+        tool-specific sub-table
+        """
         sections = list(doc.keys())
         commands = _distutils_commands()
         for k in sections:
@@ -482,7 +525,9 @@ class SetuptoolsPEP621:
         return doc
 
     def split_subtables(self, out: R) -> R:
-        """Setuptools emulate nested sections (e.g.: ``options.extras_require``)"""
+        """``setuptools`` emulate nested sections (e.g.: ``options.extras_require``)
+        which can be directly expressed in TOML via sub-tables.
+        """
         sections = [
             k
             for k in out.keys()
@@ -496,9 +541,9 @@ class SetuptoolsPEP621:
         return out
 
     def ensure_pep518(self, doc: R) -> R:
-        """PEP 518 specifies that any other tool adding configuration under
+        """:pep:`518` specifies that any other tool adding configuration under
         ``pyproject.toml`` should use the ``tool`` table. This means that the only
-        top-level keys are ``build-system``, ``project`` and ``tool``
+        top-level keys are ``build-system``, ``project`` and ``tool``.
         """
         allowed = ("build-system", "project", "tool", "metadata", "options")
         allowed_prefixes = ("options.", "project:")
@@ -530,7 +575,7 @@ class SetuptoolsPEP621:
             self.remove_metadata_not_in_pep621,
             # --- General fixes
             self.rename_script_files,
-            self.handle_packages,
+            self.handle_packages_find,
             self.handle_dynamic,
             self.move_setup_requires,
             # --- distutils ---
