@@ -82,7 +82,7 @@ def activate(translator: Translator):
 
 
 class SetuptoolsPEP621:
-    """Convert settings to ``pyproject.toml`` based on :pep:`621`"""
+    """Convert settings to 'pyproject.toml' based on :pep:`621`"""
 
     BUILD_REQUIRES = ("setuptools", "wheel")
 

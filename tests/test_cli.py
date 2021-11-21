@@ -92,18 +92,13 @@ def test_help(capsys):
     text = " ".join(x.strip() for x in out.splitlines())
     expected_profile_desc = """\
     conversion. Available profiles:
-    - "best_effort": guess option value conversion based
-    on the string format.
-    - ".coveragerc": convert settings to 'pyproject.toml'
-    equivalent.
-    - "setup.cfg": convert settings to 'pyproject.toml'
-    based on PEP 621.
-    - ".isort.cfg": convert settings to 'pyproject.toml'
-    equivalent.
-    - "mypy.ini": convert settings to 'pyproject.toml'
-    equivalent.
-    - "pytest.ini": convert settings to 'pyproject.toml'
-    ('ini_options' table).
+    - "best_effort": guess option value conversion based on the string format.
+    - ".coveragerc": convert settings to 'pyproject.toml' equivalent.
+    - "setup.cfg": convert settings to 'pyproject.toml' based on :pep:`621`.
+    - ".isort.cfg": convert settings to 'pyproject.toml' equivalent.
+    - "mypy.ini": convert settings to 'pyproject.toml' equivalent.
+    - "pytest.ini": convert settings to 'pyproject.toml' ('ini_options' table).
     """
     expected = " ".join(x.strip() for x in expected_profile_desc.splitlines())
+    print(out)
     assert expected in text
