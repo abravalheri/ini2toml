@@ -90,6 +90,15 @@ proposed by ``ini2toml`` takes the following assumptions:
   the ``project.scripts`` field defined by :pep:`621`.
 
 
+- When not present in the original config file, ``include_package_data`` is
+  explicitly added with the ``False`` value to the translated TOML.
+  This does not change directly how the configuration is handled (given that
+  currently the default value for this field is ``False``), but allows an
+  eventual future change in the default value to ``True`` if the
+  :pypi:`setuptools` maintainers decide so. This eventual change is mentioned
+  by some members of the community as a nice quality of life improvement.
+
+
 Please notice these conventions are part of a proposal and will probably
 change as soon as a pattern is established by the :pypi:`setuptools` project.
 The implementation in ``ini2toml`` is flexible to quickly adapt to these

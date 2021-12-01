@@ -112,6 +112,7 @@ build-backend = "setuptools.build_meta"
 package-dir = {"" = "src"}
 zip-safe = true
 platforms = ["any"]
+include-package-data = false
 
 [tool.setuptools.packages.find]
 where = "src"

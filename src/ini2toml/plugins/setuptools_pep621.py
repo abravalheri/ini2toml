@@ -511,6 +511,15 @@ class SetuptoolsPEP621:
 
         return doc
 
+    def make_include_package_data_explicit(self, doc: R) -> R:
+        options = doc["options"]
+        if "include-package-data" not in options:
+            # This allows setuptools to decide to change the default from False to True,
+            # when adopting PEP 621
+            options["include-package-data"] = False
+
+        return doc
+
     def parse_setup_py_command_options(self, doc: R) -> R:
         """``distutils`` commands can accept arguments from ``setup.cfg`` files.
         This function moves these arguments to their own ``distutils``
@@ -582,6 +591,7 @@ class SetuptoolsPEP621:
             self.handle_packages_find,
             self.handle_dynamic,
             self.move_setup_requires,
+            self.make_include_package_data_explicit,
             # --- distutils ---
             self.parse_setup_py_command_options,
             # --- final steps ---

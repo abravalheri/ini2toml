@@ -410,7 +410,9 @@ dynamic = ["version"]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-tool = {setuptools = {}}
+[tool]
+[tool.setuptools]
+include-package-data = false
 """
 
 
@@ -447,6 +449,7 @@ build-backend = "setuptools.build_meta"
 [tool]
 [tool.setuptools]
 data-files = {a = ["b"]}
+include-package-data = false
 """
 
 
