@@ -50,7 +50,8 @@ platforms = "any"
 
 def test_normalise_keys(plugin, parse, convert):
     obj = parse(example_normalise_keys)
-    obj = plugin.normalise_keys(obj)
+    with pytest.warns(DeprecationWarning):
+        obj = plugin.normalise_keys(obj)
     assert convert(obj) == expected_normalise_keys
 
 
@@ -331,7 +332,8 @@ def test_move_setup_requires(plugin, parse, convert):
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.move_setup_requires(doc)
+    with pytest.warns(DeprecationWarning, match="'setup_requires' is deprecated"):
+        doc = plugin.move_setup_requires(doc)
     doc.pop("tool", None)
     doc.pop("options", None)
     doc.pop("metadata", None)
@@ -448,10 +450,8 @@ data-files = {a = ["b"]}
 """
 
 
-def test_data_files(translator, caplog):
+def test_data_files(translator):
     # Same thing but with the higher level API:
-    with caplog.at_level(logging.DEBUG):
+    with pytest.warns(DeprecationWarning, match="'data-files' is deprecated"):
         text = translator.translate(example_data_files, profile_name="setup.cfg")
         assert text.strip() == expected_data_files.strip()
-
-    assert "'data-files' is deprecated" in caplog.text

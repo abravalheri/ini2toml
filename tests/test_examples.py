@@ -35,6 +35,7 @@ def validate():
     return Validator()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_api(original, expected, validate):
     translator = Translator()
@@ -53,6 +54,7 @@ COMMENT_LINE = re.compile(r"^\s*#[^\n]*\n", re.M)
 INLINE_COMMENT = re.compile(r'#\s[^\n"]*$', re.M)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_api_lite(original, expected, validate):
     opts = {"ini_loads_fn": configparser.parse, "toml_dumps_fn": lite_toml.convert}
@@ -80,6 +82,7 @@ def test_examples_api_lite(original, expected, validate):
         pass
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_cli(original, expected, capsys):
     cli.run([original])

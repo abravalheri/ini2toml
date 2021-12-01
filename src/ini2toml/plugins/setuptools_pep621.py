@@ -1,5 +1,6 @@
 import logging
 import re
+import warnings
 from functools import partial, reduce
 from itertools import chain, zip_longest
 from typing import (
@@ -493,6 +494,9 @@ class SetuptoolsPEP621:
         options = doc["options"]
         build_system = doc["build-system"]
         if "setup-requires" in options:
+            msg = "The field 'setup_requires' is deprecated. "
+            msg += "Converting to `build-system.requires` as specified by PEP 518."
+            warnings.warn(msg, DeprecationWarning)
             requirements: CommentedList[str] = options.pop("setup-requires")
             # Deduplicate
             existing = {Requirement(r).name: r for r in requirements.as_list()}
@@ -624,6 +628,8 @@ class SetuptoolsPEP621:
             return cfg
         for alias, cannonic in self.setupcfg_aliases().items():
             if alias in metadata:
+                msg = f"{alias!r} is deprecated. Translating to {cannonic!r} instead."
+                warnings.warn(msg, DeprecationWarning)
                 metadata.rename(alias, cannonic)
         return cfg
 

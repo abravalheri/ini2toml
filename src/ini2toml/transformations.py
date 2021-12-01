@@ -1,5 +1,5 @@
 """Reusable value and type casting transformations"""
-import logging
+import warnings
 from collections.abc import MutableMapping
 from functools import reduce, wraps
 from typing import (
@@ -53,8 +53,6 @@ entire table of the TOML document.
 """
 
 TF = TypeVar("TF", bound=Transformation)
-
-_logger = logging.getLogger(__name__)
 
 
 # ---- Simple value processors ----
@@ -129,7 +127,7 @@ def deprecated(
 
     @wraps(fn)
     def _fn(*args, **kwargs):
-        _logger.warning(f"{name!r} is deprecated{extra}.")
+        warnings.warn(f"{name!r} is deprecated{extra}", DeprecationWarning)
         return fn(*args, **kwargs)
 
     return cast(TF, _fn)
