@@ -2,7 +2,6 @@
 the INI and TOML syntaxes.
 """
 from collections import UserList, namedtuple
-from dataclasses import dataclass, field
 from enum import Enum
 from itertools import chain
 from pprint import pformat
@@ -180,10 +179,19 @@ class IntermediateRepr(MutableMapping):
 # the comments (if we want to).
 
 
-@dataclass
 class Commented(Generic[T]):
-    value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
-    comment: Optional[str] = field(default_factory=lambda: None)
+    def __init__(
+        self,
+        value: Union[T, NotGiven] = NOT_GIVEN,
+        comment: Optional[str] = None,
+    ):
+        self.value = value
+        self.comment = comment
+
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.value == other.value and self.comment == other.comment
 
     def comment_only(self):
         return self.value is NOT_GIVEN
