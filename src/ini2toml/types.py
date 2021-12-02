@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Mapping, MutableMapping
-from typing import Any, Callable, List, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, TypeVar, Union
 
 from .intermediate_repr import (
     KV,
@@ -15,8 +15,12 @@ from .intermediate_repr import (
 )
 
 if sys.version_info <= (3, 8):  # pragma: no cover
-    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
-    from typing_extensions import Protocol
+    # TODO: Import directly when `python_requires = >= 3.8`
+    if TYPE_CHECKING:
+        from typing_extensions import Protocol
+    else:
+        # Not a real replacement but allows getting rid of the dependency
+        from collections.abc import ABC as Protocol
 else:  # pragma: no cover
     from typing import Protocol
 
