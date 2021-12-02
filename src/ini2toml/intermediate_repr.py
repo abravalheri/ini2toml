@@ -1,7 +1,7 @@
 """Intermediate representations used by ``ini2toml`` when transforming between
 the INI and TOML syntaxes.
 """
-from collections import UserList
+from collections import UserList, namedtuple
 from dataclasses import dataclass, field
 from enum import Enum
 from itertools import chain
@@ -37,9 +37,11 @@ NOT_GIVEN = NotGiven.NOT_GIVEN
 EMPTY: Mapping = MappingProxyType({})
 
 
-@dataclass(frozen=True)
-class HiddenKey:
-    _value: int = field(default_factory=lambda: uuid4().int)
+class HiddenKey(namedtuple("_HiddenKey", "value")):
+    value: int
+
+    def __new__(cls):
+        return super().__new__(cls, uuid4().int)
 
     def __str__(self):
         return f"{self.__class__.__name__}()"

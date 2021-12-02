@@ -207,7 +207,7 @@ class SetuptoolsPEP621:
             for name, section in doc.items()
             if name in ("metadata", "options")
             for option in section
-            if isinstance(option, (str, tuple))
+            if isinstance(option, (str, tuple)) and not isinstance(option, HiddenKey)
         }
         transformations: dict = {
             **default,
@@ -569,7 +569,7 @@ class SetuptoolsPEP621:
         for k in list(doc.keys()):
             key = k
             rest: Sequence = ()
-            if isinstance(k, tuple):
+            if isinstance(k, tuple) and not isinstance(key, HiddenKey):
                 key, *rest = k
             if isinstance(key, HiddenKey):
                 continue
