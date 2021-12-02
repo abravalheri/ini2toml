@@ -115,7 +115,8 @@ platforms = ["any"]
 include-package-data = false
 
 [tool.setuptools.packages.find]
-where = "src"
+where = ["src"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "virtualenv.activation.bash" = ["*.sh"]

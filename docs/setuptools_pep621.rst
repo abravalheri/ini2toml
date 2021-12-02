@@ -41,7 +41,13 @@ proposed by ``ini2toml`` takes the following assumptions:
     'file: description.rst' => {file = "description.rst"}
 
 - Instead of requiring a separated/dedicated section to specify parameters, the
-  directives ``find:`` and ``find_namespace:`` just use a nested table. For example:
+  directives ``find:`` and ``find_namespace:`` just use a nested table:
+  ``tool.setuptools.packages.find``.
+  Moreover, two quality of life improvements are added: the ``where`` option
+  takes a list of strings (instead of a single directory) and the boolean
+  ``namespaces`` option is added (``namespaces = true`` is equivalent to
+  ``find_namespace:`` and ``namespaces = false`` is equivalent to ``find:``).
+  For example:
 
   .. code-block:: ini
 
@@ -56,9 +62,10 @@ proposed by ``ini2toml`` takes the following assumptions:
   .. code-block:: toml
 
      # pyproject.toml
-     [tool.setuptools.packages.find-namespace]
-     where = "src",
+     [tool.setuptools.packages.find]
+     where = ["src"]
      exclude = ["tests"]
+     namespaces = true
 
 - Fields set up to be dynamically resolved by :pypi:`setuptools` via directives, that
   only have an static equivalent in :pep:`621` (e.g. ``version = attr: module.attribute``

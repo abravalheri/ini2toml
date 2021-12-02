@@ -112,9 +112,10 @@ include-package-data = true
 package-dir = {"" = "src"} # all the packages under the src folder
 platforms = ["any"]
 
-[tool.setuptools.packages.find-namespace]
-where = "src"
+[tool.setuptools.packages.find]
+where = ["src"]
 exclude = ["tests"]
+namespaces = true
 
 [tool.pytest.ini_options]
 # Options for pytest:

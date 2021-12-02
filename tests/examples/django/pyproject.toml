@@ -53,9 +53,11 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = {find = {}}
 include-package-data = true
 zip-safe = false
+
+[tool.setuptools.packages]
+find = {namespaces = false}
 
 [tool.setuptools.dynamic]
 version = {attr = "django.__version__"}

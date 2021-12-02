@@ -10,6 +10,7 @@ from textwrap import indent
 from types import MappingProxyType
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterable,
@@ -191,6 +192,10 @@ class Commented(Generic[T]):
 
     def value_or(self, fallback: S) -> Union[T, S]:
         return fallback if self.value is NOT_GIVEN else self.value
+
+    def as_commented_list(self) -> "CommentedList[T]":
+        value = [] if self.value is NOT_GIVEN else [self.value]
+        return CommentedList([Commented(value, self.comment)])
 
 
 class CommentedList(Generic[T], UserList):

@@ -83,4 +83,5 @@ zip-safe = true
 include-package-data = false
 
 [tool.setuptools.packages.find]
-where = "src"
+where = ["src"]
+namespaces = false

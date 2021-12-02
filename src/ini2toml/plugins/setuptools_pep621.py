@@ -174,6 +174,7 @@ class SetuptoolsPEP621:
             ),
             ("options.packages.find", "include"): split_list_comma,
             ("options.packages.find", "exclude"): split_list_comma,
+            ("options.packages.find", "exclude"): split_list_comma,
         }
         # See also dependent_processing_rules
 
@@ -439,10 +440,15 @@ class SetuptoolsPEP621:
         if not isinstance(packages, Directive):
             return doc
         prefix = packages.kind.replace("_", "-")
-        options["packages"] = {prefix: {}}
+        # Enhancement #1: Unify find and find_namespaces, using `namespaces` as a flag
+        options["packages"] = Directive("find", {"namespaces": "namespace" in prefix})
         if "options.packages.find" in doc:
-            options.pop("packages")
-            doc.rename("options.packages.find", f"options.packages.{prefix}")
+            packages = options.pop("packages")
+            doc["options.packages.find"].update(packages["find"])
+            # Enhancement #2: ``where`` accepts multiple values (array)
+            where = doc["options.packages.find"].get("where", None)
+            if where:
+                doc["options.packages.find"]["where"] = _ensure_where_list(where)
         return doc
 
     def handle_dynamic(self, doc: R) -> R:
@@ -703,3 +709,10 @@ def _distutils_commands() -> Set[str]:
     except Exception:
         commands = []
     return {*commands, *COMMAND_SECTIONS}
+
+
+def _ensure_where_list(where):
+    if isinstance(where, Commented):
+        return where.as_commented_list()
+
+    return [where]

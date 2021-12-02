@@ -45,6 +45,7 @@ exclude = [
     "src.subpackage1",
     "src.subpackage2",
 ]
+namespaces = false
 
 [tool.setuptools.data-files]
 "/etc/my-package" = [

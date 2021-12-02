@@ -288,9 +288,10 @@ exclude =
 expected_handle_packages_find = """\
 [options]
 
-["options.packages.find-namespace"]
-where = "src"
+["options.packages.find"]
+where = ["src"]
 exclude = ["tests"]
+namespaces = true
 """
 
 
