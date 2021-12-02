@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.3 (development)
+=========================
+
+- Remove dependency on ``typing_extensions`` for Python <= 3.8
+- Remove dependency on ``dataclasses`` for Python <= 3.6
+
 Version 0.2
 ===========
 
