@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 
 from ini2toml.plugins.setuptools_pep621 import Directive, SetuptoolsPEP621, activate

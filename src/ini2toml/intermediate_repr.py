@@ -10,7 +10,6 @@ from textwrap import indent
 from types import MappingProxyType
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Iterable,
