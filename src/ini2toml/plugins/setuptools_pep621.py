@@ -148,7 +148,7 @@ class SetuptoolsPEP621:
             ("metadata", "platforms"): split_list_comma,
             # ---
             ("metadata", "provides"): split_list_comma,
-            ("metadata", "requires"): split_list_comma,
+            ("metadata", "requires"): deprecated("requires", split_list_comma),
             ("metadata", "obsoletes"): split_list_comma,
             # => NOTICE: not supported by pip
             # ---- Options ----
@@ -168,6 +168,7 @@ class SetuptoolsPEP621:
             ("options", "package-dir"): split_kv_pairs,
             ("options", "namespace-packages"): split_list_comma,
             ("options", "py-modules"): split_list_comma,
+            ("options", "cmdclass"): split_kv_pairs,
             ("options", "data-files"): deprecated("data-files", split_kv_of_lists),
             ("options", "packages"): directive(
                 "find", "find_namespace", orelse=split_list_comma
