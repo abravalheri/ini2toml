@@ -2,12 +2,11 @@
 # published under the MIT license.
 # The original PyScaffold license can be found in 'tests/examples/pyscaffold'
 
-import sys
 
 import pytest
 
 from ini2toml import plugins
-from ini2toml.plugins import ENTRYPOINT_GROUP, ErrorLoadingPlugin
+from ini2toml.plugins import ENTRYPOINT_GROUP, EntryPoint, ErrorLoadingPlugin
 
 EXISTING = (
     "setuptools_pep621",
@@ -18,13 +17,6 @@ EXISTING = (
     "mypy",
     "independent_tasks",
 )
-
-
-if sys.version_info[:2] >= (3, 8):
-    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
-    from importlib.metadata import EntryPoint  # pragma: no cover
-else:
-    from importlib_metadata import EntryPoint  # pragma: no cover
 
 
 def test_load_from_entry_point__error():
