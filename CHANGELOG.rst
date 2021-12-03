@@ -10,7 +10,7 @@ Version 0.3
 - Removed dependency on ``importlib-metadata`` for Python <= 3.8,
   but only for minimal install
 - ``setuptools`` plugin:
-  - Added support for ``cmdclass``
+   - Added support for ``cmdclass``
 
 Version 0.2
 ===========
