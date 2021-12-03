@@ -195,9 +195,11 @@ class Commented(Generic[T]):
         self.comment = comment
 
     def __eq__(self, other):
-        if self.__class__ != other.__class__:
-            return False
-        return self.value == other.value and self.comment == other.comment
+        return (
+            self.__class__ is other.__class__
+            and self.value == other.value
+            and self.comment == other.comment
+        )
 
     def comment_only(self):
         return self.value is NOT_GIVEN
