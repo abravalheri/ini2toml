@@ -2,7 +2,6 @@
 the INI and TOML syntaxes.
 """
 from collections import UserList
-from dataclasses import dataclass, field
 from enum import Enum
 from itertools import chain
 from pprint import pformat
@@ -37,9 +36,17 @@ NOT_GIVEN = NotGiven.NOT_GIVEN
 EMPTY: Mapping = MappingProxyType({})
 
 
-@dataclass(frozen=True)
 class HiddenKey:
-    _value: int = field(default_factory=lambda: uuid4().int)
+    __slots__ = ("_value",)
+
+    def __init__(self):
+        self._value = uuid4().int
+
+    def __eq__(self, other):
+        return self.__class__ is other.__class__ and self._value == other._value
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self._value))
 
     def __str__(self):
         return f"{self.__class__.__name__}()"
@@ -178,10 +185,21 @@ class IntermediateRepr(MutableMapping):
 # the comments (if we want to).
 
 
-@dataclass
 class Commented(Generic[T]):
-    value: Union[T, NotGiven] = field(default_factory=lambda: NOT_GIVEN)
-    comment: Optional[str] = field(default_factory=lambda: None)
+    def __init__(
+        self,
+        value: Union[T, NotGiven] = NOT_GIVEN,
+        comment: Optional[str] = None,
+    ):
+        self.value = value
+        self.comment = comment
+
+    def __eq__(self, other):
+        return (
+            self.__class__ is other.__class__
+            and self.value == other.value
+            and self.comment == other.comment
+        )
 
     def comment_only(self):
         return self.value is NOT_GIVEN

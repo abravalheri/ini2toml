@@ -110,7 +110,7 @@ def _collapse_commented_kv(obj: CommentedKV, root=False) -> Union[Table, InlineT
         if k:
             out[k].comment(entry.comment)
         else:
-            out.append(None, comment(entry.comment))  # type: ignore[arg-type]
+            out.append(None, comment(entry.comment))
     return out
 
 
@@ -171,9 +171,9 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
     for key, value in irepr.items():
         # TODO: prefer `add` once atoml's InlineTable supports it
         if isinstance(key, WhitespaceKey):
-            out.append(None, nl())  # type: ignore[arg-type]
+            out.append(None, nl())
         elif isinstance(key, CommentKey):
-            out.append(None, comment(value))  # type: ignore[arg-type]
+            out.append(None, comment(value))
         elif isinstance(key, tuple):
             parent_key, *rest = key
             if not isinstance(parent_key, str):
