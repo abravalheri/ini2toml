@@ -20,7 +20,7 @@ if sys.version_info <= (3, 8):  # pragma: no cover
         from typing_extensions import Protocol
     else:
         # Not a real replacement but allows getting rid of the dependency
-        from collections.abc import ABC as Protocol
+        from abc import ABC as Protocol
 else:  # pragma: no cover
     from typing import Protocol
 
