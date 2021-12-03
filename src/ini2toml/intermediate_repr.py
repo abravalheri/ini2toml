@@ -1,7 +1,7 @@
 """Intermediate representations used by ``ini2toml`` when transforming between
 the INI and TOML syntaxes.
 """
-from collections import UserList, namedtuple
+from collections import UserList
 from enum import Enum
 from itertools import chain
 from pprint import pformat
@@ -36,11 +36,17 @@ NOT_GIVEN = NotGiven.NOT_GIVEN
 EMPTY: Mapping = MappingProxyType({})
 
 
-class HiddenKey(namedtuple("_HiddenKey", "value")):
-    value: int
+class HiddenKey:
+    __slots__ = ("_value",)
 
-    def __new__(cls):
-        return super().__new__(cls, uuid4().int)
+    def __init__(self):
+        self._value = uuid4().int
+
+    def __eq__(self, other):
+        return self.__class__ is other.__class__ and self._value == other._value
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self._value))
 
     def __str__(self):
         return f"{self.__class__.__name__}()"
