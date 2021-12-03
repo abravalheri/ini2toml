@@ -5,24 +5,28 @@ Changelog
 Version 0.3 (development)
 =========================
 
-- Remove dependency on ``typing_extensions`` for Python <= 3.8
-- Remove dependency on ``dataclasses`` for Python <= 3.6
+- Removed dependency on ``typing_extensions`` for Python <= 3.8
+- Removed dependency on ``dataclasses`` for Python <= 3.6
+- Removed dependency on ``importlib-metadata`` for Python <= 3.8,
+  but only for minimal install
+- ``setuptools`` plugin:
+  - Added support for ``cmdclass``
 
 Version 0.2
 ===========
 
 - Improved support for writing inline dicts and inline AoTs in the generated TOML
-- `setuptools` plugin:
-   - Added `data-files`  support (although this option is marked as deprecated).
-   - Unified `tool.setuptools.packages.find` and `tool.setuptools.packages.find-namespace`
-     options by adding a new keyword `namespaces`
-   - `tool.setuptools.packages.find.where` is now associated with a list of directories
+- ``setuptools`` plugin:
+   - Added ``data-files``  support (although this option is marked as deprecated).
+   - Unified ``tool.setuptools.packages.find`` and ``tool.setuptools.packages.find-namespace``
+     options by adding a new keyword ``namespaces``
+   - ``tool.setuptools.packages.find.where`` is now associated with a list of directories
      (instead of a single value).
    - When not present in the original config file, ``include_package_data`` is
      explicitly added with the ``False`` value.
-   - Fixed `authors` vs. `maintainers` mixing (now they are handled independently).
-   - Added dynamic option for `readme` (e.g. when multiple license files are combined).
-   - Reordered set of transformations (which includes making `apply_value_processing` the first one).
+   - Fixed ``authors`` vs. ``maintainers`` mixing (now they are handled independently).
+   - Added dynamic option for ``readme`` (e.g. when multiple license files are combined).
+   - Reordered set of transformations (which includes making ``apply_value_processing`` the first one).
    - Improved directive handling.
    - Added deprecation warnings.
 

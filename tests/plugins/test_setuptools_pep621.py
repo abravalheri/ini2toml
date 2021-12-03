@@ -105,6 +105,9 @@ package-dir =
 install-requires =
     importlib-metadata; python_version<"3.8"
     configupdater>=3,<=4
+cmdclass =
+    customcmd = custom_build.CustomCmd
+    other = custom_build.OtherCmd  # Some command
 [options.entry-points]
 # For example:
 console-scripts =
@@ -130,6 +133,10 @@ install-requires = [
     "importlib-metadata; python_version<\\"3.8\\"",
     "configupdater>=3,<=4",
 ]
+
+[options.cmdclass]
+customcmd = "custom_build.CustomCmd"
+other = "custom_build.OtherCmd" # Some command
 
 ["project:entry-points"]
 # For example:
