@@ -39,7 +39,6 @@ try:
             entries_ = (plugin for plugin in entries.get(group, []))
         return sorted(entries_, key=lambda e: e.name)
 
-
 except ImportError:  # pragma: no cover
     from pkg_resources import EntryPoint, iter_entry_points  # type: ignore
 
