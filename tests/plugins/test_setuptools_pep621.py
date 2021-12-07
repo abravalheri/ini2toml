@@ -428,6 +428,8 @@ example_dynamic = """\
 version = attr: django.__version__
 classifiers = file: classifiers.txt
 description = file: readme.txt
+long-description = file: readme.txt, desc.txt
+long-description-content-type: plain/text
 
 [options]
 entry-points = file: entry-points.txt
@@ -437,6 +439,7 @@ expected_dynamic = """\
 [metadata]
 
 dynamic = [
+    "readme",
     "version",
     "classifiers",
     "description",
@@ -450,6 +453,9 @@ version = {attr = "django.__version__"}
 classifiers = {file = ["classifiers.txt"]}
 description = {file = ["readme.txt"]}
 entry-points = {file = ["entry-points.txt"]}
+["options.dynamic".readme]
+file = ["readme.txt", "desc.txt"]
+content-type = "plain/text"
 """  # noqa
 
 
@@ -470,6 +476,7 @@ def test_directives(plugin, parse, convert):
 def test_handle_dynamic(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
     doc = plugin.apply_value_processing(doc)
+    doc = plugin.merge_and_rename_long_description_and_content_type(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     doc = plugin.handle_dynamic(doc)
