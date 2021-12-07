@@ -164,7 +164,7 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
         return Commented(comment=_strip_comment(value, comment_prefixes))
 
     prefix = prefixes[0]  # We can only analyse one...
-    value, cmt = _split_in_2(value, prefix)
+    value, _, cmt = value.partition(prefix)
     return Commented(coerce_fn(value.strip()), _strip_comment(cmt, comment_prefixes))
 
 
@@ -357,13 +357,6 @@ def pipe(*fns):
 
 
 # ---- Private Helpers ----
-
-
-def _split_in_2(v: str, sep: str) -> Tuple[str, Optional[str]]:
-    items = iter(v.split(sep, maxsplit=1))
-    first = next(items)
-    second = next(items, None)
-    return first, second
 
 
 def _strip_comment(msg: Optional[str], prefixes: Sequence[str] = CP) -> Optional[str]:
