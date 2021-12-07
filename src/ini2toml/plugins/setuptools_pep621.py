@@ -138,7 +138,7 @@ class SetuptoolsPEP621:
             # ---
             ("metadata", "license-files"): split_list_comma,
             # => NOTICE: in PEP 621, it should be a single file
-            #            further processed via `merge_license_and_files`
+            #            further processed via `handle_license_and_files`
             # ---
             ("metadata", "url"): split_url,
             ("metadata", "download-url"): split_url,
@@ -326,7 +326,7 @@ class SetuptoolsPEP621:
         metadata.rename("long-description", "readme")
         return doc
 
-    def merge_license_and_files(self, doc: R) -> R:
+    def handle_license_and_files(self, doc: R) -> R:
         """In :pep:`621` we have a single field for license, which might have a single
         value (file path) or a dict-like structure::
 
@@ -340,15 +340,19 @@ class SetuptoolsPEP621:
         metadata: IR = doc["metadata"]
         files: Optional[CommentedList[str]] = metadata.get("license-files")
         files_as_list = files and files.as_list()
+        text = metadata.get("license")
 
         # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
         if files_as_list and (
             len(files_as_list) > 1
             or any(char in files_as_list[0] for char in "*?[")  # glob pattern
+            or text  # PEP 621 forbids both license and license-files at the same time
         ):
             metadata.setdefault("dynamic", []).append("license")
             dynamic = doc.setdefault("options.dynamic", IR())
-            dynamic.append("license", {"file": files_as_list})
+            if text:
+                dynamic.append("license", text)
+            dynamic.append("license-files", files_as_list)
             # 'file' and 'text' are mutually exclusive in PEP 621
             metadata.pop("license", None)
             metadata.pop("license-files", None)
@@ -589,7 +593,7 @@ class SetuptoolsPEP621:
             self.merge_and_rename_urls,
             self.merge_authors_maintainers_and_emails,
             self.merge_and_rename_long_description_and_content_type,
-            self.merge_license_and_files,
+            self.handle_license_and_files,
             self.move_and_split_entrypoints,
             self.move_options_missing_in_pep621,
             self.remove_metadata_not_in_pep621,

@@ -254,28 +254,102 @@ def test_entrypoints_and_split_subtables(plugin, parse, convert):
 # ----
 
 
-example_merge_license = """\
+example_handle_license_files = """\
 [metadata]
-license = MPL-2.0
 license-files = LICENSE.txt
 """
 
-expected_merge_license = """\
+expected_handle_license_files = """\
 [metadata]
 [metadata.license]
 file = "LICENSE.txt"
 """
 
 
-def test_merge_license_and_files(plugin, parse, convert):
-    doc = parse(example_merge_license.strip())
+def test_handle_license_files(plugin, parse, convert):
+    doc = parse(example_handle_license_files.strip())
     doc = plugin.apply_value_processing(doc)
     print(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    doc = plugin.merge_license_and_files(doc)
+    doc = plugin.handle_license_and_files(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_merge_license.strip()
+    assert convert(doc).strip() == expected_handle_license_files.strip()
+
+
+example_handle_multiple_license_files = """\
+[metadata]
+license-files = LICENSE.txt, NOTICE.txt
+"""
+
+expected_handle_multiple_license_files = """\
+[metadata]
+dynamic = ["license"]
+
+["options.dynamic"]
+license-files = ["LICENSE.txt", "NOTICE.txt"]
+"""
+
+
+def test_handle_multiple_license_files(plugin, parse, convert):
+    doc = parse(example_handle_multiple_license_files.strip())
+    doc = plugin.apply_value_processing(doc)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.handle_license_and_files(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_handle_multiple_license_files.strip()
+
+
+example_handle_license = """\
+[metadata]
+license = MPL-2.0
+"""
+
+expected_handle_license = """\
+[metadata]
+[metadata.license]
+text = "MPL-2.0"
+"""
+
+
+def test_handle_license(plugin, parse, convert):
+    doc = parse(example_handle_license.strip())
+    doc = plugin.apply_value_processing(doc)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.handle_license_and_files(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_handle_license.strip()
+
+
+example_handle_license_and_files = """\
+[metadata]
+license = MPL-2.0
+license-files = LICENSE.txt
+"""
+
+expected_handle_license_and_files = """\
+[metadata]
+dynamic = ["license"]
+
+["options.dynamic"]
+license = "MPL-2.0"
+license-files = ["LICENSE.txt"]
+"""
+
+
+def test_handle_license_and_files(plugin, parse, convert):
+    doc = parse(example_handle_license_and_files.strip())
+    doc = plugin.apply_value_processing(doc)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.handle_license_and_files(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc).strip() == expected_handle_license_and_files.strip()
 
 
 # ----
