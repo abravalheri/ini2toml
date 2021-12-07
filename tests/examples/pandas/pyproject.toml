@@ -16,20 +16,17 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Topic :: Scientific/Engineering",
 ]
+dynamic = ["license", "version"]
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.18.5",
     "python-dateutil>=2.8.1",
     "pytz>=2020.1",
 ]
-dynamic = ["version"]
 
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
-
-[project.license]
-file = "LICENSE"
 
 [project.urls]
 Homepage = "https://pandas.pydata.org"
@@ -65,6 +62,10 @@ include = ["pandas", "pandas.*"]
 # re-run 'versioneer.py setup' after changing this section, and commit the
 # resulting files.
 namespaces = false
+
+[tool.setuptools.dynamic]
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 
 [tool.distutils.build_ext]
 inplace = true
