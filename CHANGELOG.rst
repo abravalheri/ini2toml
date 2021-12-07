@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.4
+===========
+
+- ``setuptools`` plugin:
+   - **PROVISIONAL** - Added support for specifying ``license`` and ``license-files`` at the
+     same time via ``dynamic`` (this is likely to be revised depending on :pep:`639`).
+   - Added support for multiple files in ``long-description`` via ``dynamic``.
+
 Version 0.3
 ===========
 
