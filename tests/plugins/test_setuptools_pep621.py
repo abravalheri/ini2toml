@@ -11,7 +11,7 @@ def plugin():
 
 @pytest.fixture
 def translator(plugin):
-    return Translator(plugins=[activate])
+    return Translator(plugins=[activate], ini_parser_opts=dict(delimiters=("=", ": ")))
 
 
 @pytest.fixture
@@ -383,6 +383,45 @@ def test_handle_packages_find(plugin, parse, convert):
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_handle_packages_find.strip()
+
+
+# ----
+
+example_fix_extras_require = """\
+[options.extras-require]
+pyarrow:python_version>'3.4' =
+    pyarray>=1.0.0,<2.0dev; os_name=='posix'
+    colorama; os_name=='nt'
+"""
+
+expected_fix_extras_require = """\
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+["project:optional-dependencies"]
+pyarrow = [
+    "pyarray>=1.0.0,<2.0dev; os_name=='posix' and python_version>'3.4'",
+    "colorama; os_name=='nt' and python_version>'3.4'",
+]
+"""
+
+
+def test_fix_extras_require(plugin, parse, convert):
+    doc = plugin.template()
+    doc.update(parse(example_fix_extras_require.strip()))
+    doc = plugin.apply_value_processing(doc)
+    doc = plugin.move_options_missing_in_pep621(doc)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.fix_extras_require(doc)
+    doc.pop("tool", None)
+    doc.pop("options", None)
+    doc.pop("metadata", None)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    text = convert(doc).strip()
+    assert text == expected_fix_extras_require.strip()
 
 
 # ----

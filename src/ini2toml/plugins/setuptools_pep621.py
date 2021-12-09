@@ -185,8 +185,6 @@ class SetuptoolsPEP621:
         """
         groups: Mapping[str, Transformation] = {
             "options.extras-require": split_list_semi,
-            # TODO: extras-require can have markers embeded in the extra group
-            #       they need to be removed and added to the dependencies themselves
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             "options.data-files": split_list_comma,
@@ -407,7 +405,8 @@ class SetuptoolsPEP621:
             "install-requires": "dependencies",
             "entry-points": "entry-points",
         }
-        metadata, options = doc["metadata"], doc["options"]
+        metadata = doc.setdefault("metadata", IR())
+        options = doc.setdefault("options", IR())
         metadata.update({v: options.pop(k) for k, v in naming.items() if k in options})
 
         # Then we handle entire sections:
@@ -499,6 +498,28 @@ class SetuptoolsPEP621:
         if dynamic:
             doc.setdefault("options.dynamic", IR()).update(dynamic)
             # ^ later `options.dynamic` is converted to `tool.setuptools.dynamic`
+        return doc
+
+    def fix_extras_require(self, doc: R) -> R:
+        """`extras-require` can have markers embeded in the extra group
+        they need to be removed and added to the dependencies themselves
+        """
+        if "project:optional-dependencies" not in doc:
+            return doc
+
+        extras = doc["project:optional-dependencies"]
+        keys = list(extras.keys())  # Eager, so we can modify extras
+        for key in keys:
+            if not isinstance(key, str):
+                continue
+            extra_name, _, marker = key.partition(":")
+            extra_name, marker = extra_name.strip(), marker.strip()
+            if not marker:
+                continue
+            values = extras[key]
+            extras.rename(key, extra_name)
+            extras[extra_name] = [_add_marker(r, marker) for r in values.as_list()]
+
         return doc
 
     def move_setup_requires(self, doc: R) -> R:
@@ -631,6 +652,7 @@ class SetuptoolsPEP621:
             self.move_options_missing_in_pep621,
             self.remove_metadata_not_in_pep621,
             # --- General fixes
+            self.fix_extras_require,
             self.rename_script_files,
             self.handle_packages_find,
             self.handle_dynamic,
@@ -755,3 +777,8 @@ def _ensure_where_list(where):
         return where.as_commented_list()
 
     return [where]
+
+
+def _add_marker(dep: str, marker: str) -> str:
+    joiner = " and " if ";" in dep else "; "
+    return joiner.join((dep, marker))
