@@ -2,6 +2,20 @@
 Changelog
 =========
 
+Version 0.5
+===========
+
+- ``setuptools`` plugin:
+  - Added automatic "update" for deprecated ``tests-require`` key.
+    This value associated with this option is now automatically transformed
+    into a ``testing`` extras group in the ``optional-dependencies``.
+  - Added automatic "expansion" of environment markers inside the extra key in
+    optional-dependencies. According to :pep:`621#dependencies-optional-dependencies`
+    (that points to the core metadata spec), the ``optional-dependencies`` keys
+    must be valid Python identifiers (but ``setuptools`` historically seem to
+    accept markers embedded with ``:`` after the extra name).
+- Bumped the version of the ``atoml`` dependency to 1.1.1.
+
 Version 0.4
 ===========
 
