@@ -570,6 +570,7 @@ entry-points = {file = ["entry-points.txt"]}
 def test_directives(plugin, parse, convert):
     doc = parse(example_dynamic.strip())
     doc = plugin.apply_value_processing(doc)
+    doc = plugin.move_options_missing_in_pep621(doc)
     assert isinstance(doc["metadata"]["version"], Directive)
     assert doc["metadata"]["version"].kind == "attr"
 
@@ -578,7 +579,7 @@ def test_directives(plugin, parse, convert):
     assert isinstance(doc["metadata"]["description"], Directive)
     assert doc["metadata"]["description"].kind == "file"
 
-    assert isinstance(doc["options"]["entry-points"], Directive)
+    assert isinstance(doc["metadata"]["entry-points"], Directive)
 
 
 def test_handle_dynamic(plugin, parse, convert):

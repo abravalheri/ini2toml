@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.5.1
+=============
+
+- ``setuptools`` plugin:
+   - Fixed bug that was preventing ``entry-points`` to be automatically
+     added to the ``project.dynamic`` array.
+
 Version 0.5
 ===========
 

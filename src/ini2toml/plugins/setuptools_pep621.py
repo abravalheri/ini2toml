@@ -486,7 +486,7 @@ class SetuptoolsPEP621:
             fields.insert(0, "version")
 
         extras: List[str] = []
-        ep = options.pop("entry-points", None)
+        ep = metadata.pop("entry-points", options.pop("entry-points", None))
         if isinstance(ep, Directive):
             fields.append("entry-points")
             dynamic["entry-points"] = ep
