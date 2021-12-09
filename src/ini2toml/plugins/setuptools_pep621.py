@@ -185,6 +185,8 @@ class SetuptoolsPEP621:
         """
         groups: Mapping[str, Transformation] = {
             "options.extras-require": split_list_semi,
+            # TODO: extras-require can have markers embeded in the extra group
+            #       they need to be removed and added to the dependencies themselves
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             "options.data-files": split_list_comma,
@@ -412,6 +414,7 @@ class SetuptoolsPEP621:
         naming = {"extras-require": "optional-dependencies"}
         for src, target in naming.items():
             doc.rename(f"options.{src}", f"project:{target}", ignore_missing=True)
+
         return doc
 
     def remove_metadata_not_in_pep621(self, doc: R) -> R:
@@ -522,6 +525,36 @@ class SetuptoolsPEP621:
 
         return doc
 
+    def move_tests_require(self, doc: R) -> R:
+        """Move ``tests_require`` to a ``testing`` extra as optional dependency
+        (this option is deprecated in setuptools (the test command is deprecated).
+
+        It assumes ``move_options_missing_in_pep621`` already run (to populate
+        ``project:optional-dependencies``.
+        """
+        if "tests-require" in doc["options"]:
+            msg = "The field 'tests_require' is deprecated and no longer supported. "
+            msg += "Dependencies will be converted to optional (`testing` extra). "
+            msg += "You can use a tool like `tox` or `nox` to replace this workflow."
+            warnings.warn(msg, DeprecationWarning)
+            reqs: CommentedList[str] = doc["options"].pop("tests-require")
+            if "project:optional-dependencies" not in doc:
+                doc["project:optional-dependencies"] = IR(testing=reqs)
+                return doc
+
+            opt_deps = doc["project:optional-dependencies"]
+            if "testing" not in opt_deps:
+                opt_deps["testing"] = reqs
+
+            testing: CommentedList[str] = opt_deps["testing"]
+            test_deps = {Requirement(r).name: r for r in reqs.as_list()}
+            existing_deps = {Requirement(r).name: r for r in testing.as_list()}
+            new = [r for name, r in test_deps.items() if name not in existing_deps]
+            for req in new:
+                testing.insert_line(len(testing), (req,))
+
+        return doc
+
     def make_include_package_data_explicit(self, doc: R) -> R:
         options = doc["options"]
         if "include-package-data" not in options:
@@ -602,6 +635,7 @@ class SetuptoolsPEP621:
             self.handle_packages_find,
             self.handle_dynamic,
             self.move_setup_requires,
+            self.move_tests_require,
             self.make_include_package_data_explicit,
             # --- distutils ---
             self.parse_setup_py_command_options,

@@ -423,6 +423,77 @@ def test_move_setup_requires(plugin, parse, convert):
     assert text == expected_move_setup_requires.strip()
 
 
+# ----
+
+
+example_move_tests_require1 = """\
+[options]
+tests-require =
+    pytest
+    pytest-cov
+"""
+
+expected_move_tests_require1 = """\
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+["project:optional-dependencies"]
+testing = [
+    "pytest",
+    "pytest-cov",
+]
+"""
+
+example_move_tests_require2 = """\
+[options]
+tests-require =
+    pytest
+    pytest-cov
+
+[options.extras-require]
+testing =
+    pytest>=6.2.5
+"""
+
+expected_move_tests_require2 = """\
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+["project:optional-dependencies"]
+testing = [
+    "pytest>=6.2.5",
+    "pytest-cov",
+]
+"""
+
+
+def test_move_tests_require(plugin, parse, convert):
+    for example, expected in [
+        (example_move_tests_require1, expected_move_tests_require1),
+        (example_move_tests_require2, expected_move_tests_require2),
+    ]:
+        doc = plugin.template()
+        doc.update(parse(example.strip()))
+        doc = plugin.apply_value_processing(doc)
+        doc = plugin.move_options_missing_in_pep621(doc)
+        print(doc)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        with pytest.warns(DeprecationWarning, match="'tests_require' is deprecated"):
+            doc = plugin.move_tests_require(doc)
+        doc.pop("tool", None)
+        doc.pop("options", None)
+        doc.pop("metadata", None)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        print(doc)
+        text = convert(doc).strip()
+        assert text == expected.strip()
+
+
+# ----
+
+
 example_dynamic = """\
 [metadata]
 version = attr: django.__version__
@@ -449,13 +520,11 @@ dynamic = [
 ]
 
 ["options.dynamic"]
+readme = {file = ["readme.txt", "desc.txt"], content-type = "plain/text"}
 version = {attr = "django.__version__"}
 classifiers = {file = ["classifiers.txt"]}
 description = {file = ["readme.txt"]}
 entry-points = {file = ["entry-points.txt"]}
-["options.dynamic".readme]
-file = ["readme.txt", "desc.txt"]
-content-type = "plain/text"
 """  # noqa
 
 

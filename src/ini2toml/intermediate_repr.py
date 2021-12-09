@@ -214,6 +214,9 @@ class Commented(Generic[T]):
         value = [] if self.value is NOT_GIVEN else [self.value]
         return CommentedList([Commented(value, self.comment)])
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.value!r}, {self.comment!r})"
+
 
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: Sequence[Commented[List[T]]] = ()):
