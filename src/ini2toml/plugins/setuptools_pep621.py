@@ -62,7 +62,13 @@ split_url = partial(split_comment, comment_prefixes=(" #",))
 
 SECTION_SPLITTER = re.compile(r"\.|:")
 SETUPTOOLS_SECTIONS = ("metadata", "options")
-SKIP_CHILD_NORMALISATION = ("options.entry_points",)
+SKIP_CHILD_NORMALISATION = (
+    "options.entry_points",
+    "options.package_data",
+    "options.exclude_package_data",
+    "options.extras_require",
+    "options.data_files",
+)
 COMMAND_SECTIONS = (
     "global",
     "alias",

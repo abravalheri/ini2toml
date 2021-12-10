@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.5.2
+=============
+
+- ``setuptools`` plugin:
+   - Fixed bug that forced normalisation of option subsections
+     even when the keys represent package names or file paths.
+
 Version 0.5.1
 =============
 

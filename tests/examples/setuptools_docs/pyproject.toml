@@ -48,7 +48,7 @@ exclude = [
 namespaces = false
 
 [tool.setuptools.data-files]
-"/etc/my-package" = [
+"/etc/my_package" = [
     "site.d/00_default.conf",
     "host.d/00_default.conf",
 ]
