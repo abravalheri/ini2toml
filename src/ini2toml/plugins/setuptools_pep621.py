@@ -159,9 +159,9 @@ class SetuptoolsPEP621:
             # => NOTICE: not supported by pip
             # ---- Options ----
             ("options", "zip-safe"): split_bool,
-            ("options", "setup-requires"): split_list_semi,
-            ("options", "install-requires"): split_list_semi,
-            ("options", "tests-require"): split_list_semi,
+            ("options", "setup-requires"): split_deps,
+            ("options", "install-requires"): split_deps,
+            ("options", "tests-require"): split_deps,
             ("options", "scripts"): split_list_comma,
             ("options", "eager-resources"): split_list_comma,
             ("options", "dependency-links"): deprecated(
@@ -190,7 +190,7 @@ class SetuptoolsPEP621:
         on the existing document.
         """
         groups: Mapping[str, Transformation] = {
-            "options.extras-require": split_list_semi,
+            "options.extras-require": split_deps,
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             "options.data-files": split_list_comma,
@@ -788,3 +788,58 @@ def _ensure_where_list(where):
 def _add_marker(dep: str, marker: str) -> str:
     joiner = " and " if ";" in dep else "; "
     return joiner.join((dep, marker))
+
+
+def split_deps(value):
+    """Setuptools seem to accept line continuations for markers
+    (with comments in the middle), and that is more difficult to process.
+    e.g.: https://github.com/jaraco/zipp
+    """
+    internal: CommentedList[str] = split_list_semi(value)
+    lines = list(internal)
+    L = len(lines)
+    i = j = 0
+    remove = []
+    while i < L:
+        line = lines[i]
+        if line.comment_only() or not line.value:
+            i += 1
+            continue
+        while line.value and line.value[-1].strip()[-1] == "\\":
+            comments: List[Tuple(int, str)] = []
+            for j in range(i + 1, L):
+                # Find the non commented / non empty line
+                following = lines[j]
+                if following.value_or(None):
+                    line = _fuse_lines(line, following)
+                    lines[i] = line
+                    if len(comments) == 1 and not line.has_comment():
+                        # If just one comment was found in between,
+                        # use it as a inline comment
+                        remove.append(comments[0][0])
+                        line.comment = comments[0][1]
+                    remove.append(j)
+                    i = j
+                    break
+                if following.comment:
+                    # Store the comments, they might be used as inline
+                    comments.append((j, following.comment))
+        i += 1
+
+    for i in reversed(remove):  # backwards otherwise we lose track of the indexes
+        lines.pop(i)
+
+    return CommentedList(lines)
+
+
+def _fuse_lines(line1: Commented[List[str]], line2: Commented[List[str]]):
+    """Fuse 2 lines in a CommentedList that accidentally split a single
+    value between them
+    """
+    values1 = line1.value
+    values2 = line2.value
+    # Requires line1 and line2 to not be empty
+    assert isinstance(values1, list) and isinstance(values2, list)
+    keep1, keep2 = values1[:-1], values2[1:]
+    shared = values1[-1].strip().strip("\\").strip() + " " + values2[0].strip()
+    return Commented(keep1 + [shared] + keep2, line2.comment)

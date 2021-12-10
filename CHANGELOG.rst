@@ -8,8 +8,11 @@ Version 0.5.2
 - ``setuptools`` plugin:
    - Fixed bug that forced normalisation of option subsections
      even when the keys represent package names or file paths.
-- Fixed bug that was replacing tables with a subtable was able to
-  be written as a inline table
+   - Fixed bug that prevented line continuations in the package requirements.
+     ``setuptools`` seem to support this use case, and people use it to write
+     markers in separated lines (possible with comments between them).
+- Fixed bug that was replacing tables when a new subtable was being added
+  and that new subtable could be written as an inline table
 
 Version 0.5.1
 =============

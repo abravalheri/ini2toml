@@ -628,6 +628,8 @@ def test_empty(translator, plugin, parse, convert):
 
 
 # ----
+
+
 example_data_files = """
 [options]
 data-files =
@@ -654,3 +656,53 @@ def test_data_files(translator):
     with pytest.warns(DeprecationWarning, match="'data-files' is deprecated"):
         text = translator.translate(example_data_files, profile_name="setup.cfg")
         assert text.strip() == expected_data_files.strip()
+
+
+# ----
+
+# Example taken from https://github.com/jaraco/zipp
+example_deps_with_line_continuation = """
+[options.extras_require]
+testing =
+    # upstream
+    pytest >= 6
+    pytest-checkdocs >= 2.4
+    pytest-flake8
+    pytest-black >= 0.3.7; \
+        # workaround for jaraco/skeleton#22
+        python_implementation != "PyPy"
+    pytest-cov
+    pytest-mypy; \
+        # workaround for jaraco/skeleton#22
+        # comment have several lines
+        python_implementation != "PyPy" and \
+        # another comment
+        os_name == "unix"
+    pytest-enabler >= 1.0.1
+"""
+
+expected_deps_with_line_continuation = """
+["options.extras_require"]
+testing = [
+    # upstream
+    "pytest >= 6",
+    "pytest-checkdocs >= 2.4"
+    "pytest-flake8",
+    "pytest-black >= 0.3.7; python_implementation != \"PyPy\"", # workaround for jaraco/skeleton#22
+    "pytest-cov",
+    "pytest-mypy; python_implementation != \"PyPy\" and os_name == \"unix\"",
+    # workaround for jaraco/skeleton#22
+    # comment have several lines
+    # another comment
+    pytest-enabler >= 1.0.1
+"""  # noqa
+
+
+def test_deps_with_line_continuation(plugin, parse, convert):
+    doc = parse(example_convert_directives)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.apply_value_processing(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc) == expected_convert_directives
