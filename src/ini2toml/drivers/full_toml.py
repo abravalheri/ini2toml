@@ -192,9 +192,8 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
                     and simplified_str.count("=") <= 1
                     # ^-- avoid nested inline-table, unless it is empty
                 ):
-                    child = inline_table()
+                    child = out.setdefault(parent_key, inline_table())
                     child[nested_key] = collapsed_value
-                    out[parent_key] = child
                     continue
             else:
                 nested_key = tuple(rest)

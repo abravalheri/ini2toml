@@ -8,6 +8,8 @@ Version 0.5.2
 - ``setuptools`` plugin:
    - Fixed bug that forced normalisation of option subsections
      even when the keys represent package names or file paths.
+- Fixed bug that was replacing tables with a subtable was able to
+  be written as a inline table
 
 Version 0.5.1
 =============
