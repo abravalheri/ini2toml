@@ -11,6 +11,8 @@ Version 0.5.2
    - Fixed bug that prevented line continuations in the package requirements.
      ``setuptools`` seem to support this use case, and people use it to write
      markers in separated lines (possible with comments between them).
+   - Fixed but that allowed an empty ``entry-points`` subtable to be left
+     behind in the ``tool.setuptools`` table.
 - Fixed bug that was replacing tables when a new subtable was being added
   and that new subtable could be written as an inline table
 

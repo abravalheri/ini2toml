@@ -387,6 +387,7 @@ class SetuptoolsPEP621:
         """
         entrypoints: IR = doc.get("options.entry-points", IR())
         if not entrypoints:
+            doc.pop("options.entry-points", None)
             return doc
         doc.rename("options.entry-points", "project:entry-points")
         # ^ use `:` to guarantee it is split later
