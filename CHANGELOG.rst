@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.5.3 (Development)
+===========================
+
+- ``isort`` plugin:
+   - Fixed wrong comparison of whitespace and comments with field names
+
 Version 0.5.2
 =============
 

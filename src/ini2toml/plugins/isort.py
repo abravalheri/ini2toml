@@ -49,8 +49,11 @@ class ISort:
         dynamic_fields = (
             field
             for field in section
-            if any(field.startswith(s) for s in self.FIELD_STARTS)
-            or any(field.endswith(s) for s in self.FIELD_ENDS)
+            if isinstance(field, str)
+            and (
+                any(field.startswith(s) for s in self.FIELD_STARTS)
+                or any(field.endswith(s) for s in self.FIELD_ENDS)
+            )
         )
         fields = {*self.FIELDS, *dynamic_fields}
         return {*fields, *map(kebab_case, fields)}
