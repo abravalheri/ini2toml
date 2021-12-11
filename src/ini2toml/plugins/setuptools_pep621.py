@@ -21,7 +21,7 @@ from typing import (
 try:
     from packaging.requirements import Requirement
 except ImportError:  # pragma: no cover
-    from setuptools.extern.packaging.requirements import Requirement
+    from setuptools.extern.packaging.requirements import Requirement  # type: ignore
 
 from ..transformations import (
     apply,
