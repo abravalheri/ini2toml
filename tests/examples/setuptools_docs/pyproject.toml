@@ -8,14 +8,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.5",
 ]
-dynamic = ["readme", "version"]
+dynamic = ["readme", "license", "version"]
 dependencies = [
     "requests",
     "importlib; python_version == \"2.6\"",
 ]
-
-[project.license]
-text = "BSD 3-Clause License"
 
 [project.optional-dependencies]
 pdf = ["ReportLab>=1.2", "RXP"]
@@ -57,4 +54,6 @@ fonts = ["data/fonts/*.ttf", "data/fonts/*.otf"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst", "CHANGELOG.rst", "LICENSE.rst"]}
+license = "BSD 3-Clause License"
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 version = {attr = "src.VERSION"}

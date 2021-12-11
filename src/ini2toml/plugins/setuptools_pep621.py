@@ -18,7 +18,10 @@ from typing import (
     cast,
 )
 
-from packaging.requirements import Requirement
+try:
+    from packaging.requirements import Requirement
+except ImportError:  # pragma: no cover
+    from setuptools.extern.packaging.requirements import Requirement
 
 from ..transformations import (
     apply,
@@ -79,6 +82,8 @@ COMMAND_SECTIONS = (
     "bdist_wheel",
     *getattr(distutils_commands, "__all__", []),
 )
+DEFAULT_LICENSE_FILES = ("LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*")
+# defaults from the `wheel` package
 
 
 def activate(translator: Translator):
@@ -345,7 +350,9 @@ class SetuptoolsPEP621:
         """
         metadata: IR = doc["metadata"]
         files: Optional[CommentedList[str]] = metadata.get("license-files")
-        files_as_list = files and files.as_list()
+        # Setuptools automatically includes license files if not present
+        # so let's make it dynamic
+        files_as_list = (files and files.as_list()) or list(DEFAULT_LICENSE_FILES)
         text = metadata.get("license")
 
         # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
@@ -367,7 +374,7 @@ class SetuptoolsPEP621:
         if files_as_list:
             files = cast(CommentedList[str], files)
             license = IR(file=Commented(files_as_list[0], files[0].comment))
-        elif "license" in metadata:
+        elif text:
             license = IR(text=metadata["license"])
         else:
             return doc

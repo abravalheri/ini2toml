@@ -309,8 +309,11 @@ license = MPL-2.0
 
 expected_handle_license = """\
 [metadata]
-[metadata.license]
-text = "MPL-2.0"
+dynamic = ["license"]
+
+["options.dynamic"]
+license = "MPL-2.0"
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 """
 
 
@@ -600,7 +603,7 @@ def test_handle_dynamic(plugin, parse, convert):
 
 expected_empty = """\
 [project]
-dynamic = ["version"]
+dynamic = ["license", "version"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -609,6 +612,9 @@ build-backend = "setuptools.build_meta"
 [tool]
 [tool.setuptools]
 include-package-data = false
+
+[tool.setuptools.dynamic]
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 """
 
 
@@ -638,7 +644,7 @@ data-files =
 
 expected_data_files = """\
 [project]
-dynamic = ["version"]
+dynamic = ["license", "version"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -648,6 +654,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 data-files = {a = ["b"]}
 include-package-data = false
+
+[tool.setuptools.dynamic]
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 """
 
 

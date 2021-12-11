@@ -11,9 +11,9 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
 ]
 urls = {Homepage = "https://github.com/jaraco/zipp"}
+dynamic = ["license", "version"]
 requires-python = ">=3.6"
 dependencies = []
-dynamic = ["version"]
 
 [project.optional-dependencies]
 testing = [
@@ -53,3 +53,6 @@ exclude = [
     "tests*",
 ]
 namespaces = true
+
+[tool.setuptools.dynamic]
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]

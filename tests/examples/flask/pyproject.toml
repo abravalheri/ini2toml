@@ -16,8 +16,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
+dynamic = ["license", "version"]
 requires-python = ">= 3.6"
-dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://palletsprojects.com/p/flask"
@@ -28,9 +28,6 @@ Changes = "https://flask.palletsprojects.com/changes/"
 "Issue Tracker" = "https://github.com/pallets/flask/issues/"
 Twitter = "https://twitter.com/PalletsTeam"
 Chat = "https://discord.gg/pallets"
-
-[project.license]
-text = "BSD-3-Clause"
 
 [project.readme]
 file = "README.rst"
@@ -53,6 +50,8 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.dynamic]
+license = "BSD-3-Clause"
+license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 version = {attr = "flask.__version__"}
 
 [tool.pytest.ini_options]

@@ -2,11 +2,15 @@
 Changelog
 =========
 
-Version 0.5.3 (Development)
-===========================
+Version 0.6
+===========
 
 - ``isort`` plugin:
    - Fixed wrong comparison of whitespace and comments with field names
+- ``setuptools`` plugin:
+   - Explicitly added the default license globs as considered by
+     setuptools/wheels (previously the :pep:`621` guarantees about backfilling
+     dynamic fields could not be respected).
 
 Version 0.5.2
 =============
