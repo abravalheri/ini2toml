@@ -174,7 +174,12 @@ def split_scalar(value: str, *, comment_prefixes=CP) -> Commented[Scalar]:
 
 @overload
 def split_list(
-    value: str, sep: str = ",", *, subsplit_dangling=True, comment_prefixes=CP
+    value: str,
+    sep: str = ",",
+    *,
+    subsplit_dangling=True,
+    comment_prefixes=CP,
+    force_multiline=False,
 ) -> CommentedList[str]:
     ...
 
@@ -187,6 +192,7 @@ def split_list(
     coerce_fn: CoerceFn[T],
     subsplit_dangling=True,
     comment_prefixes=CP,
+    force_multiline=False,
 ) -> CommentedList[T]:
     ...
 
@@ -198,12 +204,18 @@ def split_list(
     coerce_fn: CoerceFn[T],
     subsplit_dangling=True,
     comment_prefixes=CP,
+    force_multiline=False,
 ) -> CommentedList[T]:
     ...
 
 
 def split_list(
-    value, sep=",", coerce_fn=noop, subsplit_dangling=True, comment_prefixes=CP
+    value,
+    sep=",",
+    coerce_fn=noop,
+    subsplit_dangling=True,
+    comment_prefixes=CP,
+    force_multiline=False,
 ):
     """Value encoded as a (potentially) dangling list values separated by ``sep``.
 
@@ -217,7 +229,7 @@ def split_list(
     comment_prefixes = [p for p in comment_prefixes if sep not in p]
 
     values = value.strip().splitlines()
-    if not subsplit_dangling and len(values) > 1:
+    if not subsplit_dangling and (len(values) > 1 or force_multiline):
         sep += "\n"  # force a pattern that cannot be found in a split line
 
     def _split(line: str) -> list:

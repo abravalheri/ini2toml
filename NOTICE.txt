@@ -10,10 +10,11 @@ purposes during development:
 - 'django/setup.cfg' from https://github.com/django/django, licensed under BSD-3-Clause
 - 'flask/setup.cfg' from https://github.com/pallets/flask, licensed under BSD-3-Clause
 - 'pandas/setup.cfg' from https://github.com/pandas-dev/pandas, licensed under BSD-3-Clause
+- 'pluggy/setup.cfg' from https://github.com/pytest-dev, licensed under MIT
 - 'pyscaffold/setup.cfg' from https://github.com/pyscaffold/pyscaffold, licensed under MIT
+- 'setuptools_docs/**/*.cfg' from https://github.com/pypa/setuptools, licensed under MIT
 - 'setuptools_scm/setup.cfg' from https://github.com/pypa/setuptools_scm, licensed under MIT
 - 'virtualenv/setup.cfg' from https://github.com/pypa/virtualenv, licensed under MIT
-- 'setuptools_docs/**/*.cfg' from https://github.com/pypa/setuptools, licensed under MIT
 - 'zipp/setup.cfg' from https://github.com/jaraco/zipp, licensed under MIT
 
 These files are not part of the 'ini2toml' project and not meant

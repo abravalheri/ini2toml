@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.6.1
+=============
+
+- ``setuptools`` plugin:
+   - Fix dependency splitter for single lines with env markers
+
 Version 0.6
 ===========
 
