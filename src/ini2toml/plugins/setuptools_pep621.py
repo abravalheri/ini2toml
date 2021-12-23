@@ -54,9 +54,7 @@ _logger = logging.getLogger(__name__)
 chain_iter = chain.from_iterable
 
 ENV_MARKER = re.compile(r";\s*(python|platform|implementation|os|sys)[_.]", re.M)
-"""Simplified regex for :pep:`508` markers that can be used in `setup.cfg`_
-.. _setup.cfg specs: https://setuptools.pypa.io/en/latest/userguide/declarative_config.html
-"""  # noqa
+"""Simplified regex for :pep:`508` markers that can be used in ``setup.cfg``"""
 
 # Functions that split values from comments and parse those values
 split_list_comma = partial(split_list, sep=",", subsplit_dangling=False)
