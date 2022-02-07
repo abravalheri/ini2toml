@@ -187,8 +187,7 @@ def test_application():
 
     doc["table"] = apply(doc["table"], "option10", dangling_kv_no_subsplit)
     expected = """\
-    [table.option10]
-    a = "1"
-    b = "2, c=3"
+    option10 = {a = "1", b = "2, c=3"}
     """
+    print(dumps(doc))
     assert dedent(expected) in dumps(doc)

@@ -38,8 +38,8 @@ Homepage = "https://pandas.pydata.org"
 Documentation = "https://pandas.pydata.org/pandas-docs/stable"
 "Source Code" = "https://github.com/pandas-dev/pandas"
 
-[project.entry-points]
-pandas_plotting_backends = {matplotlib = "pandas:plotting._matplotlib"}
+[project.entry-points.pandas_plotting_backends]
+matplotlib = "pandas:plotting._matplotlib"
 
 [project.optional-dependencies]
 test = [
