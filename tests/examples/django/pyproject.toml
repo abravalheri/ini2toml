@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "Django"
 authors = [{name = "Django Software Foundation", email = "foundation@djangoproject.com"}]
@@ -44,10 +48,6 @@ bcrypt = ["bcrypt"]
 
 [project.scripts]
 django-admin = "django.core.management:execute_from_command_line"
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true

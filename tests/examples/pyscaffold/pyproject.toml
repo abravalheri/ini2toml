@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "PyScaffold"
 description = "Template tool for putting up the scaffold of a Python project"
@@ -98,10 +102,6 @@ no_pyproject = "pyscaffold.extensions.no_pyproject:NoPyProject"
 
 [project.scripts]
 putup = "pyscaffold.cli:run"
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 zip-safe = false

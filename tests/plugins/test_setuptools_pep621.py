@@ -399,7 +399,7 @@ pyarrow:python_version>'3.4' =
 
 expected_fix_extras_require = """\
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -440,7 +440,6 @@ setup-requires =
 expected_move_setup_requires = """\
 [build-system]
 requires = [
-    "wheel",
     "setuptools>=46.1.0",
     "setuptools_scm>=5",
 ]
@@ -477,7 +476,7 @@ tests-require =
 
 expected_move_tests_require1 = """\
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -500,7 +499,7 @@ testing =
 
 expected_move_tests_require2 = """\
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -602,12 +601,12 @@ def test_handle_dynamic(plugin, parse, convert):
 # ----
 
 expected_empty = """\
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 dynamic = ["license", "version"]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool]
 [tool.setuptools]
@@ -643,12 +642,12 @@ data-files =
 """
 
 expected_data_files = """\
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 dynamic = ["license", "version"]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool]
 [tool.setuptools]

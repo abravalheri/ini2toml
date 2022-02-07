@@ -1,3 +1,10 @@
+[build-system]
+requires = [
+    "setuptools",
+    "setuptools-scm",
+]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pluggy"
 description = "plugin and hook calling mechanisms for python"
@@ -40,14 +47,6 @@ testing = [
     "pytest",
     "pytest-benchmark",
 ]
-
-[build-system]
-requires = [
-    "setuptools",
-    "wheel",
-    "setuptools-scm",
-]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["pluggy"]
