@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 0.7
+===========
+
+- Avoid problems with duplicated augmentation, :pr:`20`
+- Make sure each plugin is activated only once, :pr:`21`
+- Improve TOML formatting, :pr:`22`
+- ``setuptools`` plugin:
+   - Make ``build-system`` the first section in the created ``pyproject.toml``,
+     :pr:`19`
+
 Version 0.6.1
 =============
 
