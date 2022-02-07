@@ -1,6 +1,6 @@
 from functools import reduce
 from types import MappingProxyType
-from typing import Dict, Generic, List, Mapping, Sequence, TypeVar
+from typing import Dict, Generic, List, Mapping, Sequence, TypeVar, cast
 
 from . import types  # Structural/Abstract types
 from .errors import (
@@ -144,7 +144,9 @@ class BaseTranslator(Generic[T]):
         active_augmentations: Mapping[str, bool] = EMPTY,
     ) -> T:
         UndefinedProfile.check(profile_name, list(self.profiles.keys()))
-        profile = self._add_augmentations(self[profile_name], active_augmentations)
+        profile = cast(Profile, self[profile_name])._copy()
+        # ^--- avoid permanent changes and conflicts with duplicated augmentation
+        self._add_augmentations(profile, active_augmentations)
 
         ini = reduce(apply, profile.pre_processors, ini)
         irepr = self.loads(ini)

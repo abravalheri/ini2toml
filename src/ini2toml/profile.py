@@ -1,4 +1,5 @@
 import inspect
+from copy import deepcopy
 from typing import Optional, Sequence, TypeVar
 
 from .types import IntermediateProcessor, ProfileAugmentationFn, TextProcessor
@@ -37,6 +38,16 @@ class Profile:
 
     replace = replace
 
+    def _copy(self: P) -> P:
+        return self.__class__(
+            name=self.name,
+            help_text=self.help_text,
+            pre_processors=self.pre_processors[:],
+            intermediate_processors=self.intermediate_processors[:],
+            post_processors=self.post_processors[:],
+            ini_parser_opts=deepcopy(self.ini_parser_opts),
+        )
+
 
 class ProfileAugmentation:
     def __init__(
@@ -48,8 +59,8 @@ class ProfileAugmentation:
     ):
         self.fn = fn
         self.active_by_default = active_by_default
-        self.name = name
-        self.help_text = help_text
+        self.name = name or getattr(fn, "__name__", "")
+        self.help_text = help_text or getattr(fn, "__doc__", "")
 
     def is_active(self, explicitly_active: Optional[bool] = None) -> bool:
         """``explicitly_active`` is a tree-state variable: ``True`` if the user
