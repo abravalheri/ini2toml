@@ -130,3 +130,12 @@ def test_reuse_object():
     deduplicated = {getattr(p, "__name__", ""): p for p in processors}
     # Make sure there is no duplication in the processors
     assert len(processors) == len(deduplicated)
+
+
+def test_deduplicate_plugins():
+    plugins = [
+        profile_independent_tasks.activate,
+        profile_independent_tasks.activate,
+    ]
+    translator = Translator(plugins=plugins)
+    assert len(translator.plugins) == 1
