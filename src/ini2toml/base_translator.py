@@ -1,3 +1,4 @@
+import inspect
 from functools import reduce
 from types import MappingProxyType
 from typing import Dict, Generic, List, Mapping, Sequence, TypeVar, cast
@@ -84,7 +85,7 @@ class BaseTranslator(Generic[T]):
         profile_augmentations: Sequence[types.ProfileAugmentation] = (),
         ini_parser_opts: Mapping = EMPTY,
     ):
-        self.plugins = list(plugins)
+        self.plugins = _deduplicate_plugins(plugins)
         self.ini_parser_opts = ini_parser_opts
         self.profiles = {p.name: p for p in profiles}
         self.augmentations: Dict[str, types.ProfileAugmentation] = {
@@ -153,3 +154,14 @@ class BaseTranslator(Generic[T]):
         irepr = reduce(apply, profile.intermediate_processors, irepr)
         toml = self.dumps(irepr)
         return reduce(apply, profile.post_processors, toml)
+
+
+def _deduplicate_plugins(plugins: Sequence[types.Plugin]) -> List[types.Plugin]:
+    deduplicated = {_plugin_name(p): p for p in plugins}
+    return list(deduplicated.values())
+
+
+def _plugin_name(plugin: types.Plugin) -> str:
+    mod = inspect.getmodule(plugin)
+    name = getattr(plugin, "__qualname__", getattr(plugin, "__name__", "**plugin**"))
+    return f"{mod}:{name}"
