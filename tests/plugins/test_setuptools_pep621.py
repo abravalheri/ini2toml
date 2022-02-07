@@ -101,7 +101,7 @@ keywords = python, module
 [options]
 zip-safe = False  # comment
 package-dir =
-    *=src # TODO: tomlkit/atoml bug with empty keys
+    =src
 install-requires =
     importlib-metadata; python_version<"3.8"
     configupdater>=3,<=4
@@ -128,7 +128,7 @@ keywords = ["python", "module"]
 
 [options]
 zip-safe = false # comment
-package-dir = {"*" = "src"} # TODO: tomlkit/atoml bug with empty keys
+package-dir = {"" = "src"}
 install-requires = [
     "importlib-metadata; python_version<\\"3.8\\"",
     "configupdater>=3,<=4",
