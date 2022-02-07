@@ -261,6 +261,11 @@ class CommentedKV(Generic[T], UserList):
                 out[k] = v
         return out
 
+    def _all_comments(self) -> Iterable[str]:
+        for entry in self:
+            if entry.has_comment():
+                yield entry.comment
+
     def to_ir(self) -> IntermediateRepr:
         """:class:`CommentedKV` are usually intended to represent INI options, while
         :class:`IntermediateRepr` are usually intended to represent INI sections.
@@ -269,9 +274,13 @@ class CommentedKV(Generic[T], UserList):
         """
         irepr = IntermediateRepr()
         for row in self:
+            key, value = None, None
             for key, value in row.value_or([]):
                 irepr[key] = value
             if row.has_comment():
-                irepr[key] = Commented(value, row.comment)
+                if key:
+                    irepr[key] = Commented(value, row.comment)
+                else:
+                    irepr[CommentKey()] = row.comment
 
         return irepr

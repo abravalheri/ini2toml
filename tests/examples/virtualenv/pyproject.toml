@@ -52,9 +52,6 @@ Homepage = "https://virtualenv.pypa.io/"
 Source = "https://github.com/pypa/virtualenv"
 Tracker = "https://github.com/pypa/virtualenv/issues"
 
-[project.entry-points]
-"virtualenv.discovery" = {builtin = "virtualenv.discovery.builtin:Builtin"}
-
 [project.entry-points."virtualenv.activate"]
 bash = "virtualenv.activation.bash:BashActivator"
 cshell = "virtualenv.activation.cshell:CShellActivator"
@@ -76,6 +73,9 @@ pypy2-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy2:PyPy2Posix"
 pypy2-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy2:Pypy2Windows"
 pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
 pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
+
+[project.entry-points."virtualenv.discovery"]
+builtin = "virtualenv.discovery.builtin:Builtin"
 
 [project.entry-points."virtualenv.seed"]
 pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"

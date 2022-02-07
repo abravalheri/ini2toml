@@ -43,7 +43,7 @@ __all__ = [
 
 T = TypeVar("T", bound=Union[TOMLDocument, Table, InlineTable])
 
-MAX_INLINE_TABLE_LEN = 60
+MAX_INLINE_TABLE_LEN = 67
 INLINE_TABLE_LONG_ELEM = 10
 MAX_INLINE_TABLE_LONG_ELEM = 5
 LONG = 120
@@ -92,8 +92,25 @@ def _collapse_commented_list(obj: CommentedList, root=False) -> Array:
 
 
 @collapse.register(CommentedKV)
-def _collapse_commented_kv(obj: CommentedKV, root=False) -> Union[Table, InlineTable]:
-    multiline = len(obj) > 1
+def _collapse_commented_kv(
+    obj: CommentedKV, root=False, *, _key: str = ""
+) -> Union[Table, InlineTable]:
+    len_key = len(_key)
+    _as_dict = obj.as_dict()
+
+    comments = list(obj._all_comments())
+    len_comments = sum(len(c) for c in comments) + 4
+    # ^-- extra 4 for `  # `
+
+    heuristic_len = len_key + len_comments + len(str(_as_dict)) + 3
+    # ^-- extra 3 for ` = `
+
+    num_elem = len(_as_dict)
+    multiline = (
+        heuristic_len > MAX_INLINE_TABLE_LEN
+        or num_elem > MAX_INLINE_TABLE_LONG_ELEM
+        or len(comments) > 1
+    )
     out: Union[Table, InlineTable] = table() if multiline else inline_table()
 
     for entry in obj.data:
@@ -203,11 +220,15 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
                 raise ValueError(msg)
             _convert_irepr_to_toml(IntermediateRepr({nested_key: value}), p)
         elif isinstance(key, (int, str)):
-            if isinstance(value, IntermediateRepr):
-                p = out.setdefault(str(key), {})
+            _key = str(key)
+            if isinstance(value, CommentedKV):
+                # Heuristic for better inline tables
+                out[str(key)] = _collapse_commented_kv(value, _key=_key)
+            elif isinstance(value, IntermediateRepr):
+                p = out.setdefault(_key, {})
                 _convert_irepr_to_toml(value, p)
             else:
-                out[str(key)] = collapse(value)
+                out[_key] = collapse(value)
     return out
 
 
