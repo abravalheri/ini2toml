@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pandas"
 description = "Powerful data structures for data analysis, time series, and statistics"
@@ -43,10 +47,6 @@ test = [
     "pytest>=6.0",
     "pytest-xdist>=1.31",
 ]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true

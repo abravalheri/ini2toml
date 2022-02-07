@@ -99,7 +99,7 @@ def activate(translator: Translator):
 class SetuptoolsPEP621:
     """Convert settings to 'pyproject.toml' based on :pep:`621`"""
 
-    BUILD_REQUIRES = ("setuptools", "wheel")
+    BUILD_REQUIRES = ("setuptools",)
 
     def __init__(self):
         self._be = BestEffort(key_sep="=")
@@ -116,8 +116,8 @@ class SetuptoolsPEP621:
             "build-backend": "setuptools.build_meta",
         }
         tpl = {
-            "metadata": ir_cls(),  # NOTE: will be renamed later
             "build-system": ir_cls(build_system),  # type: ignore
+            "metadata": ir_cls(),  # NOTE: will be renamed later
             "tool": ir_cls(),
         }
         return ir_cls(tpl)  # type: ignore

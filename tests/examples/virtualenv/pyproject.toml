@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "virtualenv"
 description = "Virtual Python Environment builder"
@@ -100,10 +104,6 @@ testing = [
 
 [project.scripts]
 virtualenv = "virtualenv.__main__:run_with_catch"
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

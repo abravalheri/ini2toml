@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "setuptools_scm"
 description = "the blessed package to manage your versions by scm tags"
@@ -69,10 +73,6 @@ toml = [
     "setuptools>=42",
     "tomli>=1.0.0",
 ]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

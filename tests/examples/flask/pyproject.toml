@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "Flask"
 authors = [{name = "Armin Ronacher", email = "armin.ronacher@active-4.com"}]
@@ -35,10 +39,6 @@ content-type = "text/x-rst"
 
 [project.scripts]
 flask = "flask.cli:main"
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

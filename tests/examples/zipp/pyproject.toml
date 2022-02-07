@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "zipp"
 authors = [{name = "Jason R. Coombs", email = "jaraco@jaraco.com"}]
@@ -36,10 +40,6 @@ docs = [
     "rst.linker >= 1.9",
     # local
 ]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = ["zipp"]
