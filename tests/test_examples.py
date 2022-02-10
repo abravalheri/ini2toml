@@ -94,7 +94,7 @@ def test_examples_cli(original, expected, capsys):
 
 
 def remove_flake8_from_toml(text: str) -> str:
-    # full_toml uses atoml that should not change any formatting, just remove the
+    # full_toml should not change any formatting, just remove the
     # parts we don't want
     doc = full_toml.loads(text)
     tool = doc.get("tool", {})

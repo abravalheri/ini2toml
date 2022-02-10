@@ -1,5 +1,5 @@
 """This module serves as a compatibility layer between API-compatible
-style preserving TOML editing libraries (e.g. atoml and atoml).
+style preserving TOML editing libraries (e.g. tomlkit and atoml).
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
@@ -8,7 +8,7 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from functools import singledispatch
 from typing import Iterable, Optional, Tuple, TypeVar, Union, cast
 
-from atoml import (
+from tomlkit import (
     aot,
     array,
     comment,
@@ -20,8 +20,8 @@ from atoml import (
     nl,
     table,
 )
-from atoml.items import AoT, Array, InlineTable, Item, Table
-from atoml.toml_document import TOMLDocument
+from tomlkit.items import AoT, Array, InlineTable, Item, Table
+from tomlkit.toml_document import TOMLDocument
 
 from ..errors import InvalidTOMLKey
 from ..types import (
@@ -127,7 +127,7 @@ def _collapse_commented_kv(
         if k:
             out[k].comment(entry.comment)
         else:
-            out.append(None, comment(entry.comment))
+            out.add(comment(entry.comment))
     return out
 
 
@@ -186,11 +186,10 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
     if irepr.inline_comment and isinstance(out, Item):
         out.comment(irepr.inline_comment)
     for key, value in irepr.items():
-        # TODO: prefer `add` once atoml's InlineTable supports it
         if isinstance(key, WhitespaceKey):
-            out.append(None, nl())
+            out.add(nl())
         elif isinstance(key, CommentKey):
-            out.append(None, comment(value))
+            out.add(comment(value))
         elif isinstance(key, tuple):
             parent_key, *rest = key
             if not isinstance(parent_key, str):
