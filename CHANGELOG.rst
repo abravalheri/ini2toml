@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.8
+===========
+
+- :pypi:`atoml` dependency replaced with :pypi:`tomlkit`, :issue:`23`
+- ``setuptools`` plugin:
+    - Now commas are stripped when splitting keywords for setuptools plugin, :issue:`24`
+
 Version 0.7
 ===========
 
@@ -61,7 +68,7 @@ Version 0.5
      (that points to the core metadata spec), the ``optional-dependencies`` keys
      must be valid Python identifiers (but ``setuptools`` historically seem to
      accept markers embedded with ``:`` after the extra name).
-- Bumped the version of the ``atoml`` dependency to 1.1.1.
+- Bumped the version of the :pypi:`atoml` dependency to 1.1.1.
 
 Version 0.4
 ===========
