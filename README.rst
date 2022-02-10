@@ -125,5 +125,5 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _pipx: https://pypa.github.io/pipx/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _TOML: https://toml.io/en/
-.. _TOML library: https://github.com/frostming/atoml
+.. _TOML library: https://github.com/sdispater/tomlkit
 .. _virtual environment: https://realpython.com/python-virtual-environments-a-primer/
