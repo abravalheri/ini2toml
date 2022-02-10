@@ -62,6 +62,7 @@ split_list_semi = partial(split_list, sep=";", subsplit_dangling=False)
 split_hash_comment = partial(split_comment, comment_prefixes="#")  # avoid splitting `;`
 split_bool = partial(split_comment, coerce_fn=coerce_bool)
 split_kv_of_lists = partial(split_kv_pairs, coerce_fn=split_list_comma)
+split_keywords = partial(split_list_comma, coerce_fn=lambda x: x.rstrip(","))
 # URLs can contain the # symbol
 split_kv_urls = partial(split_kv_pairs, comment_prefixes=(" #",))
 split_url = partial(split_comment, comment_prefixes=(" #",))
@@ -142,7 +143,7 @@ class SetuptoolsPEP621:
         return {
             ("metadata", "version"): directive("file", "attr"),
             ("metadata", "classifiers"): directive("file", orelse=split_list_comma),
-            ("metadata", "keywords"): split_list_comma,
+            ("metadata", "keywords"): split_keywords,
             ("metadata", "description"): directive("file"),
             # ---
             ("metadata", "long-description"): directive("file", orelse=noop),
