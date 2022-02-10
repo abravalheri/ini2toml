@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plumbum"
+description = "Plumbum: shell combinators library"
+authors = [{name = "Tomer Filiba", email = "tomerfiliba@gmail.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Systems Administration",
+]
+keywords = [
+    "path",
+    "local",
+    "remote",
+    "ssh",
+    "shell",
+    "pipe",
+    "popen",
+    "process",
+    "execution",
+    "color",
+    "cli",
+]
+urls = {Homepage = "https://plumbum.readthedocs.io"}
+dynamic = ["license", "version"]
+requires-python = ">=3.6"
+dependencies = ["pywin32;platform_system=='Windows' and platform_python_implementation!=\"PyPy\""]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.optional-dependencies]
+dev = [
+    "paramiko",
+    "psutil",
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-timeout",
+]
+docs = [
+    "Sphinx>=4.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+]
+ssh = ["paramiko"]
+
+[tool.setuptools]
+platforms = ["POSIX", "Windows"]
+provides = ["plumbum"]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"plumbum.cli" = ["i18n/*/LC_MESSAGES/*.mo"]
+
+[tool.setuptools.dynamic]
+license = "MIT"
+license-files = ["LICENSE"]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source_pkgs = ["plumbum"]
+omit = [
+    "*ipython*.py",
+    "*__main__.py",
+    "*_windows.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.flake8]
+max-complexity = "50"
+extend-ignore = "E203, E501, E722, B950, E731"
+select = "C,E,F,W,B,B9"
+
+[tool.codespell]
+ignore-words-list = "ans,switchs,hart,ot,twoo,fo"
+skip = "*.po"
