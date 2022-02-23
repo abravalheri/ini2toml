@@ -5,9 +5,12 @@ from typing import Callable
 
 from ..types import Profile, Translator
 
-NEWLINES = re.compile(r"\n+", re.M)
+DUPLICATED_NEWLINES = re.compile(r"\n+", re.M)
 TABLE_START = re.compile(r"^\[(.*)\]", re.M)
 EMPTY_TABLES = re.compile(r"^\[(.*)\]\n+\[(\1\.(?:.*))\]", re.M)
+MISSING_TERMINATING_LINE = re.compile(r"(?<!\n)\Z", re.M)
+# ^ POSIX tools will not play nicely with text files without a terminating new line
+# https://unix.stackexchange.com/questions/18743/whats-the-point-in-adding-a-new-line-to-the-end-of-a-file
 
 
 def activate(translator: Translator):
@@ -27,9 +30,11 @@ def post_process(fn: Callable[[str], str]):
 def normalise_newlines(text: str) -> str:
     """Make sure every table is preceded by an empty newline, but remove them elsewhere
     in the output TOML document.
+    Also ensure a terminating newline is present for best POSIX tool compatibility.
     """
-    text = NEWLINES.sub(r"\n", text)
-    return TABLE_START.sub(r"\n[\1]", text)
+    text = DUPLICATED_NEWLINES.sub(r"\n", text)
+    text = TABLE_START.sub(r"\n[\1]", text)
+    return MISSING_TERMINATING_LINE.sub("\n", text)
 
 
 def remove_empty_table_headers(text: str) -> str:
