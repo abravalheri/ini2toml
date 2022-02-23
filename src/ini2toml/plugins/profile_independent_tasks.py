@@ -39,4 +39,8 @@ def normalise_newlines(text: str) -> str:
 
 def remove_empty_table_headers(text: str) -> str:
     """Remove empty TOML table headers"""
-    return EMPTY_TABLES.sub(r"[\2]", text).strip()
+    prev_text = ""
+    while text != prev_text:
+        prev_text = text
+        text = EMPTY_TABLES.sub(r"[\2]", text).strip()
+    return text
