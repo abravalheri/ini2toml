@@ -41,7 +41,7 @@ def test_examples_api(original, expected, validate):
     translator = Translator()
     available_profiles = list(translator.profiles.keys())
     profile = cli.guess_profile(None, original, available_profiles)
-    out = translator.translate(Path(original).read_text(), profile)
+    out = translator.translate(Path(original).read_text(), profile).strip()
     expected_text = Path(expected).read_text().strip()
     assert out == expected_text
     # Make sure they can be parsed
@@ -88,7 +88,7 @@ def test_examples_cli(original, expected, capsys):
     cli.run([original])
     (out, err) = capsys.readouterr()
     expected_text = Path(expected).read_text().strip()
-    assert out == expected_text
+    assert out.strip() == expected_text
     # Make sure they can be parsed
     assert tomli.loads(out) == tomli.loads(expected_text)
 
