@@ -29,7 +29,7 @@ dynamic = ["license", "version"]
 requires-python = ">=3.8"
 dependencies = [
     "asgiref >= 3.3.2",
-    "backports.zoneinfo; python_version<\"3.9\"",
+    'backports.zoneinfo; python_version<"3.9"',
     "sqlparse >= 0.2.2",
     "tzdata; sys_platform == 'win32'",
 ]

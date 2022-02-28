@@ -25,9 +25,9 @@ testing = [
     "pytest >= 6",
     "pytest-checkdocs >= 2.4",
     "pytest-flake8",
-    "pytest-black >= 0.3.7; python_implementation != \"PyPy\"", # workaround for jaraco/skeleton#22
+    'pytest-black >= 0.3.7; python_implementation != "PyPy"', # workaround for jaraco/skeleton#22
     "pytest-cov",
-    "pytest-mypy; python_implementation != \"PyPy\"", # workaround for jaraco/skeleton#22
+    'pytest-mypy; python_implementation != "PyPy"', # workaround for jaraco/skeleton#22
     "pytest-enabler >= 1.0.1",
     # local
     "jaraco.itertools",

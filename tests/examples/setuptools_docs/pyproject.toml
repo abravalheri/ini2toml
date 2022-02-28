@@ -15,7 +15,7 @@ classifiers = [
 dynamic = ["readme", "license", "version"]
 dependencies = [
     "requests",
-    "importlib; python_version == \"2.6\"",
+    'importlib; python_version == "2.6"',
 ]
 
 [project.optional-dependencies]

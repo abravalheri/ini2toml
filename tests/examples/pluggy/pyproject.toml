@@ -32,7 +32,7 @@ classifiers = [
 urls = {Homepage = "https://github.com/pytest-dev/pluggy"}
 dynamic = ["license", "version"]
 requires-python = ">=3.6"
-dependencies = ["importlib-metadata>=0.12;python_version<\"3.8\""]
+dependencies = ['importlib-metadata>=0.12;python_version<"3.8"']
 
 [project.readme]
 file = "README.rst"
