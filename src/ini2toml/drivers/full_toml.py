@@ -18,9 +18,10 @@ from tomlkit import (
     item,
     loads,
     nl,
+    string,
     table,
 )
-from tomlkit.items import AoT, Array, InlineTable, Item, Table
+from tomlkit.items import AoT, Array, InlineTable, Item, String, Table
 from tomlkit.toml_document import TOMLDocument
 
 from ..errors import InvalidTOMLKey
@@ -57,6 +58,11 @@ def convert(irepr: IntermediateRepr) -> str:
 def collapse(obj, root=False):
     # Catch all
     return obj
+
+
+@collapse.register(str)
+def _collapse_string(obj: str) -> String:
+    return _string(obj)
 
 
 @collapse.register(Commented)
@@ -235,7 +241,7 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
 
 
 def create_item(value, comment):
-    obj = item(value)
+    obj = _item(value)
     if comment is not None:
         obj.comment(comment)
     return obj
@@ -291,3 +297,28 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, int, bool, bool, int]:
         has_nl = has_nl or "\n" in elem_repr
 
     return is_aot, max_len, total_len, has_nl, has_nested, len(seq)
+
+
+def _item(obj) -> Item:
+    if isinstance(obj, str):
+        return _string(obj)
+
+    return item(obj)
+
+
+def _string(obj: str) -> String:
+    """Try to guess the best TOML representation for a string"""
+    multiline = "\n" in obj
+    single_line = "".join(x.strip().rstrip("\\") for x in obj.splitlines())
+    literal = '"' in obj or "\\" in single_line
+
+    if multiline and not obj.startswith("\n"):
+        # TOML will automatically strip an starting newline
+        # so let's add it, since it is better for reading
+        obj = "\n" + obj
+
+    try:
+        return string(obj, literal=literal, multiline=multiline)
+    except ValueError:
+        # Literal strings are not always possible
+        return string(obj, multiline=multiline)
