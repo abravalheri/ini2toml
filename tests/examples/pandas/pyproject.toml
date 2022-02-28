@@ -80,19 +80,90 @@ parentdir_prefix = "pandas-"
 
 [tool.flake8]
 max-line-length = "88"
-ignore = "\n# space before : (needed for how black formats slicing)\nE203,\n# line break before binary operator\nW503,\n# line break after binary operator\nW504,\n# module level import not at top of file\nE402,\n# do not assign a lambda expression, use a def\nE731,\n# found modulo formatter (incorrect picks up mod operations)\nS001,\n# controversial\nB005,\n# controversial\nB006,\n# controversial\nB007,\n# controversial\nB008,\n# setattr is used to side-step mypy\nB009,\n# getattr is used to side-step mypy\nB010,\n# tests use assert False\nB011,\n# tests use comparisons but not their returned value\nB015,\n# false positives\nB301"
-exclude = "\ndoc/sphinxext/*.py,\ndoc/build/*.py,\ndoc/temp/*.py,\n.eggs/*.py,\nversioneer.py,\n# exclude asv benchmark environments from linting\nenv"
-per-file-ignores = "\n# private import across modules\npandas/tests/*:PDF020\n# pytest.raises without match=\npandas/tests/extension/*:PDF009\n# os.remove\ndoc/make.py:PDF008\n# import from pandas._testing\npandas/testing.py:PDF014"
+ignore = """
+# space before : (needed for how black formats slicing)
+E203,
+# line break before binary operator
+W503,
+# line break after binary operator
+W504,
+# module level import not at top of file
+E402,
+# do not assign a lambda expression, use a def
+E731,
+# found modulo formatter (incorrect picks up mod operations)
+S001,
+# controversial
+B005,
+# controversial
+B006,
+# controversial
+B007,
+# controversial
+B008,
+# setattr is used to side-step mypy
+B009,
+# getattr is used to side-step mypy
+B010,
+# tests use assert False
+B011,
+# tests use comparisons but not their returned value
+B015,
+# false positives
+B301"""
+exclude = """
+doc/sphinxext/*.py,
+doc/build/*.py,
+doc/temp/*.py,
+.eggs/*.py,
+versioneer.py,
+# exclude asv benchmark environments from linting
+env"""
+per-file-ignores = """
+# private import across modules
+pandas/tests/*:PDF020
+# pytest.raises without match=
+pandas/tests/extension/*:PDF009
+# os.remove
+doc/make.py:PDF008
+# import from pandas._testing
+pandas/testing.py:PDF014"""
 
 [tool.flake8-rst]
 max-line-length = "84"
-bootstrap = "\nimport numpy as np\nimport pandas as pd\n# avoiding error when importing again numpy or pandas\nnp\n# (in some cases we want to do it to show users)\npd"
-ignore = "\n# space before : (needed for how black formats slicing)\nE203,\n# module level import not at top of file\nE402,\n# line break before binary operator\nW503,\n# Classes/functions in different blocks can generate those errors\n# expected 2 blank lines, found 0\nE302,\n# expected 2 blank lines after class or function definition, found 0\nE305,\n# We use semicolon at the end to avoid displaying plot objects\n# statement ends with a semicolon\nE703,\n# comparison to none should be 'if cond is none:'\nE711,"
-exclude = "\ndoc/source/development/contributing_docstring.rst,\n# work around issue of undefined variable warnings\n# https://github.com/pandas-dev/pandas/pull/38837#issuecomment-752884156\ndoc/source/getting_started/comparison/includes/*.rst"
+bootstrap = """
+import numpy as np
+import pandas as pd
+# avoiding error when importing again numpy or pandas
+np
+# (in some cases we want to do it to show users)
+pd"""
+ignore = """
+# space before : (needed for how black formats slicing)
+E203,
+# module level import not at top of file
+E402,
+# line break before binary operator
+W503,
+# Classes/functions in different blocks can generate those errors
+# expected 2 blank lines, found 0
+E302,
+# expected 2 blank lines after class or function definition, found 0
+E305,
+# We use semicolon at the end to avoid displaying plot objects
+# statement ends with a semicolon
+E703,
+# comparison to none should be 'if cond is none:'
+E711,"""
+exclude = """
+doc/source/development/contributing_docstring.rst,
+# work around issue of undefined variable warnings
+# https://github.com/pandas-dev/pandas/pull/38837#issuecomment-752884156
+doc/source/getting_started/comparison/includes/*.rst"""
 
 [tool.codespell]
 ignore-words-list = "ba,blocs,coo,hist,nd,sav,ser"
-ignore-regex = "https://(\\w+\\.)+"
+ignore-regex = 'https://(\w+\.)+'
 
 [tool.coverage.run]
 branch = true
@@ -114,7 +185,7 @@ exclude_lines = [
     "pragma: no cover",
     # Don't complain about missing debug-only code:
     "def __repr__",
-    "if self\\.debug",
+    'if self\.debug',
     # Don't complain if tests don't hit defensive assertion code:
     "raise AssertionError",
     "raise NotImplementedError",

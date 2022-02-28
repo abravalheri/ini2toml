@@ -38,8 +38,8 @@ dependencies = [
     "filelock>=3.0.0,<4",
     "platformdirs>=2,<3",
     "six>=1.9.0,<2", # keep it >=1.9.0 as it may cause problems on LTS platforms
-    "importlib-metadata>=0.12;python_version<\"3.8\"",
-    "importlib-resources>=1.0;python_version<\"3.7\"",
+    'importlib-metadata>=0.12;python_version<"3.8"',
+    'importlib-resources>=1.0;python_version<"3.7"',
     "pathlib2>=2.3.3,<3;python_version < '3.4' and sys.platform != 'win32'",
 ]
 
@@ -99,7 +99,7 @@ testing = [
     "pytest-mock>=2",
     "pytest-randomly>=1",
     "pytest-timeout>=1",
-    "packaging>=20.0;python_version>\"3.4\"",
+    'packaging>=20.0;python_version>"3.4"',
 ]
 
 [project.scripts]
@@ -138,4 +138,6 @@ universal = true
 markers = ["slow"]
 junit_family = "xunit2"
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-env = "PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command\nPYTHONIOENCODING=utf-8"
+env = """
+PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command
+PYTHONIOENCODING=utf-8"""

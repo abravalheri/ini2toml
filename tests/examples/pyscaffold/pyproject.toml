@@ -23,7 +23,7 @@ classifiers = [
 dynamic = ["license", "version"]
 requires-python = ">=3.6"
 dependencies = [
-    "importlib-metadata; python_version<\"3.8\"",
+    'importlib-metadata; python_version<"3.8"',
     "appdirs>=1.4.4,<2",
     "configupdater>=3.0,<4",
     "setuptools>=46.1.0",
@@ -125,7 +125,9 @@ license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 # in order to write a coverage file that can be read by Jenkins.
 # CAUTION: --cov flags may prohibit setting breakpoints while debugging.
 # Comment those flags to avoid this pytest issue.
-addopts = "--cov pyscaffold --cov-config .coveragerc --cov-report term-missing\n--verbose"
+addopts = """
+--cov pyscaffold --cov-config .coveragerc --cov-report term-missing
+--verbose"""
 # In order to use xdist, the developer can add, for example, the following
 # arguments:
 # --dist=load --numprocesses=auto
@@ -160,7 +162,13 @@ formats = "bdist_wheel"
 max_line_length = "88"
 # E203 and W503 have edge cases handled by black
 extend_ignore = "E203, W503"
-exclude = "\nsrc/pyscaffold/contrib\n.tox\nbuild\ndist\n.eggs\ndocs/conf.py"
+exclude = """
+src/pyscaffold/contrib
+.tox
+build
+dist
+.eggs
+docs/conf.py"""
 
 [tool.mypy]
 ignore_missing_imports = true

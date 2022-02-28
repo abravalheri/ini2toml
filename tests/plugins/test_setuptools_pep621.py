@@ -130,7 +130,7 @@ keywords = ["python", "module"]
 zip-safe = false # comment
 package-dir = {"" = "src"}
 install-requires = [
-    "importlib-metadata; python_version<\\"3.8\\"",
+    'importlib-metadata; python_version<"3.8"',
     "configupdater>=3,<=4",
 ]
 
