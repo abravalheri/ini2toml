@@ -41,9 +41,15 @@ def test_examples_api(original, expected, validate):
     translator = Translator()
     available_profiles = list(translator.profiles.keys())
     profile = cli.guess_profile(None, original, available_profiles)
-    out = translator.translate(Path(original).read_text(), profile).strip()
-    expected_text = Path(expected).read_text().strip()
+    orig = Path(original)
+
+    # Make sure file ends in a newline (requirement for posix text files)
+    out = translator.translate(orig.read_text(encoding="utf-8"), profile)
+    assert out.endswith("\n")
+
+    expected_text = Path(expected).read_text(encoding="utf-8")
     assert out == expected_text
+
     # Make sure they can be parsed
     dict_equivalent = tomli.loads(out)
     assert dict_equivalent == tomli.loads(expected_text)
@@ -64,8 +70,13 @@ def test_examples_api_lite(original, expected, validate):
     # We cannot compare "flake8" sections (currently not handled)
     # (ConfigParser automatically strips comments, contrary to ConfigUpdater)
     orig = Path(original)
-    out = remove_flake8_from_toml(translator.translate(orig.read_text(), profile))
-    expected_text = remove_flake8_from_toml(Path(expected).read_text().strip())
+
+    # Make sure file ends in a newline (requirement for posix text files)
+    translated = translator.translate(orig.read_text(encoding="utf-8"), profile)
+    assert translated.endswith("\n")
+
+    out = remove_flake8_from_toml(translated)
+    expected_text = remove_flake8_from_toml(Path(expected).read_text(encoding="utf-8"))
 
     # At least the Python-equivalents should be the same when parsing
     dict_equivalent = tomli.loads(out)
@@ -87,8 +98,13 @@ def test_examples_api_lite(original, expected, validate):
 def test_examples_cli(original, expected, capsys):
     cli.run([original])
     (out, err) = capsys.readouterr()
-    expected_text = Path(expected).read_text().strip()
-    assert out.strip() == expected_text
+
+    # Make sure file ends in a newline (requirement for posix text files)
+    assert out.endswith("\n")
+
+    expected_text = Path(expected).read_text(encoding="utf-8")
+    assert out == expected_text
+
     # Make sure they can be parsed
     assert tomli.loads(out) == tomli.loads(expected_text)
 
