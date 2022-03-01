@@ -1,5 +1,6 @@
 import logging
 import sys
+from inspect import cleandoc
 from unittest.mock import MagicMock
 
 import pytest
@@ -102,3 +103,38 @@ def test_help(capsys):
     expected = " ".join(x.strip() for x in expected_profile_desc.splitlines())
     print(out)
     assert expected in text
+
+
+def test_auto_formatting(tmp_path, capsys):
+    setupcfg = """
+    [metadata]
+    version = 42
+    name = myproj
+    """
+    normal_output = """
+    requires = ["setuptools"]
+    """
+    expected = """
+    requires = [
+      "setuptools",
+    ]
+    """
+
+    # Check if the underlying function works
+    formatted = cli.apply_auto_formatting(cleandoc(expected))
+    assert formatted.strip() == cleandoc(expected).strip()
+
+    (tmp_path / "setup.cfg").write_text(cleandoc(setupcfg), encoding="utf-8")
+    assert (tmp_path / "setup.cfg").exists()
+
+    # Check the output when formatting in off
+    cli.run([str(tmp_path / "setup.cfg")])
+    out, _ = capsys.readouterr()
+    assert cleandoc(normal_output) in out
+    assert cleandoc(expected) not in out
+
+    # Check the output when formatting in on
+    cli.run(["-F", str(tmp_path / "setup.cfg")])
+    out, _ = capsys.readouterr()
+    assert cleandoc(normal_output) not in out
+    assert cleandoc(expected) in out

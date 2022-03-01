@@ -96,12 +96,12 @@ try:
     def apply_auto_formatting(text: str) -> str:
         try:
             return format_pyproject(Config(text))
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             _logger.debug(f"pyproject-fmt failed: {ex}", exc_info=True)
             _logger.warning("Auto-formatting failed, falling back to original text")
             return text
 
-except ImportError:
+except ImportError:  # pragma: no cover
 
     def apply_auto_formatting(text: str) -> str:
         return text
@@ -198,7 +198,7 @@ def run(args: Sequence[str] = ()):
     out = translator.translate(
         params.input_file.read(), params.profile, params.active_augmentations
     )
-    if params.auto_format:
+    if getattr(params, "auto_format", False):
         out = apply_auto_formatting(out)
     params.output_file.write(out)
 
