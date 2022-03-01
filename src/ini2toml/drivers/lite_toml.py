@@ -18,4 +18,5 @@ __all__ = [
 
 
 def convert(irepr: IntermediateRepr) -> str:
-    return dumps(plain_builtins.convert(irepr))
+    text = dumps(plain_builtins.convert(irepr))
+    return text.strip() + "\n"  # ensure terminating newline (POSIX requirement)

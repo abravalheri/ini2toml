@@ -14,7 +14,11 @@ MISSING_TERMINATING_LINE = re.compile(r"(?<!\n)\Z", re.M)
 
 
 def activate(translator: Translator):
-    tasks = [normalise_newlines, remove_empty_table_headers]
+    tasks = [
+        normalise_newlines,
+        remove_empty_table_headers,
+        ensure_terminating_newlines,
+    ]
     for task in tasks:
         translator.augment_profiles(post_process(task), active_by_default=True)
 
@@ -44,3 +48,7 @@ def remove_empty_table_headers(text: str) -> str:
         prev_text = text
         text = EMPTY_TABLES.sub(r"[\2]", text).strip()
     return text
+
+
+def ensure_terminating_newlines(text: str) -> str:
+    return text.strip() + "\n"

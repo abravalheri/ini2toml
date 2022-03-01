@@ -51,7 +51,8 @@ LONG = 120
 
 
 def convert(irepr: IntermediateRepr) -> str:
-    return dumps(collapse(irepr, root=True))
+    text = dumps(collapse(irepr, root=True))
+    return text.strip() + "\n"  # ensure terminating newline (POSIX requirement)
 
 
 @singledispatch
