@@ -83,6 +83,29 @@ META: Dict[str, dict] = {
     ),
 }
 
+try:
+    from pyproject_fmt import Config, format_pyproject
+
+    META["auto_format"] = dict(
+        flags=("-F", "--auto-format"),
+        action="store_true",
+        help="**EXPERIMENTAL** - format output with `pyproject-fmt`\n"
+        "(note that auto-formatting is intrusive and may cause loss of comments).",
+    )
+
+    def apply_auto_formatting(text: str) -> str:
+        try:
+            return format_pyproject(Config(text))
+        except Exception as ex:  # pragma: no cover
+            _logger.debug(f"pyproject-fmt failed: {ex}", exc_info=True)
+            _logger.warning("Auto-formatting failed, falling back to original text")
+            return text
+
+except ImportError:  # pragma: no cover
+
+    def apply_auto_formatting(text: str) -> str:
+        return text
+
 
 def __meta__(
     profiles: Sequence[Profile], augmentations: Sequence[ProfileAugmentation]
@@ -175,6 +198,8 @@ def run(args: Sequence[str] = ()):
     out = translator.translate(
         params.input_file.read(), params.profile, params.active_augmentations
     )
+    if getattr(params, "auto_format", False):
+        out = apply_auto_formatting(out)
     params.output_file.write(out)
 
 
