@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.9
+===========
+
+- Fixed missing terminating newline at the end of the generated file, :pr:`27`, :pr:`32`
+- Added heuristic for appropriate string representation selection when
+  serialising TOML, :pr:`28`
+- [CI] Added GitHub Actions for automatic test and release of tags, :pr:`30`
+
 Version 0.8
 ===========
 
