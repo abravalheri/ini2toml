@@ -15,7 +15,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 
 try:
@@ -342,49 +341,36 @@ class SetuptoolsPEP621:
         return doc
 
     def handle_license_and_files(self, doc: R) -> R:
-        """In :pep:`621` we have a single field for license, which might have a single
-        value (file path) or a dict-like structure::
+        """In :pep:`621` we have a single field for license, which is not compatible
+        with setuptools ``license-files``.
+        This field is meant to fill the ``License`` core metadata as a plain license
+        text (not a path to a file). Even when the ``project.license.file`` table field
+        is given, the idea is that the file should be expanded into text.
 
-            license-files => license.file
-            license => license.text
-
-        We also have to be aware that :pep:`621` accepts a single file, so the option of
-        combining multiple files as presented in ``setup.cfg`` have to be handled via
-        ``dynamic``.
+        This will likely change once :pep:`639` is accepted.
+        Meanwhile we have to translate ``license-files`` into a setuptools specific
+        configuration.
         """
         metadata: IR = doc["metadata"]
         files: Optional[CommentedList[str]] = metadata.get("license-files")
         # Setuptools automatically includes license files if not present
         # so let's make it dynamic
         files_as_list = (files and files.as_list()) or list(DEFAULT_LICENSE_FILES)
-        text = metadata.get("license")
 
-        # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
-        if files_as_list and (
-            len(files_as_list) > 1
-            or any(char in files_as_list[0] for char in "*?[")  # glob pattern
-            or text  # PEP 621 forbids both license and license-files at the same time
-        ):
-            metadata.setdefault("dynamic", []).append("license")
-            dynamic = doc.setdefault("options.dynamic", IR())
-            if text:
-                dynamic.append("license", text)
-            dynamic.append("license-files", files_as_list)
-            # 'file' and 'text' are mutually exclusive in PEP 621
-            metadata.pop("license", None)
-            metadata.pop("license-files", None)
-            return doc
-
+        # PEP 621 does not specify an equivalent for 'License-file' metadata
         if files_as_list:
-            files = cast(CommentedList[str], files)
-            license = IR(file=Commented(files_as_list[0], files[0].comment))
-        elif text:
-            license = IR(text=metadata["license"])
-        else:
+            # TODO: Once PEP 639 is approved this will not require a `tool` config
+            dynamic = doc.setdefault("options.dynamic", IR())
+            dynamic.append("license-files", files_as_list)
+            metadata.pop("license-files", None)
+
+        text = metadata.get("license")
+        if not text:
+            metadata.pop("license", None)
             return doc
 
-        fields = ("license-files", "license")
-        metadata.replace_first_remove_others(fields, "license", license)
+        metadata.rename("license", ("license", "text"))
+
         return doc
 
     def move_and_split_entrypoints(self, doc: R) -> R:
