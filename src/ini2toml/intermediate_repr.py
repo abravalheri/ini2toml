@@ -217,6 +217,10 @@ class Commented(Generic[T]):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value!r}, {self.comment!r})"
 
+    def _iter_comments(self) -> Iterable[str]:
+        if self.comment:
+            yield self.comment
+
 
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: Sequence[Commented[List[T]]] = ()):
@@ -234,6 +238,11 @@ class CommentedList(Generic[T], UserList):
         values = list(values)
         if values or comment:
             self.insert(i, Commented(values, comment))
+
+    def _iter_comments(self) -> Iterable[str]:
+        for entry in self:
+            if entry.has_comment():
+                yield entry.comment
 
 
 class CommentedKV(Generic[T], UserList):
@@ -261,10 +270,7 @@ class CommentedKV(Generic[T], UserList):
                 out[k] = v
         return out
 
-    def _all_comments(self) -> Iterable[str]:
-        for entry in self:
-            if entry.has_comment():
-                yield entry.comment
+    _iter_comments = CommentedList._iter_comments
 
     def to_ir(self) -> IntermediateRepr:
         """:class:`CommentedKV` are usually intended to represent INI options, while

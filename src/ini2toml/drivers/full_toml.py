@@ -105,7 +105,7 @@ def _collapse_commented_kv(
     len_key = len(_key)
     _as_dict = obj.as_dict()
 
-    comments = list(obj._all_comments())
+    comments = list(obj._iter_comments())
     len_comments = sum(len(c) for c in comments) + 4
     # ^-- extra 4 for `  # `
 
@@ -217,6 +217,9 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
                 ):
                     child = out.setdefault(parent_key, inline_table())
                     child[nested_key] = collapsed_value
+                    cmt = list(getattr(value, "_iter_comments", lambda: [])())
+                    if cmt:
+                        child.comment(" ".join(cmt))
                     continue
             else:
                 nested_key = tuple(rest)
