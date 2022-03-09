@@ -239,10 +239,8 @@ class CommentedList(Generic[T], UserList):
         if values or comment:
             self.insert(i, Commented(values, comment))
 
-    def _iter_comments(self) -> Iterable[str]:
-        for entry in self:
-            if entry.has_comment():
-                yield entry.comment
+    def _iter_comments(self: Iterable[Commented]) -> Iterable[str]:
+        return chain.from_iterable(entry._iter_comments() for entry in self)
 
 
 class CommentedKV(Generic[T], UserList):
