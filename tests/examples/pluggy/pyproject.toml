@@ -8,6 +8,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pluggy"
 description = "plugin and hook calling mechanisms for python"
+license = {text = "MIT"}
 authors = [{name = "Holger Krekel", email = "holger@merlinux.eu"}]
 classifiers = [
     "Development Status :: 6 - Mature",
@@ -30,9 +31,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 urls = {Homepage = "https://github.com/pytest-dev/pluggy"}
-dynamic = ["license", "version"]
 requires-python = ">=3.6"
 dependencies = ['importlib-metadata>=0.12;python_version<"3.8"']
+dynamic = ["version"]
 
 [project.readme]
 file = "README.rst"
@@ -53,10 +54,6 @@ packages = ["pluggy"]
 package-dir = {"" = "src"}
 platforms = ["unix", "linux", "osx", "win32"]
 include-package-data = false
-
-[tool.setuptools.dynamic]
-license = "MIT"
-license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 
 [tool.devpi.upload]
 formats = "sdist.tgz,bdist_wheel"

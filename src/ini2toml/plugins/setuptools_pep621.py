@@ -3,20 +3,7 @@ import re
 import warnings
 from functools import partial, reduce
 from itertools import chain, zip_longest
-from typing import (
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Mapping, Sequence, Set, Tuple, Type, TypeVar, Union
 
 try:
     from packaging.requirements import Requirement
@@ -86,8 +73,6 @@ COMMAND_SECTIONS = (
     "bdist_wheel",
     *getattr(distutils_commands, "__all__", []),
 )
-DEFAULT_LICENSE_FILES = ("LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*")
-# defaults from the `wheel` package
 
 
 def activate(translator: Translator):
@@ -152,8 +137,8 @@ class SetuptoolsPEP621:
             #            `merge_and_rename_long_description_and_content_type`
             # ---
             ("metadata", "license-files"): split_list_comma,
-            # => NOTICE: in PEP 621, it should be a single file
-            #            further processed via `handle_license_and_files`
+            # => NOTICE: not standard for now, needs PEP 639
+            #            further processed via `remove_metadata_not_in_pep621`
             # ---
             ("metadata", "url"): split_url,
             ("metadata", "download-url"): split_url,
@@ -341,50 +326,20 @@ class SetuptoolsPEP621:
         metadata.rename("long-description", "readme")
         return doc
 
-    def handle_license_and_files(self, doc: R) -> R:
-        """In :pep:`621` we have a single field for license, which might have a single
-        value (file path) or a dict-like structure::
+    def handle_license(self, doc: R) -> R:
+        """In :pep:`621` we have a single field for license, which is not compatible
+        with setuptools ``license-files``.
+        This field is meant to fill the ``License`` core metadata as a plain license
+        text (not a path to a file). Even when the ``project.license.file`` table field
+        is given, the idea is that the file should be expanded into text.
 
-            license-files => license.file
-            license => license.text
-
-        We also have to be aware that :pep:`621` accepts a single file, so the option of
-        combining multiple files as presented in ``setup.cfg`` have to be handled via
-        ``dynamic``.
+        This will likely change once :pep:`639` is accepted.
+        Meanwhile we have to translate ``license-files`` into a setuptools specific
+        configuration.
         """
         metadata: IR = doc["metadata"]
-        files: Optional[CommentedList[str]] = metadata.get("license-files")
-        # Setuptools automatically includes license files if not present
-        # so let's make it dynamic
-        files_as_list = (files and files.as_list()) or list(DEFAULT_LICENSE_FILES)
-        text = metadata.get("license")
-
-        # PEP 621 specifies a single "file". If there is more, we need to use "dynamic"
-        if files_as_list and (
-            len(files_as_list) > 1
-            or any(char in files_as_list[0] for char in "*?[")  # glob pattern
-            or text  # PEP 621 forbids both license and license-files at the same time
-        ):
-            metadata.setdefault("dynamic", []).append("license")
-            dynamic = doc.setdefault("options.dynamic", IR())
-            if text:
-                dynamic.append("license", text)
-            dynamic.append("license-files", files_as_list)
-            # 'file' and 'text' are mutually exclusive in PEP 621
-            metadata.pop("license", None)
-            metadata.pop("license-files", None)
-            return doc
-
-        if files_as_list:
-            files = cast(CommentedList[str], files)
-            license = IR(file=Commented(files_as_list[0], files[0].comment))
-        elif text:
-            license = IR(text=metadata["license"])
-        else:
-            return doc
-
-        fields = ("license-files", "license")
-        metadata.replace_first_remove_others(fields, "license", license)
+        if "license" in metadata:
+            metadata.rename("license", ("license", "text"))
         return doc
 
     def move_and_split_entrypoints(self, doc: R) -> R:
@@ -438,9 +393,14 @@ class SetuptoolsPEP621:
         """:pep:`621` does not cover all project metadata in ``setup.cfg "metadata"``
         section. That is left as "tool" specific configuration.
         """
-        specific = ["platforms", "provides", "obsoletes"]
-        metadata, options = doc["metadata"], doc["options"]
-        options.update({k: metadata.pop(k) for k in specific if k in metadata})
+        # TODO: PEP 621 does not specify an equivalent for 'License-file' metadata,
+        #       but once PEP 639 is approved this will change
+        metadata = doc.get("metadata", IR())
+        non_standard = ("platforms", "provides", "obsoletes", "license-files")
+        specific = [k for k in non_standard if k in metadata]
+        if specific:
+            options = doc.setdefault("options", IR())
+            options.update({k: metadata.pop(k) for k in specific})
         return doc
 
     def rename_script_files(self, doc: R) -> R:
@@ -665,7 +625,7 @@ class SetuptoolsPEP621:
             self.merge_and_rename_urls,
             self.merge_authors_maintainers_and_emails,
             self.merge_and_rename_long_description_and_content_type,
-            self.handle_license_and_files,
+            self.handle_license,
             self.move_and_split_entrypoints,
             self.move_options_missing_in_pep621,
             self.remove_metadata_not_in_pep621,

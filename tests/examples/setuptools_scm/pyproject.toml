@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "setuptools_scm"
 description = "the blessed package to manage your versions by scm tags"
 authors = [{name = "Ronny Pfannschmidt", email = "opensource@ronnypfannschmidt.de"}]
+license = {text = "MIT"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -23,13 +24,13 @@ classifiers = [
     "Topic :: Utilities",
 ]
 urls = {Homepage = "https://github.com/pypa/setuptools_scm/"}
-dynamic = ["license", "version"]
 requires-python = ">=3.6"
 dependencies = [
     "packaging>=20.0",
     "setuptools",
     "tomli>=1.0.0", # keep in sync
 ]
+dynamic = ["version"]
 
 [project.readme]
 file = "README.rst"
@@ -81,12 +82,9 @@ toml = [
 [tool.setuptools]
 package-dir = {"" = "src"}
 zip-safe = true
+license-files = ["LICENSE"]
 include-package-data = false
 
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
-
-[tool.setuptools.dynamic]
-license = "MIT"
-license-files = ["LICENSE"]

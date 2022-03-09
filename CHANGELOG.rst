@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.10
+============
+
+* ``setuptools`` plugin:
+   * Separate the handling of ``license-files`` and PEP 621 metadata, #34
+   * ``license`` and ``license-files`` are no longer added to ``tool.setuptools.dynamic``.
+      Instead ``license-files`` is added directly to ``tool.setuptools``, and the ``license`` should be added as ``project.license.text``.
+
 Version 0.9
 ===========
 
