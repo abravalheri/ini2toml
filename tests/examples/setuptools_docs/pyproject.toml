@@ -6,13 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "my_package"
 description = "My package description"
 keywords = ["one", "two"]
+license = {text = "BSD 3-Clause License"}
 classifiers = [
     "Framework :: Django",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.5",
 ]
-dynamic = ["readme", "license", "version"]
+dynamic = ["readme", "version"]
 dependencies = [
     "requests",
     'importlib; python_version == "2.6"',
@@ -54,6 +55,4 @@ fonts = ["data/fonts/*.ttf", "data/fonts/*.otf"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst", "CHANGELOG.rst", "LICENSE.rst"]}
-license = "BSD 3-Clause License"
-license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 version = {attr = "src.VERSION"}

@@ -7,6 +7,7 @@ name = "virtualenv"
 description = "Virtual Python Environment builder"
 authors = [{name = "Bernat Gabor", email = "gaborjbernat@gmail.com"}]
 maintainers = [{name = "Bernat Gabor", email = "gaborjbernat@gmail.com"}]
+license = {text = "MIT"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -30,7 +31,6 @@ classifiers = [
     "Topic :: Utilities",
 ]
 keywords = ["virtual", "environments", "isolated"]
-dynamic = ["license", "version"]
 requires-python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 dependencies = [
     "backports.entry_points_selectable>=1.0.4",
@@ -42,6 +42,7 @@ dependencies = [
     'importlib-resources>=1.0;python_version<"3.7"',
     "pathlib2>=2.3.3,<3;python_version < '3.4' and sys.platform != 'win32'",
 ]
+dynamic = ["version"]
 
 [project.readme]
 file = "README.md"
@@ -109,6 +110,7 @@ virtualenv = "virtualenv.__main__:run_with_catch"
 package-dir = {"" = "src"}
 zip-safe = true
 platforms = ["any"]
+license-files = ["LICENSE"]
 include-package-data = false
 
 [tool.setuptools.packages.find]
@@ -123,10 +125,6 @@ namespaces = false
 "virtualenv.activation.nushell" = ["*.nu"]
 "virtualenv.activation.powershell" = ["*.ps1"]
 "virtualenv.seed.wheels.embed" = ["*.whl"]
-
-[tool.setuptools.dynamic]
-license = "MIT"
-license-files = ["LICENSE"]
 
 [tool.distutils.sdist]
 formats = "gztar"

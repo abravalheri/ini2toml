@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Flask"
+license = {text = "BSD-3-Clause"}
 authors = [{name = "Armin Ronacher", email = "armin.ronacher@active-4.com"}]
 maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
 description = "A simple framework for building complex web applications."
@@ -20,8 +21,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dynamic = ["license", "version"]
 requires-python = ">= 3.6"
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://palletsprojects.com/p/flask"
@@ -50,8 +51,6 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.dynamic]
-license = "BSD-3-Clause"
-license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 version = {attr = "flask.__version__"}
 
 [tool.pytest.ini_options]

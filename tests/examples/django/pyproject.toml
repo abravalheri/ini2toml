@@ -7,6 +7,7 @@ name = "Django"
 authors = [{name = "Django Software Foundation", email = "foundation@djangoproject.com"}]
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 readme = "README.rst"
+license = {text = "BSD-3-Clause"}
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Web Environment",
@@ -25,7 +26,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dynamic = ["license", "version"]
 requires-python = ">=3.8"
 dependencies = [
     "asgiref >= 3.3.2",
@@ -33,6 +33,7 @@ dependencies = [
     "sqlparse >= 0.2.2",
     "tzdata; sys_platform == 'win32'",
 ]
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://www.djangoproject.com/"
@@ -57,8 +58,6 @@ zip-safe = false
 find = {namespaces = false}
 
 [tool.setuptools.dynamic]
-license = "BSD-3-Clause"
-license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 version = {attr = "django.__version__"}
 
 [tool.distutils.bdist_rpm]
