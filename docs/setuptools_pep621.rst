@@ -30,7 +30,7 @@ proposed by ``ini2toml`` takes the following assumptions:
 - ``[options.*]`` sections in ``setup.cfg`` are translated to sub-tables of
   ``[tool.setuptools]`` in ``pyproject.toml``. For example::
 
-    [options.package_data] => [tool.setuptools.package_data]
+    [options.package_data] => [tool.setuptools.package-data]
 
 - Field and subtables in ``[tool.setuptools]`` have the ``_`` character
   replaced by ``-`` in their keys, to follow the conventions set in :pep:`517`
@@ -41,10 +41,10 @@ proposed by ``ini2toml`` takes the following assumptions:
 
     'file: description.rst' => {file = "description.rst"}
 
-  Notice, however, that these directives are not allowed to be used directly
+  Note, however, that these directives are not allowed to be used directly
   under the ``project`` table. Instead, ``ini2toml`` will rely on ``dynamic``,
   as explained bellow.
-  Also note that for some fields (e.g. ``readme`` or ``license``), ``ini2toml``
+  Also note that for some fields (e.g. ``readme``), ``ini2toml``
   might try to automatically convert the directive into values accepted by
   :pep:`621` (for complex scenarios ``dynamic`` might still be used).
 
@@ -120,8 +120,18 @@ proposed by ``ini2toml`` takes the following assumptions:
   :pypi:`setuptools` maintainers decide so. This eventual change is mentioned
   by some members of the community as a nice quality of life improvement.
 
+- The ``metadata.license_files`` field in ``setup.cfg`` is not translated to
+  ``project.license.file`` in ``pyproject.toml``, even when a single file is
+  given.  The reason behind this choice is that ``project.license.file`` is
+  meant to be used in a different way than ``metadata.license_files`` when
+  generating `core metadata`_ (the first is read and expanded into the
+  ``License`` core metadata field, the second is added as a path - relative to
+  the project root - as the ``License-file`` core metadata field). This might
+  change in the future if :pep:`639` is accepted.  Meanwhile,
+  ``metadata.license_files`` is translated to ``tool.setuptools.license-files``.
 
-Please notice these conventions are part of a proposal and will probably
+
+Please note these conventions are part of a proposal and will probably
 change as soon as a pattern is established by the :pypi:`setuptools` project.
 The implementation in ``ini2toml`` is flexible to quickly adapt to these
 changes.
@@ -130,3 +140,4 @@ changes.
 .. _TOML: https://toml.io/en/
 .. _setuptools own configuration file: https://setuptools.pypa.io/en/latest/userguide/declarative_config.html
 .. _entry-points file: https://packaging.python.org/en/latest/specifications/entry-points/
+.. _core metadata: https://packaging.python.org/en/latest/specifications/core-metadata/
