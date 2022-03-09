@@ -3,19 +3,7 @@ import re
 import warnings
 from functools import partial, reduce
 from itertools import chain, zip_longest
-from typing import (
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, List, Mapping, Sequence, Set, Tuple, Type, TypeVar, Union
 
 try:
     from packaging.requirements import Requirement
@@ -85,8 +73,6 @@ COMMAND_SECTIONS = (
     "bdist_wheel",
     *getattr(distutils_commands, "__all__", []),
 )
-DEFAULT_LICENSE_FILES = ("LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*")
-# defaults from the `wheel` package
 
 
 def activate(translator: Translator):
@@ -151,8 +137,8 @@ class SetuptoolsPEP621:
             #            `merge_and_rename_long_description_and_content_type`
             # ---
             ("metadata", "license-files"): split_list_comma,
-            # => NOTICE: in PEP 621, it should be a single file
-            #            further processed via `handle_license_and_files`
+            # => NOTICE: not standard for now, needs PEP 639
+            #            further processed via `remove_metadata_not_in_pep621`
             # ---
             ("metadata", "url"): split_url,
             ("metadata", "download-url"): split_url,
@@ -340,7 +326,7 @@ class SetuptoolsPEP621:
         metadata.rename("long-description", "readme")
         return doc
 
-    def handle_license_and_files(self, doc: R) -> R:
+    def handle_license(self, doc: R) -> R:
         """In :pep:`621` we have a single field for license, which is not compatible
         with setuptools ``license-files``.
         This field is meant to fill the ``License`` core metadata as a plain license
@@ -352,25 +338,8 @@ class SetuptoolsPEP621:
         configuration.
         """
         metadata: IR = doc["metadata"]
-        files: Optional[CommentedList[str]] = metadata.get("license-files")
-        # Setuptools automatically includes license files if not present
-        # so let's make it dynamic
-        files_as_list = (files and files.as_list()) or list(DEFAULT_LICENSE_FILES)
-
-        # PEP 621 does not specify an equivalent for 'License-file' metadata
-        if files_as_list:
-            # TODO: Once PEP 639 is approved this will not require a `tool` config
-            dynamic = doc.setdefault("options.dynamic", IR())
-            dynamic.append("license-files", files_as_list)
-            metadata.pop("license-files", None)
-
-        text = metadata.get("license")
-        if not text:
-            metadata.pop("license", None)
-            return doc
-
-        metadata.rename("license", ("license", "text"))
-
+        if "license" in metadata:
+            metadata.rename("license", ("license", "text"))
         return doc
 
     def move_and_split_entrypoints(self, doc: R) -> R:
@@ -424,9 +393,14 @@ class SetuptoolsPEP621:
         """:pep:`621` does not cover all project metadata in ``setup.cfg "metadata"``
         section. That is left as "tool" specific configuration.
         """
-        specific = ["platforms", "provides", "obsoletes"]
-        metadata, options = doc["metadata"], doc["options"]
-        options.update({k: metadata.pop(k) for k in specific if k in metadata})
+        # TODO: PEP 621 does not specify an equivalent for 'License-file' metadata,
+        #       but once PEP 639 is approved this will change
+        metadata = doc.get("metadata", IR())
+        non_standard = ("platforms", "provides", "obsoletes", "license-files")
+        specific = [k for k in non_standard if k in metadata]
+        if specific:
+            options = doc.setdefault("options", IR())
+            options.update({k: metadata.pop(k) for k in specific})
         return doc
 
     def rename_script_files(self, doc: R) -> R:
@@ -651,7 +625,7 @@ class SetuptoolsPEP621:
             self.merge_and_rename_urls,
             self.merge_authors_maintainers_and_emails,
             self.merge_and_rename_long_description_and_content_type,
-            self.handle_license_and_files,
+            self.handle_license,
             self.move_and_split_entrypoints,
             self.move_options_missing_in_pep621,
             self.remove_metadata_not_in_pep621,
