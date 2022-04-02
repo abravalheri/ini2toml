@@ -46,6 +46,7 @@ def test_list_from_entry_points():
     # Should return a list with all the plugins registered in the entrypoints
     pluging_list = plugins.list_from_entry_points()
     orig_len = len(pluging_list)
+    isort_count = len([e for e in pluging_list if "isort" in str(e.__module__)])
     assert all(callable(e) for e in pluging_list)
     plugin_names = " ".join(str(e.__module__) for e in pluging_list)
     for example in EXISTING:
@@ -54,5 +55,5 @@ def test_list_from_entry_points():
     # a filtering function can be passed to avoid loading plugins that are not needed
     pluging_list = plugins.list_from_entry_points(filtering=lambda e: e.name != "isort")
     plugin_names = " ".join(str(e.__module__) for e in pluging_list)
-    assert len(pluging_list) == orig_len - 1
+    assert len(pluging_list) == orig_len - isort_count
     assert "isort" not in plugin_names
