@@ -4,7 +4,7 @@
 
 import sys
 from textwrap import dedent
-from typing import Callable, Iterable, List, Optional
+from typing import Any, Callable, Iterable, List, Optional, cast
 
 from .. import __version__
 from ..types import Plugin
@@ -32,7 +32,8 @@ try:
         if hasattr(entries, "select"):
             # The select method was introduced in importlib_metadata 3.9/3.10
             # and the previous dict interface was declared deprecated
-            entries_ = entries.select(group=group)  # type: ignore
+            select = cast(Any, getattr(entries, "select"))  # typecheck gymnastic # noqa
+            entries_: Iterable[EntryPoint] = select(group=group)
         else:
             # TODO: Once Python 3.10 becomes the oldest version supported, this fallback
             #       and conditional statement can be removed.
