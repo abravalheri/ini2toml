@@ -398,7 +398,7 @@ pyarrow:python_version>'3.4' =
 
 expected_fix_extras_require = """\
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -475,7 +475,7 @@ tests-require =
 
 expected_move_tests_require1 = """\
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -498,7 +498,7 @@ testing =
 
 expected_move_tests_require2 = """\
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 ["project:optional-dependencies"]
@@ -601,7 +601,7 @@ def test_handle_dynamic(plugin, parse, convert):
 
 expected_empty = """\
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -639,7 +639,7 @@ data-files =
 
 expected_data_files = """\
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
