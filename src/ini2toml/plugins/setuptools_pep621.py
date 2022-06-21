@@ -85,7 +85,7 @@ def activate(translator: Translator):
 class SetuptoolsPEP621:
     """Convert settings to 'pyproject.toml' based on :pep:`621`"""
 
-    BUILD_REQUIRES = ("setuptools",)
+    BUILD_REQUIRES = ("setuptools>=61.2",)
 
     def __init__(self):
         self._be = BestEffort(key_sep="=")

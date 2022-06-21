@@ -112,11 +112,11 @@ def test_auto_formatting(tmp_path, capsys):
     name = myproj
     """
     normal_output = """
-    requires = ["setuptools"]
+    requires = ["setuptools>=61.2"]
     """
     expected = """
     requires = [
-      "setuptools",
+      "setuptools>=61.2",
     ]
     """
 
