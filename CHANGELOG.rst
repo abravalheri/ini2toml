@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.11
+============
+
+* ``setuptools`` plugin:
+   * Add minimum version of ``setuptools`` implementing :pep:`621` to ``[build-system] requires``, :pr:`42`
+
 Version 0.10
 ============
 
