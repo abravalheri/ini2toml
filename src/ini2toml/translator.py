@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 class Translator(BaseTranslator[str]):
     """``Translator`` is the main public Python API exposed by the ``ini2toml``,
-    to convert strings represeting ``.ini/.cfg`` files into the ``TOML`` syntax.
+    to convert strings representing ``.ini/.cfg`` files into the ``TOML`` syntax.
 
     It follows the public API defined in :class:`ini2toml.types.Translator`, and is very
     similar to :class:`~ini2toml.base_translator.BaseTranslator`.

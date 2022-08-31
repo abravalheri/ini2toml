@@ -124,7 +124,7 @@ class SetuptoolsPEP621:
         """Value type processing, as defined in:
         https://setuptools.pypa.io/en/stable/userguide/declarative_config.html
         """
-        # If not present bellow will be transformed via split_comment by default
+        # If not present below will be transformed via split_comment by default
         return {
             ("metadata", "version"): directive("file", "attr"),
             ("metadata", "classifiers"): directive("file", orelse=split_list_comma),
@@ -479,7 +479,7 @@ class SetuptoolsPEP621:
         return doc
 
     def fix_extras_require(self, doc: R) -> R:
-        """`extras-require` can have markers embeded in the extra group
+        """`extras-require` can have markers embedded in the extra group
         they need to be removed and added to the dependencies themselves
         """
         if "project:optional-dependencies" not in doc:

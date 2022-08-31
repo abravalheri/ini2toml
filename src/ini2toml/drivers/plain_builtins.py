@@ -1,5 +1,5 @@
 """The purpose of this module is to "collapse" the intermediate representation of a TOML
-document into Python buitin data types (mainly a composition of :class:`dict`,
+document into Python builtin data types (mainly a composition of :class:`dict`,
 :class:`list`, :class:`int`, :class:`float`, :class:`bool`, :class:`str`).
 
 This is **not a loss-less** process, since comments are not preserved.
