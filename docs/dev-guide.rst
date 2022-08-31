@@ -203,7 +203,7 @@ adding processors to specific profiles using the Python programming language.
 
 The implementation requirement for a ``ini2toml`` plugin is a function that
 accepts a ``Translator`` object. Using this object it is possible to register
-new processors for different profiles, as shown in the example bellow.
+new processors for different profiles, as shown in the example below.
 
 .. code-block:: python
 
