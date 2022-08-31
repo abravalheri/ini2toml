@@ -17,7 +17,7 @@ from .intermediate_repr import (
 if sys.version_info <= (3, 8):  # pragma: no cover
     # TODO: Import directly when `python_requires = >= 3.8`
     if TYPE_CHECKING:
-        from typing_extensions import Protocol
+        from typing import Protocol
     else:
         # Not a real replacement but allows getting rid of the dependency
         from abc import ABC as Protocol

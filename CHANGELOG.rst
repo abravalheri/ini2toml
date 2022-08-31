@@ -153,7 +153,7 @@ Version 0.0.3
   when using the ``full_toml`` adapter.
 - Improve heuristic to remove superfluous empty tables in the generated TOML string.
 - ``distutils.commands``-related sections in ``setup.cfg`` are now better
-  recognised and transfered to the ``tool.distutils`` table in the generated
+  recognised and transferred to the ``tool.distutils`` table in the generated
   TOML (previously they were placed under ``tool.setuptools.commands``).
   The normalisation of the command names using ``kebab-case`` is no longer
   performed.

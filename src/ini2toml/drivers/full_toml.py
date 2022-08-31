@@ -277,7 +277,7 @@ def classify_list(seq: Sequence) -> Tuple[bool, int, int, bool, bool, int]:
     - max_len(int): Rough (and definitely not precise) estimative of the number of
       chars the TOML representation for the largest element would be.
     - total_len(int): Rough (and definitely not precise) estimate of the total number of
-      chars in the TOML representation if it was a sinlge line
+      chars in the TOML representation if it was a single line
     - has_nl(bool): if any TOML representation for the elements has a ``\\n`` char.
     - has_nested(bool): if any element has a nested table or array
     - num_elements(int): number of elements in the list.
