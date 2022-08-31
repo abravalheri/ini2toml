@@ -43,7 +43,7 @@ proposed by ``ini2toml`` takes the following assumptions:
 
   Note, however, that these directives are not allowed to be used directly
   under the ``project`` table. Instead, ``ini2toml`` will rely on ``dynamic``,
-  as explained bellow.
+  as explained below.
   Also note that for some fields (e.g. ``readme``), ``ini2toml``
   might try to automatically convert the directive into values accepted by
   :pep:`621` (for complex scenarios ``dynamic`` might still be used).
