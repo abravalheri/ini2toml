@@ -105,6 +105,10 @@ def test_help(capsys):
     assert expected in text
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7),
+    reason="pyproject-fmt is only available on Python 3.7+",
+)
 def test_auto_formatting(tmp_path, capsys):
     setupcfg = """
     [metadata]
