@@ -1,5 +1,6 @@
 import pytest
 
+from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
 from ini2toml.plugins.setuptools_pep621 import Directive, SetuptoolsPEP621, activate
 from ini2toml.translator import Translator
 
@@ -175,13 +176,9 @@ django-admin = django.core.management:execute_from_command_line
 """
 
 expected_split_subtables = """\
-[tool]
-[tool.setuptools]
-[tool.setuptools.packages]
 [tool.setuptools.packages.find]
 where = "src"
 
-[project]
 [project.entry-points]
 # For example:
 
@@ -197,7 +194,8 @@ def test_split_subtables(plugin, parse, convert):
     doc = plugin.split_subtables(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_split_subtables.strip()
+    converted = convert(doc).strip()
+    assert remove_empty_table_headers(converted) == expected_split_subtables.strip()
 
 
 # ----
@@ -217,13 +215,9 @@ pyscaffold.cli =
 """
 
 expected_entrypoints_and_split_subtables = """\
-[tool]
-[tool.setuptools]
-[tool.setuptools.packages]
 [tool.setuptools.packages.find]
 where = "src"
 
-[project]
 [project.entry-points]
 # For example:
 
@@ -248,7 +242,9 @@ def test_entrypoints_and_split_subtables(plugin, parse, convert):
     doc = plugin.split_subtables(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_entrypoints_and_split_subtables.strip()
+    converted = convert(doc).strip()
+    expected = expected_entrypoints_and_split_subtables.strip()
+    assert remove_empty_table_headers(converted) == expected
 
 
 # ----
@@ -607,7 +603,6 @@ build-backend = "setuptools.build_meta"
 [project]
 dynamic = ["version"]
 
-[tool]
 [tool.setuptools]
 include-package-data = false
 """
@@ -621,7 +616,8 @@ def test_empty(translator, plugin, parse, convert):
     doc = plugin.pep621_transform(doc)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
-    assert convert(doc).strip() == expected_empty.strip()
+    converted = convert(doc).strip()
+    assert remove_empty_table_headers(converted) == expected_empty.strip()
 
     # Same thing but with the higher level API:
     text = translator.translate("", profile_name="setup.cfg")
@@ -645,7 +641,6 @@ build-backend = "setuptools.build_meta"
 [project]
 dynamic = ["version"]
 
-[tool]
 [tool.setuptools]
 data-files = {a = ["b"]}
 include-package-data = false
@@ -656,7 +651,7 @@ def test_data_files(translator):
     # Same thing but with the higher level API:
     with pytest.warns(DeprecationWarning, match="'data-files' is deprecated"):
         text = translator.translate(example_data_files, profile_name="setup.cfg")
-        assert text.strip() == expected_data_files.strip()
+        assert remove_empty_table_headers(text.strip()) == expected_data_files.strip()
 
 
 # ----
