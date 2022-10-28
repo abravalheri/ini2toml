@@ -1,4 +1,5 @@
 from ini2toml.drivers import full_toml as lib
+from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
 from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
 from ini2toml.types import IntermediateRepr as IR
 from ini2toml.types import WhitespaceKey
@@ -27,7 +28,6 @@ b = 2 # 1st line comment
 c = 3
 d = 4 # 2nd line comment
 
-[section3]
 [section3.nested]
 x = "y"
 z = "w" # nested
@@ -64,4 +64,5 @@ example_parsed = IR(
 
 
 def test_convert():
-    assert lib.convert(example_parsed) == example_toml
+    converted = lib.convert(example_parsed)
+    assert remove_empty_table_headers(converted) == example_toml.strip()
