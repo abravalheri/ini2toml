@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.11.1
+==============
+
+* Internal test fixes, minor CI and doc improvements
+* Only list ``pyproject-fmt`` as an experimental dependency on Python 3.7+
+
 Version 0.11
 ============
 
