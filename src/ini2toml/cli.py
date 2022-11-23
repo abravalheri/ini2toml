@@ -95,7 +95,7 @@ try:
 
     def apply_auto_formatting(text: str) -> str:
         try:
-            return format_pyproject(Config(text))
+            return format_pyproject(Config(Path("pyproject.toml"), text))
         except Exception as ex:  # pragma: no cover
             _logger.debug(f"pyproject-fmt failed: {ex}", exc_info=True)
             _logger.warning("Auto-formatting failed, falling back to original text")
