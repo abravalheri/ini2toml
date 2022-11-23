@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.11.3
+==============
+
+* Fix dependency problems by requiring ``pyproject-fmt>=0.4.0``
+
 Version 0.11.2
 ==============
 
