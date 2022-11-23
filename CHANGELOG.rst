@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.11.2
+==============
+
+* Adapt to changes in ``pyproject-fmt`` 0.4.0
+
 Version 0.11.1
 ==============
 
