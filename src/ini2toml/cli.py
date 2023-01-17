@@ -248,4 +248,4 @@ def _flatten_str(text: str) -> str:
 
 
 def _format_choice_help(choice: CLIChoice) -> str:
-    return f'- "{choice.name}": {_flatten_str(choice.help_text)}.'
+    return f"- {choice.name!r}: {_flatten_str(choice.help_text)}."
