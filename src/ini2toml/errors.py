@@ -46,7 +46,7 @@ class InvalidAugmentationName(ValueError):
 
     def __init__(self, name: str):
         msg = self.__class__.__doc__ or ""
-        super().__init__(f"{msg} ('{name}' given)")
+        super().__init__(f"{msg} ({name!r} given)")
 
     @classmethod
     def check(cls, name: str):
