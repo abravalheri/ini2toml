@@ -50,7 +50,7 @@ def _discover_ini_loads_fn() -> types.IniLoadsFn:
     try:
         from .drivers.configupdater import parse
     except ImportError:  # pragma: no cover
-        from .drivers.configparser import parse  # type: ignore[no-redef]
+        from .drivers.configparser import parse
 
     return parse
 
@@ -60,7 +60,7 @@ def _discover_toml_dumps_fn() -> types.TomlDumpsFn:
         from .drivers.full_toml import convert
     except ImportError:  # pragma: no cover
         try:
-            from .drivers.lite_toml import convert  # type: ignore[no-redef]
+            from .drivers.lite_toml import convert
         except ImportError:
             msg = "Please install either `ini2toml[full]` or `ini2toml[lite]`"
             _logger.warning(f"{msg}. `ini2toml` (alone) is not valid.")
