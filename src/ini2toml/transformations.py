@@ -127,7 +127,7 @@ def deprecated(
 
     @wraps(fn)
     def _fn(*args, **kwargs):
-        warnings.warn(f"{name!r} is deprecated{extra}", DeprecationWarning)
+        warnings.warn(f"{name!r} is deprecated{extra}", DeprecationWarning, 2)
         return fn(*args, **kwargs)
 
     return cast(TF, _fn)
