@@ -3,7 +3,20 @@ import re
 import warnings
 from functools import partial, reduce
 from itertools import chain, zip_longest
-from typing import Any, Dict, List, Mapping, Sequence, Set, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 try:
     from packaging.requirements import Requirement
@@ -254,7 +267,7 @@ class SetuptoolsPEP621:
         """
         metadata: IR = doc["metadata"]
 
-        def _split_values(field):
+        def _split_values(field: str) -> Tuple[Iterator[str], Optional[str]]:
             commented: Commented[str] = metadata.get(field, Commented())
             values = commented.value_or("").strip().split(",")
             return (v.strip() for v in values), commented.comment
@@ -762,7 +775,7 @@ def _add_marker(dep: str, marker: str) -> str:
     return joiner.join((dep, marker))
 
 
-def split_deps(value):
+def split_deps(value: str) -> CommentedList:
     """Setuptools seem to accept line continuations for markers
     (with comments in the middle), and that is more difficult to process.
     e.g.: https://github.com/jaraco/zipp
@@ -779,7 +792,7 @@ def split_deps(value):
             i += 1
             continue
         while line.value and line.value[-1].strip()[-1] == "\\":
-            comments: List[Tuple(int, str)] = []
+            comments: List[Tuple[int, str]] = []
             for j in range(i + 1, L):
                 # Find the non commented / non empty line
                 following = lines[j]
