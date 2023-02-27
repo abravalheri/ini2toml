@@ -522,7 +522,7 @@ class SetuptoolsPEP621:
         if "setup-requires" in options:
             msg = "The field 'setup_requires' is deprecated. "
             msg += "Converting to `build-system.requires` as specified by PEP 518."
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning)  # noqa: B028
             requirements: CommentedList[str] = options.pop("setup-requires")
             # Deduplicate
             existing = {Requirement(r).name: r for r in requirements.as_list()}
@@ -548,7 +548,7 @@ class SetuptoolsPEP621:
             msg = "The field 'tests_require' is deprecated and no longer supported. "
             msg += "Dependencies will be converted to optional (`testing` extra). "
             msg += "You can use a tool like `tox` or `nox` to replace this workflow."
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning)  # noqa: B028
             reqs: CommentedList[str] = doc["options"].pop("tests-require")
             if "project:optional-dependencies" not in doc:
                 doc["project:optional-dependencies"] = IR(testing=reqs)
@@ -697,7 +697,7 @@ class SetuptoolsPEP621:
         for alias, cannonic in self.setupcfg_aliases().items():
             if alias in metadata:
                 msg = f"{alias!r} is deprecated. Translating to {cannonic!r} instead."
-                warnings.warn(msg, DeprecationWarning)
+                warnings.warn(msg, DeprecationWarning)  # noqa: B028
                 metadata.rename(alias, cannonic)
         return cfg
 
