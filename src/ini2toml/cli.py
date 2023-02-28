@@ -129,7 +129,6 @@ def __meta__(
     return meta
 
 
-@critical_logging()
 def parse_args(
     args: Sequence[str],
     profiles: Sequence[Profile],
@@ -189,11 +188,12 @@ def run(args: Sequence[str] = ()):
       args (List[str]): command line parameters as list of strings
           (for example  ``["--verbose", "setup.cfg"]``).
     """
-    args = args or sys.argv[1:]
-    translator = Translator()
-    profiles = list(translator.profiles.values())
-    profile_augmentations = list(translator.augmentations.values())
-    params = parse_args(args, profiles, profile_augmentations)
+    with critical_logging():
+        args = args or sys.argv[1:]
+        translator = Translator()
+        profiles = list(translator.profiles.values())
+        profile_augmentations = list(translator.augmentations.values())
+        params = parse_args(args, profiles, profile_augmentations)
     setup_logging(params.loglevel)
     out = translator.translate(
         params.input_file.read(), params.profile, params.active_augmentations
