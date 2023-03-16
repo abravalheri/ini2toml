@@ -19,7 +19,10 @@ def test_pytest():
         dist
         build
         .tox
-    """
+    filterwarnings=
+        error
+        ignore:Please use `dok_matrix` from the `scipy\\.sparse` namespace, the `scipy\\.sparse\\.dok` namespace is deprecated.:DeprecationWarning
+    """  # noqa
     expected = """\
     [pytest]
     [pytest.ini_options]
@@ -32,6 +35,10 @@ def test_pytest():
         "dist", 
         "build", 
         ".tox", 
+    ]
+    filterwarnings = [
+        "error",
+        'ignore:Please use `dok_matrix` from the `scipy\\.sparse` namespace, the `scipy\\.sparse\\.dok` namespace is deprecated.:DeprecationWarning',
     ]
     """  # noqa
     for convert in (lite_toml.convert, full_toml.convert):
