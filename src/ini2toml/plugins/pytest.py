@@ -9,10 +9,10 @@ from ..types import IntermediateRepr, Translator
 
 R = TypeVar("R", bound=IntermediateRepr)
 
-list_with_space = partial(split_list, sep=" ")
-split_markers = partial(split_list, sep="\n")
+split_spaces = partial(split_list, sep=" ")
+split_lines = partial(split_list, sep="\n")
 # ^ most of the list values in pytest use whitespace separators,
-#   but markers are a special case, since they can define a help text
+#   but markers/filterwarnings are a special case.
 
 
 def activate(translator: Translator):
@@ -25,8 +25,11 @@ def activate(translator: Translator):
 class Pytest:
     """Convert settings to 'pyproject.toml' ('ini_options' table)"""
 
-    LIST_VALUES = (
+    LINE_SEPARATED_LIST_VALUES = (
+        "markers",
         "filterwarnings",
+    )
+    SPACE_SEPARATED_LIST_VALUES = (
         "norecursedirs",
         "python_classes",
         "python_files",
@@ -56,9 +59,9 @@ class Pytest:
         for field in section:
             if field in self.DONT_TOUCH:
                 continue
-            if field == "markers":
-                section[field] = split_markers(section[field])
-            elif field in self.LIST_VALUES:
-                section[field] = list_with_space(section[field])
+            if field in self.LINE_SEPARATED_LIST_VALUES:
+                section[field] = split_lines(section[field])
+            elif field in self.SPACE_SEPARATED_LIST_VALUES:
+                section[field] = split_spaces(section[field])
             else:
                 section[field] = coerce_scalar(section[field])
