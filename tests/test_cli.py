@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ini2toml import cli
+from ini2toml.plugins import ErrorLoadingPlugin
 from ini2toml.profile import Profile, ProfileAugmentation
 
 
@@ -83,6 +84,23 @@ def test_exceptions2exit():
     with pytest.raises(SystemExit):
         with cli.exceptions2exit():
             raise ValueError
+
+
+def test_early_plugin_error(monkeypatch):
+    err = MagicMock(side_effect=ErrorLoadingPlugin("fake"))
+    monkeypatch.setattr("ini2toml.translator.list_all_plugins", err)
+
+    # Remove all attached handlers, so `logging.basicConfig` can work
+    for logger in (logging.getLogger(), logging.getLogger(cli.__package__)):
+        monkeypatch.setattr(logger, "handlers", [])
+
+    assert logger.getEffectiveLevel() in {logging.NOTSET, logging.WARNING}
+
+    monkeypatch.setattr("sys.argv", ["ini2toml", "-vv"])
+    with pytest.raises(SystemExit):
+        cli.run()
+
+    assert logger.getEffectiveLevel() == logging.DEBUG
 
 
 def test_help(capsys):
