@@ -1,4 +1,5 @@
 import pytest
+import tomli
 
 from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
 from ini2toml.plugins.setuptools_pep621 import Directive, SetuptoolsPEP621, activate
@@ -591,6 +592,41 @@ def test_handle_dynamic(plugin, parse, convert):
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc).strip() == expected_dynamic.strip()
+
+
+# ----
+
+example_dynamic_dependencies = """\
+[options]
+install_requires = file: requirements.txt
+[options.extras_require]
+dev = file: dev-requirements.txt
+"""
+
+expected_dynamic_dependencies = """\
+[project]
+dynamic = ["version", "dependencies", "optional-dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies.dev = {file = ["dev-requirements.txt"]}
+"""
+
+
+def test_dynamic_dependecies(plugin, parse, convert):
+    doc = parse(example_dynamic_dependencies)
+    print(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    doc = plugin.normalise_keys(doc)
+    doc = plugin.pep621_transform(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    converted = tomli.loads(convert(doc).strip())
+    converted.pop("build-system", None)
+    converted["tool"]["setuptools"].pop("include-package-data", None)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(converted)
+    assert converted == tomli.loads(expected_dynamic_dependencies)
 
 
 # ----
