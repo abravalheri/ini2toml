@@ -29,7 +29,7 @@ class Pytest:
         "markers",
         "filterwarnings",
     )
-    SPACE_LIST_VALUES = (
+    SPACE_SEPARATED_LIST_VALUES = (
         "norecursedirs",
         "python_classes",
         "python_files",
@@ -61,7 +61,7 @@ class Pytest:
                 continue
             if field in self.LINE_SEPARATED_LIST_VALUES:
                 section[field] = split_lines(section[field])
-            elif field in self.SPACE_LIST_VALUES:
+            elif field in self.SPACE_SEPARATED_LIST_VALUES:
                 section[field] = split_spaces(section[field])
             else:
                 section[field] = coerce_scalar(section[field])
