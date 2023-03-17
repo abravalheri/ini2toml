@@ -6,6 +6,8 @@ Version 0.11.4 (dev)
 ====================
 
 * Fix logging in case of early errors while loading plugins, :pr:`69`
+* Log warning if ``flake8`` and ``devpi`` sections are translation,
+  prompting the user to review the output, :issue:`72`
 * ``pytest`` plugin:
    * Fix parsing of ``filterwarnings``, issue:`74`
 
