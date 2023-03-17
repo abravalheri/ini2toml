@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.11.4 (dev)
+====================
+
+* Fix logging in case of early errors while loading plugins, :pr:`69`
+
 Version 0.11.3
 ==============
 
