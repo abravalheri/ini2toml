@@ -167,7 +167,7 @@ class SetuptoolsPEP621:
             # ---- Options ----
             ("options", "zip-safe"): split_bool,
             ("options", "setup-requires"): split_deps,
-            ("options", "install-requires"): split_deps,
+            ("options", "install-requires"): directive("file", orelse=split_deps),
             ("options", "tests-require"): split_deps,
             ("options", "scripts"): split_list_comma,
             ("options", "eager-resources"): split_list_comma,
@@ -197,7 +197,7 @@ class SetuptoolsPEP621:
         on the existing document.
         """
         groups: Mapping[str, Transformation] = {
-            "options.extras-require": split_deps,
+            "options.extras-require": directive("file", orelse=split_deps),
             "options.package-data": split_list_comma,
             "options.exclude-package-data": split_list_comma,
             "options.data-files": split_list_comma,
@@ -459,7 +459,7 @@ class SetuptoolsPEP621:
         when not explicitly set (in that case plugins such as ``setuptools_scm`` are
         expected to provide a value at runtime).
         """
-        potential = ["version", "classifiers", "description"]
+        potential = ["version", "classifiers", "description", "dependencies"]
         # directives = {k[-1]: v for k, v in self.setupcfg_directives().items()}
         metadata, options = doc["metadata"], doc["options"]
 
@@ -484,8 +484,21 @@ class SetuptoolsPEP621:
             extras = ["scripts", "gui-scripts"]
         if not fields:
             return doc
-        metadata.setdefault("dynamic", []).extend(fields + extras)
 
+        dyn_deps = [
+            isinstance(v, Directive)
+            for v in doc.get("project:optional-dependencies", {}).values()
+        ]
+        if any(dyn_deps):
+            dynamic["optional-dependencies"] = doc.pop("project:optional-dependencies")
+            fields.append("optional-dependencies")
+            if not all(dyn_deps):
+                _logger.warning(
+                    "setuptools may require all optional-dependencies to be dynamic "
+                    "when using `pyproject.toml`."
+                )
+
+        metadata.setdefault("dynamic", []).extend(fields + extras)
         if dynamic:
             doc.setdefault("options.dynamic", IR()).update(dynamic)
             # ^ later `options.dynamic` is converted to `tool.setuptools.dynamic`
