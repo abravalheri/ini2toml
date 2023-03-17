@@ -168,7 +168,7 @@ def setup_logging(loglevel: int):
 
 
 @contextmanager
-def exceptisons2exit():
+def exceptions2exit():
     try:
         yield
     except Exception as ex:
@@ -177,7 +177,7 @@ def exceptisons2exit():
         raise SystemExit(1)
 
 
-@exceptisons2exit()
+@exceptions2exit()
 def run(args: Sequence[str] = ()):
     """Wrapper allowing :obj:`Translator` to be called in a CLI fashion.
 

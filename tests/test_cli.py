@@ -79,9 +79,9 @@ def test_critical_logging_does_nothing_if_no_argv(monkeypatch, caplog):
     assert spy.call_args is None
 
 
-def test_exceptisons2exit():
+def test_exceptions2exit():
     with pytest.raises(SystemExit):
-        with cli.exceptisons2exit():
+        with cli.exceptions2exit():
             raise ValueError
 
 
