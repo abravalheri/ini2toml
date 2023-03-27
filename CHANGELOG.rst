@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Version 0.13 (dev)
-==================
+Version 0.13
+============
 
 * ``setuptools`` plugin:
    * Add support for ``file:`` directive in ``install_requires`` and ``extras_require``, :pr:`77`.
