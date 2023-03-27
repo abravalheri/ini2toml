@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import tomli
 from validate_pyproject.api import Validator
+from validate_pyproject.errors import ValidationError
 
 from ini2toml import cli
 from ini2toml.drivers import configparser, full_toml, lite_toml
@@ -53,7 +54,13 @@ def test_examples_api(original, expected, validate):
     # Make sure they can be parsed
     dict_equivalent = tomli.loads(out)
     assert dict_equivalent == tomli.loads(expected_text)
-    assert validate(remove_deprecated(dict_equivalent)) is not None
+    try:
+        assert validate(remove_deprecated(dict_equivalent)) is not None
+    except ValidationError as ex:
+        if "optional-dependencies" not in str(ex):
+            # For the time being both `setuptools` and `validate-pyproject`
+            # are not prepared to deal with mixed dynamic dependencies
+            raise
 
 
 COMMENT_LINE = re.compile(r"^\s*#[^\n]*\n", re.M)
@@ -81,7 +88,13 @@ def test_examples_api_lite(original, expected, validate):
     # At least the Python-equivalents should be the same when parsing
     dict_equivalent = tomli.loads(out)
     assert dict_equivalent == tomli.loads(expected_text)
-    assert validate(remove_deprecated(dict_equivalent)) is not None
+    try:
+        assert validate(remove_deprecated(dict_equivalent)) is not None
+    except ValidationError as ex:
+        if "optional-dependencies" not in str(ex):
+            # For the time being both `setuptools` and `validate-pyproject`
+            # are not prepared to deal with mixed dynamic dependencies
+            raise
 
     without_comments = COMMENT_LINE.sub("", expected_text)
     without_comments = INLINE_COMMENT.sub("", without_comments)
