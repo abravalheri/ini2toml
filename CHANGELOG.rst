@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.13.1 (dev)
+====================
+
+* Fix errors when ``isort`` is installed in the same environment as
+  ``ini2toml``.
+
 Version 0.13
 ============
 
