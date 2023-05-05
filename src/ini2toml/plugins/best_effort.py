@@ -50,6 +50,8 @@ class BestEffort:
     def apply_best_effort(self, container: M, field: str, value: str):
         if isinstance(field, HiddenKey):
             return
+        if not isinstance(value, str):
+            return
         lines = value.splitlines()
         if len(lines) > 1:
             if self.key_sep in value:

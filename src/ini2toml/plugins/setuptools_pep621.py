@@ -86,6 +86,9 @@ COMMAND_SECTIONS = (
     "bdist_wheel",
     *getattr(distutils_commands, "__all__", []),
 )
+SKIP_COMMAND_SECTIONS = {
+    "isort",
+}
 
 
 def activate(translator: Translator):
@@ -595,7 +598,7 @@ class SetuptoolsPEP621:
         tool-specific sub-table
         """
         sections = list(doc.keys())
-        commands = _distutils_commands()
+        commands = _distutils_commands() - SKIP_COMMAND_SECTIONS
         for k in sections:
             if isinstance(k, str) and k in commands:
                 section = self._be.apply_best_effort_to_section(doc[k])
