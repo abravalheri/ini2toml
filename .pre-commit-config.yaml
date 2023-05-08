@@ -57,7 +57,7 @@ repos:
     additional_dependencies: [flake8-bugbear>=23.2.13]
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.3.1
+  rev: v3.4.0
   hooks:
   - id: pyupgrade
     args:
