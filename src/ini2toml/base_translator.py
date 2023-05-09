@@ -163,5 +163,6 @@ def _deduplicate_plugins(plugins: Sequence[types.Plugin]) -> List[types.Plugin]:
 
 def _plugin_name(plugin: types.Plugin) -> str:
     mod = inspect.getmodule(plugin)
+    modname = getattr(mod, "__name__", str(mod))
     name = getattr(plugin, "__qualname__", getattr(plugin, "__name__", "**plugin**"))
-    return f"{mod}:{name}"
+    return f"{modname}:{name}"

@@ -1,6 +1,6 @@
 # based on https://coverage.readthedocs.io/en/stable/config.html
 from collections.abc import MutableMapping
-from functools import partial
+from functools import partial, update_wrapper
 from typing import TypeVar
 
 from ..transformations import coerce_scalar, split_list
@@ -15,6 +15,7 @@ def activate(translator: Translator):
     profile = translator[".coveragerc"]
 
     fn = partial(plugin.process_values, prefix="")
+    update_wrapper(fn, plugin.process_values)
     profile.intermediate_processors.append(fn)
     profile.help_text = plugin.__doc__ or ""
 

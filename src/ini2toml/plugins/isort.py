@@ -1,6 +1,6 @@
 # https://pycqa.github.io/isort/docs/configuration/config_files
 from collections.abc import Mapping, MutableMapping
-from functools import partial
+from functools import partial, update_wrapper
 from typing import Set, TypeVar
 
 from ..transformations import coerce_scalar, kebab_case, split_list
@@ -14,6 +14,7 @@ def activate(translator: Translator):
     plugin = ISort()
     profile = translator[".isort.cfg"]
     fn = partial(plugin.process_values, section_name="settings")
+    update_wrapper(fn, plugin.process_values)
     profile.intermediate_processors.append(fn)
     profile.help_text = plugin.__doc__ or ""
 
