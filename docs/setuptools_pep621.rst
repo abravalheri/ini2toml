@@ -19,8 +19,8 @@ concepts between these two files.
 
 :pep:`621` covers most of the information expected from a ``setup.cfg`` file,
 but there are parameters specific to :pypi:`setuptools` without an obvious equivalent.
-The :doc:`setuptools docs <setuptools:userguide/pyproject_config>` offer a
-mapping between those fields and the ``[tool.setuptools]`` TOML table.
+The :doc:`setuptools docs <setuptools:userguide/pyproject_config>` covers
+the remaining options using the ``[tool.setuptools]`` TOML table.
 Based on this description, the automatic translation proposed by ``ini2toml``
 works like the following:
 
