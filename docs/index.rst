@@ -13,18 +13,22 @@ Contents
    :maxdepth: 2
 
    Overview <readme>
-   Setuptools & PEP 621 <setuptools_pep621>
+   setuptools_pep621
 
 .. toctree::
    :caption: Project
    :maxdepth: 2
 
    Contributions & Help <contributing>
-   Developer Guide <dev-guide>
-   License <license>
-   Authors <authors>
-   Changelog <changelog>
+   dev-guide
+   license
+   authors
+
+.. toctree::
+   :maxdepth: 1
+
    Module Reference <api/modules>
+   changelog
 
 
 Indices and tables

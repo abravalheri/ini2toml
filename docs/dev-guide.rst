@@ -136,22 +136,56 @@ adds some handy position-dependent methods - such as
 by TOML_ (e.g. numbers, strings, lists, booleans…) and also a few other
 special objects that carry comments along:
 
-- :class:`~ini2toml.intermediate_repr.Commented`: A wrapper around a Python
-  built-in value carrying an in-line comment::
+.. testsetup::
 
-    Commented(42, "comment")  # => represents `42 # comment`
+   from importlib import import_module
+
+   from ini2toml.drivers.full_toml import convert
+   from ini2toml.intermediate_repr import (
+       CommentKey,
+       Commented,
+       CommentedKV,
+       CommentedList,
+       IntermediateRepr,
+       WhitespaceKey,
+   )
+
+- :class:`~ini2toml.intermediate_repr.Commented`: A wrapper around a Python
+  built-in value carrying an in-line comment:
+
+  .. testcode::
+
+     ir = Commented(42, "comment")  # => represents `42 # comment`
+
+  .. doctest::
+     :hide:
+
+     >> convert(ir)
+     '42 # comment'
 
 - :class:`~ini2toml.intermediate_repr.CommentedList`: A wrapper around a list
   of elements. The elements are organised in groups (that are equivalent to a
   single line in the TOML document), with each group being a ``Commented[list]``.
-  For example::
+  For example:
 
-    ir = IntermediateRepr()
-    ir["x"] = CommentedList([Commented([0, 1], "comment"), CommentedList([2], "other")])
+  .. testcode::
+
+     ir = IntermediateRepr()
+     ir["x"] = CommentedList(
+         [
+             Commented([0, 1], "comment"),
+             Commented([2], "other"),
+         ]
+     )
+
+  .. testcode::
+     :hide:
+
+     print(convert(ir).strip())
 
   is equivalent to the TOML:
 
-  .. code-block:: toml
+  .. testoutput::
 
      x = [
          0, 1, # comment
@@ -160,20 +194,27 @@ special objects that carry comments along:
 
 - :class:`~ini2toml.intermediate_repr.CommentedKV`: similar to
   ``CommentedList``, but each element is a *key-value pair*.
-  For example::
+  For example:
+
+  .. testcode::
 
     ir = IntermediateRepr()
     ir["x"] = CommentedKV([Commented([("a", 1), ("b", 2)], "comment")])
-    ir["y"] = CommentedKV([
-        Commented([("a", 1), ("b", 2)], "comment"),
-        Commented([("c", 3)], "other")
-    ])
+    ir["y"] = CommentedKV(
+        [Commented([("a", 1), ("b", 2)], "comment"), Commented([("c", 3)], "other")]
+    )
+
+  .. testcode::
+     :hide:
+
+     print(convert(ir).strip())
 
   is equivalent to the TOML:
 
-  .. code-block:: toml
+  .. testoutput::
 
-     x = { a = 1, b = 2 } # comment
+     x = {a = 1, b = 2} # comment
+
      [y]
      a = 1
      b = 2 # comment
@@ -184,11 +225,19 @@ special objects that carry comments along:
   converted to full-blown TOML tables.
 
 A comment or newline can be added directly to the intermediate representation,
-by using a :class:`~ini2toml.intermediate_repr.HiddenKey`::
+by using a :class:`~ini2toml.intermediate_repr.HiddenKey`:
 
-    ir = IntermediateRepr()
-    ir[CommentKey(), "comment"]  # => represents `# comment`
-    ir[WhitespaceKey(), ""]  # => represents a `"\n"` in the TOML
+.. testcode::
+
+   ir = IntermediateRepr()
+   ir[CommentKey()] = "comment"  # => represents `# comment`
+   ir[WhitespaceKey()] = ""  # => represents a `"\n"` in the TOML
+
+.. doctest::
+   :hide:
+
+   >> convert(ir)
+   '# comment\n\n'
 
 Also notice that ``IntermediateRepr`` objects can be nested.
 
@@ -205,7 +254,14 @@ The implementation requirement for a ``ini2toml`` plugin is a function that
 accepts a ``Translator`` object. Using this object it is possible to register
 new processors for different profiles, as shown in the example below.
 
-.. code-block:: python
+.. testcode::
+   :hide:
+
+   my_pre_processor = lambda text: text
+   my_intermediate_processor = lambda ir: ir
+   my_post_processor = lambda text: text
+
+.. testcode::
 
    from ini2toml.types import Translator
 
@@ -214,9 +270,17 @@ new processors for different profiles, as shown in the example below.
        profile = translator["setup.cfg"]  # profile.name will be ``setup.cfg``
        desc = "Convert 'setup.cfg' files to 'pyproject.toml' based on PEP 621"
        profile.description = desc
-       profile.pre_processing += my_pre_processor
-       profile.intermediate_processing += my_intermediate_processor
-       profile.post_processing += my_post_processor
+       profile.pre_processors.append(my_pre_processor)
+       profile.intermediate_processors.append(my_intermediate_processor)
+       profile.post_processors.append(my_post_processor)
+
+.. testcode::
+   :hide:
+
+   # Just make sure this does not raise an exception
+   translator = import_module("ini2toml.api").Translator()
+   activate(translator)
+   assert my_pre_processor in translator["setup.cfg"].pre_processors
 
 
 .. _profile augmentation:
@@ -234,18 +298,27 @@ to modify the profile after it is selected.
 An example of these - here called **"profile augmentation functions"** - is
 shown in the following example:
 
-.. code-block:: python
+.. testcode::
 
    from ini2toml.types import Translator, Profile
 
 
    def activate(translator: Translator):
-       translator.augment_profiles(extra_processing, active_by_default=True)
+       translator.augment_profiles(strip_trailing_newline, active_by_default=True)
 
 
    def strip_trailing_newline(profile: Profile):
        """Remove trailing newline from the generated TOML file"""
-       profile.post_processing.append(str.strip)
+       profile.post_processors.append(str.strip)
+
+.. testcode::
+   :hide:
+
+   # Just make sure this does not raise an exception
+   translator = import_module("ini2toml.api").Translator()
+   activate(translator)
+   profile = translator._add_augmentations(translator["setup.cfg"])
+   assert str.strip in profile.post_processors
 
 
 Customising the CLI help text
