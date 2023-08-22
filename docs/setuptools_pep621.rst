@@ -1,6 +1,6 @@
-======================
-Setuptools and PEP 621
-======================
+=================================
+Setuptools and ``pyproject.toml``
+=================================
 
 In the Python software ecosystem packaging and distributing software have
 historically been a difficult topic.
@@ -13,15 +13,16 @@ During this packaging renaissance, :pep:`621` was proposed (and accepted)
 to standardise package metadata/configuration done by developers, in a single
 file format shared by all the packaging alternatives.
 It makes use of a TOML_ file, ``pyproject.toml``, which is, unfortunately,
-significantly different from `setuptools own configuration file`_,
+significantly different from `setuptools own original declarative configuration file`_,
 ``setup.cfg``, and therefore its adoption by :pypi:`setuptools` requires mapping
 concepts between these two files.
 
 :pep:`621` covers most of the information expected from a ``setup.cfg`` file,
 but there are parameters specific to :pypi:`setuptools` without an obvious equivalent.
-For the time being :pypi:`setuptools` documentation does not offer a clear way of
-mapping those fields. As a result the (experimental) automatic translation
-proposed by ``ini2toml`` takes the following assumptions:
+The :doc:`setuptools docs <setuptools:userguide/pyproject_config>` offer a
+mapping between those fields and the ``[tool.setuptools]`` TOML table.
+Based on this description, the automatic translation proposed by ``ini2toml``
+works like the following:
 
 - Any field without an obvious equivalent in :pep:`621` is stored in the
   ``[tool.setuptools]`` TOML table, regardless if it comes from the
@@ -114,11 +115,11 @@ proposed by ``ini2toml`` takes the following assumptions:
 
 - When not present in the original config file, ``include_package_data`` is
   explicitly added with the ``False`` value to the translated TOML.
-  This does not change directly how the configuration is handled (given that
-  currently the default value for this field is ``False``), but allows an
-  eventual future change in the default value to ``True`` if the
-  :pypi:`setuptools` maintainers decide so. This eventual change is mentioned
-  by some members of the community as a nice quality of life improvement.
+  This happens because in ``setup.cfg`` the default value for
+  ``inclue_package_data`` is ``False``, but in ``pyproject.toml`` the default
+  value is ``True``.
+  This change was mentioned by some members of the community as a nice quality
+  of life improvement.
 
 - The ``metadata.license_files`` field in ``setup.cfg`` is not translated to
   ``project.license.file`` in ``pyproject.toml``, even when a single file is
@@ -131,13 +132,7 @@ proposed by ``ini2toml`` takes the following assumptions:
   ``metadata.license_files`` is translated to ``tool.setuptools.license-files``.
 
 
-Please note these conventions are part of a proposal and will probably
-change as soon as a pattern is established by the :pypi:`setuptools` project.
-The implementation in ``ini2toml`` is flexible to quickly adapt to these
-changes.
-
-
 .. _TOML: https://toml.io/en/
-.. _setuptools own configuration file: https://setuptools.pypa.io/en/latest/userguide/declarative_config.html
+.. _setuptools own original declarative configuration file: https://setuptools.pypa.io/en/latest/userguide/declarative_config.html
 .. _entry-points file: https://packaging.python.org/en/latest/specifications/entry-points/
 .. _core metadata: https://packaging.python.org/en/latest/specifications/core-metadata/
