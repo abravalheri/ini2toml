@@ -23,8 +23,12 @@ Contents
    Developer Guide <dev-guide>
    License <license>
    Authors <authors>
-   Changelog <changelog>
+
+.. toctree::
+   :maxdepth: 1
+
    Module Reference <api/modules>
+   Changelog <changelog>
 
 
 Indices and tables
