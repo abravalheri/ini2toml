@@ -2,19 +2,16 @@
 Changelog
 =========
 
-Version 0.13.1 (dev)
-====================
-
-* Fix errors when ``isort`` is installed in the same environment as
-  ``ini2toml``.
-
 Version 0.13
 ============
 
+* Fix errors when ``isort`` is installed in the same environment as ``ini2toml``, :pr:`83`.
 * ``setuptools`` plugin:
    * Add support for ``file:`` directive in ``install_requires`` and ``extras_require``, :pr:`77`.
-     Note that ``setuptools`` (as per v67.6) may require that all ``optional-dependencies``
-     to be specified via the ``file:`` directive if at least one of them requires so.
+
+     .. attention::
+        Note that ``setuptools`` (as per v67.6) may require that all ``optional-dependencies``
+        to be specified via the ``file:`` directive if at least one of them requires so.
 
 Version 0.12
 ============
