@@ -1,4 +1,5 @@
 """Profile-independent tasks implemented via *profile augmentation*."""
+
 import re
 from functools import wraps
 from typing import Callable

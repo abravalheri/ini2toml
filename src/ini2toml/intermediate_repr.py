@@ -1,6 +1,7 @@
 """Intermediate representations used by ``ini2toml`` when transforming between
 the INI and TOML syntaxes.
 """
+
 from collections import UserList
 from enum import Enum
 from itertools import chain

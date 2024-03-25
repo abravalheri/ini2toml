@@ -3,6 +3,7 @@ TOML parsers/serialisers.
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
+
 try:
     from tomli_w import dumps
 except ImportError:  # pragma: no cover
