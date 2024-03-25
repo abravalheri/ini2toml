@@ -3,6 +3,7 @@ style preserving TOML editing libraries (e.g. tomlkit and atoml).
 It makes it easy to swap between implementations for testing (by means of search and
 replace).
 """
+
 from collections import UserList
 from collections.abc import Mapping, MutableSequence, Sequence
 from functools import singledispatch
