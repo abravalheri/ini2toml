@@ -1,4 +1,5 @@
 """Reusable value and type casting transformations"""
+
 import warnings
 from collections.abc import MutableMapping
 from functools import reduce, wraps
@@ -140,15 +141,13 @@ def deprecated(
 
 
 @overload
-def split_comment(value: str, *, comment_prefixes=CP) -> Commented[str]:
-    ...
+def split_comment(value: str, *, comment_prefixes=CP) -> Commented[str]: ...
 
 
 @overload
 def split_comment(
     value: str, coerce_fn: CoerceFn[T], comment_prefixes=CP
-) -> Commented[T]:
-    ...
+) -> Commented[T]: ...
 
 
 def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
@@ -181,8 +180,7 @@ def split_list(
     subsplit_dangling=True,
     comment_prefixes=CP,
     force_multiline=False,
-) -> CommentedList[str]:
-    ...
+) -> CommentedList[str]: ...
 
 
 @overload
@@ -194,8 +192,7 @@ def split_list(
     subsplit_dangling=True,
     comment_prefixes=CP,
     force_multiline=False,
-) -> CommentedList[T]:
-    ...
+) -> CommentedList[T]: ...
 
 
 @overload
@@ -206,8 +203,7 @@ def split_list(
     subsplit_dangling=True,
     comment_prefixes=CP,
     force_multiline=False,
-) -> CommentedList[T]:
-    ...
+) -> CommentedList[T]: ...
 
 
 def split_list(
@@ -247,8 +243,7 @@ def split_kv_pairs(
     pair_sep=",",
     subsplit_dangling=True,
     comment_prefixes=CP,
-) -> CommentedKV[str]:
-    ...
+) -> CommentedKV[str]: ...
 
 
 @overload
@@ -260,8 +255,7 @@ def split_kv_pairs(
     pair_sep=",",
     subsplit_dangling=True,
     comment_prefixes=CP,
-) -> CommentedKV[T]:
-    ...
+) -> CommentedKV[T]: ...
 
 
 @overload
@@ -272,8 +266,7 @@ def split_kv_pairs(
     pair_sep=",",
     subsplit_dangling=True,
     comment_prefixes=CP,
-) -> CommentedKV[T]:
-    ...
+) -> CommentedKV[T]: ...
 
 
 def split_kv_pairs(
@@ -326,25 +319,21 @@ def apply(x, fn):
 
 
 @overload
-def pipe(fn1: FN[S, T], fn2: FN[T, U]) -> FN[S, U]:
-    ...
+def pipe(fn1: FN[S, T], fn2: FN[T, U]) -> FN[S, U]: ...
 
 
 @overload
-def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V]) -> FN[S, V]:
-    ...
+def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V]) -> FN[S, V]: ...
 
 
 @overload
-def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V], fn4: FN[V, X]) -> FN[S, X]:
-    ...
+def pipe(fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V], fn4: FN[V, X]) -> FN[S, X]: ...
 
 
 @overload
 def pipe(
     fn1: FN[S, T], fn2: FN[T, U], fn3: FN[U, V], fn4: FN[V, X], fn5: FN[X, Y]
-) -> FN[S, Y]:
-    ...
+) -> FN[S, Y]: ...
 
 
 @overload
@@ -355,8 +344,7 @@ def pipe(
     fn4: FN[V, X],
     fn5: FN[X, Y],
     *fn: FN[Y, Y],
-) -> FN[S, Y]:
-    ...
+) -> FN[S, Y]: ...
 
 
 def pipe(*fns):
