@@ -99,8 +99,7 @@ linux_task:
     - name: test (Linux - 3.11)
       container: {image: "python:3.11-bullseye"}
     - name: test (Linux - 3.12)
-      container: {image: "python:3.12-rc-bullseye"}
-      allow_failures: true  # Experimental
+      container: {image: "python:3.12-bullseye"}
   install_script:
     - python -m pip install --upgrade pip tox pipx
   <<: *test-template
