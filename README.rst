@@ -122,7 +122,7 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _ini_cfg: https://docs.python.org/3/library/configparser.html#supported-ini-file-structure
 .. _our docs: https://ini2toml.readthedocs.io
 .. _PEP 621: https://www.python.org/dev/peps/pep-0621/
-.. _pipx: https://pypa.github.io/pipx/
+.. _pipx: https://pipx.pypa.io/stable/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _TOML: https://toml.io/en/
 .. _TOML library: https://github.com/sdispater/tomlkit

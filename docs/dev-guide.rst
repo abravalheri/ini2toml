@@ -96,8 +96,7 @@ Each text-processor is a simple Python function with the following signature:
 
 .. code-block:: python
 
-   def text_process(file_contents: str) -> str:
-       ...
+   def text_process(file_contents: str) -> str: ...
 
 
 .. important:: All processors are called in sequence, so the output of one is
@@ -119,8 +118,7 @@ Each intermediate-processor is a simple Python function with the following signa
 
 .. code-block:: python
 
-   def intermediate_process(intermediate: IntermediateRepr) -> IntermediateRepr:
-       ...
+   def intermediate_process(intermediate: IntermediateRepr) -> IntermediateRepr: ...
 
 :class:`~ini2toml.intermediate_repr.IntermediateRepr` is a special kind of
 Python object with characteristics of both :obj:`dict` and :obj:`list`.

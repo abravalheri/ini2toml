@@ -60,8 +60,7 @@ class ProfileAugmentation(Protocol):
     name: str
     help_text: str
 
-    def fn(self, profile: Profile):
-        ...
+    def fn(self, profile: Profile): ...
 
     def is_active(self, explicitly_active: Optional[bool] = None) -> bool:
         """``explicitly_active`` is a tree-state variable: ``True`` if the user

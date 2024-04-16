@@ -4,6 +4,7 @@ document into Python builtin data types (mainly a composition of :class:`dict`,
 
 This is **not a loss-less** process, since comments are not preserved.
 """
+
 from collections.abc import Mapping, MutableMapping
 from functools import singledispatch
 from typing import Any, TypeVar

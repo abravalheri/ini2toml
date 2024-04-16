@@ -18,6 +18,7 @@ Plugin authors can also rely on the functions exported by
 
 .. _structural polymorphism: https://www.python.org/dev/peps/pep-0544/
 """
+
 from . import errors, transformations, types
 from .base_translator import BaseTranslator
 from .translator import Translator
