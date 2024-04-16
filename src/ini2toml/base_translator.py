@@ -18,7 +18,7 @@ EMPTY = MappingProxyType({})  # type: ignore
 
 class BaseTranslator(Generic[T]):
     """Translator object that follows the public API defined in
-    :class:`ini2toml.types.Translator`. See :doc:`dev-guide` for a quick explanation of
+    :class:`ini2toml.types.Translator`. See :doc:`/dev-guide` for a quick explanation of
     concepts such as plugins, profiles, profile augmentations, etc.
 
     Arguments
@@ -121,7 +121,7 @@ class BaseTranslator(Generic[T]):
         help_text: str = "",
     ):
         """Register a profile augmentation function to be called after the
-        profile is selected and before the actual translation (see :doc:`dev-guide`).
+        profile is selected and before the actual translation (see :doc:`/dev-guide`).
         """
         name = (name or fn.__name__).strip()
         InvalidAugmentationName.check(name)
