@@ -21,6 +21,14 @@ Plugin authors can also rely on the functions exported by
 
 from . import errors, transformations, types
 from .base_translator import BaseTranslator
-from .translator import Translator
+from .translator import FullTranslator, LiteTranslator, Translator
 
-__all__ = ["BaseTranslator", "Translator", "errors", "types", "transformations"]
+__all__ = [
+    "BaseTranslator",
+    "FullTranslator",
+    "LiteTranslator",
+    "Translator",
+    "errors",
+    "types",
+    "transformations",
+]
