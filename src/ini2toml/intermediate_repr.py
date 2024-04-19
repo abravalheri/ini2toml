@@ -10,6 +10,7 @@ from textwrap import indent
 from types import MappingProxyType
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterable,
@@ -226,6 +227,20 @@ class Commented(Generic[T]):
 class CommentedList(Generic[T], UserList):
     def __init__(self, data: Sequence[Commented[List[T]]] = ()):
         super().__init__(data)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(\n{indent(super().__repr__(), '   ')}\n)"
+
+    def _map_lines(self, fn: Callable[[T], S]) -> "CommentedList[S]":
+        """Run a transformation function for each line.
+        Each line is a list of elements so the function should be
+        in the shape of ``fn(list[T]) -> list[S]`.
+        """
+        out: List[Commented[List[S]]] = []
+        for entry in self:
+            values = entry.value_or([])
+            out.append(Commented(fn(values), entry.comment))
+        return CommentedList(out)
 
     def as_list(self) -> list:
         out = []
