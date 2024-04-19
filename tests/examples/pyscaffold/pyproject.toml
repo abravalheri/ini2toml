@@ -122,9 +122,10 @@ namespaces = true
 # in order to write a coverage file that can be read by Jenkins.
 # CAUTION: --cov flags may prohibit setting breakpoints while debugging.
 # Comment those flags to avoid this pytest issue.
-addopts = """
---cov pyscaffold --cov-config .coveragerc --cov-report term-missing
---verbose"""
+addopts = [
+    "--cov", "pyscaffold", "--cov-config", ".coveragerc", "--cov-report", "term-missing",
+    "--verbose",
+]
 # In order to use xdist, the developer can add, for example, the following
 # arguments:
 # --dist=load --numprocesses=auto
