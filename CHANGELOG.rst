@@ -6,7 +6,7 @@ Development Version
 ===================
 
 * Introduce ``LiteTranslator`` and ``FullTranslator`` as
-  convenience classes for more deterministic behaviour.
+  convenience classes for more deterministic behaviour, :pr:`95`.
 * ``setuptools`` plugin:
   * Fix ``ValueError`` when ``setup.cfg`` contains ``[options.packages.find]``
     but also lists ``[options] packages = ...`` explicitly as a list of package
