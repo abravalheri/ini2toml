@@ -204,6 +204,6 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _setuptools' docs: https://setuptools.pypa.io/en/latest/userguide/quickstart.html#setuppy-discouraged
 .. _TOML: https://toml.io/en/
 .. _TOML library: https://github.com/sdispater/tomlkit
-.. _toml-w: https://pypi.org/project/tomli-w/
+.. _tomli-w: https://pypi.org/project/tomli-w/
 .. _tomlkit: https://tomlkit.readthedocs.io/en/latest/
 .. _virtual environment: https://realpython.com/python-virtual-environments-a-primer/
