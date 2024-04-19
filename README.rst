@@ -138,6 +138,33 @@ Therefore it is recommended to double check the output and fix any
 problems before using the ``.toml`` files in production.
 
 
+Can ``ini2toml`` also translate ``setup.py`` into ``pyproject.toml``?
+=====================================================================
+
+Working with ``.py`` files is not in the scope of the ``ini2toml`` project,
+and therefore this feature is not implemented.
+
+However, you can probably find some tools on PyPI to translate from
+``setup.py`` into ``setup.cfg``, like `setup-py-upgrade`_ and
+`setuptools-py2cfg`_ [#untested]_.
+
+Once you have ``setup.cfg`` then you can use ``ini2toml`` [#setuppy]_.
+
+.. [#untested] Such tools are neither maintained by this project,
+   nor tested for integration by ``ini2toml``.
+   It is best to try some of them out and find the one that works for you.
+   Manual corrections might be needed.
+
+.. [#setuppy] Please note that ``setup.py`` is a very dynamic
+   format and that not everything can be represented in ``setup.cfg`` or
+   ``pyproject.toml``. Indeed, the `setuptools' docs`_ explicitly say that
+   ``setup.py`` can be used in tandem with ``pyproject.toml``: ideally all the
+   declarative metadata goes to ``pyproject.toml``, but you can keep the
+   dynamic bits in ``setup.py``.
+   Remember ``setup.py`` is a perfectly and non deprecated configuration file;
+   what is deprecated is running it as a CLI tool, i.e. ``python setup.py ...`.
+
+
 .. _pyscaffold-notes:
 
 .. tip::
@@ -167,6 +194,9 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _pipx: https://pipx.pypa.io/stable/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _plugin: https://ini2toml.readthedocs.io/en/latest/dev-guide.html#plugins
+.. _setup-py-upgrade: https://pypi.org/project/setup-cfg-fmt/
+.. _setuptools-py2cfg: https://pypi.org/project/setuptools-py2cfg/
+.. _setuptools' docs: https://setuptools.pypa.io/en/latest/userguide/quickstart.html#setuppy-discouraged
 .. _TOML: https://toml.io/en/
 .. _TOML library: https://github.com/sdispater/tomlkit
 .. _toml-w: https://pypi.org/project/tomli-w/
