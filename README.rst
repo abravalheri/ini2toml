@@ -153,7 +153,7 @@ However, you can probably find some tools on PyPI to translate from
 ``setup.py`` into ``setup.cfg``, like `setup-py-upgrade`_ and
 `setuptools-py2cfg`_ [#untested]_.
 
-Once you have ``setup.cfg`` then you can use ``ini2toml`` [#setuppy]_.
+Once you have ``setup.cfg``, you can use ``ini2toml`` [#setuppy]_.
 
 .. [#untested] Such tools are neither maintained by this project,
    nor tested for integration by ``ini2toml``.
