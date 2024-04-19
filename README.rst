@@ -112,16 +112,20 @@ well known limitations:
 * Although ``ini2toml`` attempts to keep the same order/sequence as the original
   information was written, sometimes that is not compatible with the TOML
   syntax, and things end up moving around a bit.
+
 * ``ini2toml`` uses `ConfigParser`_ + `tomli-w`_ for implementing the *"lite"* flavour
   and `ConfigUpdater`_ + `tomlkit`_ for implementing the *"full"* flavour.
   Therefore it inherits the limitations from those libraries (please check
   their documentation for more information).
+
   * `ConfigUpdater`_, in particular, will have trouble to parse
-    interpolations and the related escaping sequence (``%%``)
-    (in this respect, it behaves more similarly to ``RawConfigParser`` than ``ConfigParser``).
+     interpolations and the related escaping sequence (``%%``)
+     (in this respect, it behaves more similarly to ``RawConfigParser`` than ``ConfigParser``).
+
 * ``ini2toml`` *expects the input to be valid* and will not perform extensive
   checks on the provided document. If something in the output is not working as you would
   expect, it might be a good idea to check the input.
+
 * ``.ini/.cfg`` files are used in a plethora of use cases and it is impossible
   to cover all of them in a single code base. Even when considering
   ``setup.cfg``, there are many packages that define different sections in the
@@ -129,6 +133,7 @@ well known limitations:
   Because of that ``ini2toml``, adopts a "best-effort" approach, that might not
   correspond to what you expect. If that is the case please consider
   contributing or creating your own `plugin`_.
+
 * The translation procedure analyse only the given input. If the original
   ``.ini/.cfg`` file contains references to other files, or behaves differently
   depending on the existence/presence of other files and directories, the
