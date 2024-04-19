@@ -1,11 +1,13 @@
 # https://docs.pytest.org/en/latest/reference/reference.html#configuration-options
 # https://docs.pytest.org/en/latest/reference/customize.html#config-file-formats
+import shlex
 from collections.abc import MutableMapping
 from functools import partial
-from typing import TypeVar
+from itertools import chain
+from typing import Callable, List, TypeVar, Union, cast
 
-from ..transformations import coerce_scalar, split_list
-from ..types import IntermediateRepr, Translator
+from ..transformations import coerce_scalar, pipe, split_list
+from ..types import CommentedList, IntermediateRepr, Translator
 
 R = TypeVar("R", bound=IntermediateRepr)
 
@@ -63,5 +65,17 @@ class Pytest:
                 section[field] = split_lines(section[field])
             elif field in self.SPACE_SEPARATED_LIST_VALUES:
                 section[field] = split_spaces(section[field])
+            elif hasattr(self, f"_process_{field}"):
+                section[field] = getattr(self, f"_process_{field}")(section[field])
             else:
                 section[field] = coerce_scalar(section[field])
+
+    def _process_addopts(self, content: str) -> Union[CommentedList[str], str]:
+        if "\n" in content:
+            # Better to use a list? (if it contains comments, we definitely need to)
+            split: Callable[[str], List[str]] = pipe(str.strip, shlex.split)
+            flatten: Callable[[List[List[str]]], List[str]] = pipe(
+                chain.from_iterable, list
+            )
+            return split_lines(content, coerce_fn=split)._map_lines(flatten)
+        return cast(str, coerce_scalar(content))  # The docs say strings are fine
