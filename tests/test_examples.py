@@ -9,7 +9,7 @@ from validate_pyproject.errors import ValidationError
 
 from ini2toml import cli
 from ini2toml.drivers import configparser, full_toml, lite_toml
-from ini2toml.translator import Translator
+from ini2toml.translator import FullTranslator, LiteTranslator
 
 
 def examples():
@@ -39,7 +39,7 @@ def validate():
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_api(original, expected, validate):
-    translator = Translator()
+    translator = FullTranslator()
     available_profiles = list(translator.profiles.keys())
     profile = cli.guess_profile(None, original, available_profiles)
     orig = Path(original)
@@ -71,7 +71,7 @@ INLINE_COMMENT = re.compile(r'#\s[^\n"]*$', re.M)
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_api_lite(original, expected, validate):
     opts = {"ini_loads_fn": configparser.parse, "toml_dumps_fn": lite_toml.convert}
-    translator = Translator(**opts)
+    translator = LiteTranslator(**opts)
     available_profiles = list(translator.profiles.keys())
     profile = cli.guess_profile(None, original, available_profiles)
     # We cannot compare "flake8" sections (currently not handled)
