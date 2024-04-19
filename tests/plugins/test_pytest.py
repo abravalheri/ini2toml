@@ -1,9 +1,10 @@
 from textwrap import dedent
 
+import pytest
 import tomli
 
 from ini2toml.drivers import full_toml, lite_toml
-from ini2toml.plugins import pytest
+from ini2toml.plugins.pytest import activate
 from ini2toml.translator import Translator
 
 
@@ -41,9 +42,43 @@ def test_pytest():
         'ignore:Please use `dok_matrix` from the `scipy\\.sparse` namespace, the `scipy\\.sparse\\.dok` namespace is deprecated.:DeprecationWarning',
     ]
     """  # noqa
+    _compare_test(example, expected)
+
+
+@pytest.mark.parametrize(
+    "example",
+    [
+        """\
+        [tool:pytest]
+        addopts =
+           -ra -q
+           # comment
+           --cov ini2toml
+        """,
+        """\
+        [tool:pytest]
+        addopts = -ra -q
+           # comment
+           --cov ini2toml
+        """,
+    ],
+)
+def test_addopts_comments(example):
+    expected = """\
+    [tool.pytest.ini_options]
+    addopts = [
+        "-ra", "-q",
+        # comment
+        "--cov", "ini2toml"
+    ]
+    """
+    _compare_test(example, expected)
+
+
+def _compare_test(example, expected):
     for convert in (lite_toml.convert, full_toml.convert):
-        translator = Translator(plugins=[pytest.activate], toml_dumps_fn=convert)
-        out = translator.translate(dedent(example), "pytest.ini").strip()
+        translator = Translator(plugins=[activate], toml_dumps_fn=convert)
+        out = translator.translate(dedent(example), "setup.cfg").strip()
         expected = dedent(expected).strip()
         print("expected=\n" + expected + "\n***")
         print("out=\n" + out)
