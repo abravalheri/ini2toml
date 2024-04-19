@@ -2,7 +2,12 @@ import pytest
 import tomli
 
 from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
-from ini2toml.plugins.setuptools_pep621 import Directive, SetuptoolsPEP621, activate
+from ini2toml.plugins.setuptools_pep621 import (
+    Directive,
+    SetuptoolsPEP621,
+    _ConfusingPackagesConfig,
+    activate,
+)
 from ini2toml.translator import Translator
 
 
@@ -738,3 +743,37 @@ def test_deps_with_line_continuation(plugin, parse, convert):
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print(doc)
     assert convert(doc) == expected_convert_directives
+
+
+# ----
+
+# Example taken from https://github.com/aio-libs/aiohttp/
+# In general, you should either list packages explicit or use find,
+# but some configs change and `options.packages.find` is left behind
+example_explicit_packages_with_find = """\
+[options]
+packages = aiohttp
+[options.packages.find]
+exclude =
+  examples
+"""
+
+# In those cases, `ini2toml` should remove  `[options.packages.find]`
+# And warn about it
+expected_explicit_packages_with_find = """\
+[tool.setuptools]
+packages = ["aiohttp"]
+"""
+
+
+def test_explicit_packages_with_find(plugin, parse, convert):
+    doc = parse(example_explicit_packages_with_find)
+    print(doc)
+    doc = plugin.apply_value_processing(doc)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    with pytest.warns(_ConfusingPackagesConfig, match="[options.packages.find]"):
+        doc = plugin.handle_packages_find(doc)
+    doc.rename("options", ("tool", "setuptools"))
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(doc)
+    assert convert(doc) == expected_explicit_packages_with_find

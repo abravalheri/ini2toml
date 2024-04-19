@@ -438,8 +438,13 @@ class SetuptoolsPEP621:
         options = doc["options"]
         # Abort when not using find or find_namespace
         packages = options.get("packages")
+
         if not isinstance(packages, Directive):
+            if "options.packages.find" in doc:
+                _ConfusingPackagesConfig.emit()
+                doc.pop("options.packages.find", None)
             return doc
+
         prefix = packages.kind.replace("_", "-")
         # Enhancement #1: Unify find and find_namespaces, using `namespaces` as a flag
         options["packages"] = Directive("find", {"namespaces": "namespace" in prefix})
@@ -845,3 +850,24 @@ def _fuse_lines(line1: Commented[List[str]], line2: Commented[List[str]]):
     keep1, keep2 = values1[:-1], values2[1:]
     shared = values1[-1].strip().strip("\\").strip() + " " + values2[0].strip()
     return Commented(keep1 + [shared] + keep2, line2.comment)
+
+
+class _ConfusingPackagesConfig(UserWarning):
+    _MSG = """Confusing configuration `[options.packages.find]`.
+
+    Original configuration sets both:
+
+    - `[options] packages = ...` as a list of named packages
+    - `[options.packages.find]`
+
+    The confusion comes from the fact that `[options.packages.find]` should be used
+    with `[options] packages = find:` or `[options] packages = find_namespace:`.
+
+    Conversion will ignore `[options.packages.find]`, as it cannot be written in the
+    TOML format when `[options] packages = ...` is already given.
+    """
+    __doc__ = _MSG
+
+    @classmethod
+    def emit(cls, msg=_MSG, stacklevel=1):
+        warnings.warn(msg, category=cls, stacklevel=stacklevel + 1)
