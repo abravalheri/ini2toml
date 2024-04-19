@@ -114,8 +114,8 @@ well known limitations:
   syntax, and things end up moving around a bit.
 * ``ini2toml`` uses `ConfigParser`_ + `tomli-w`_ for implementing the *"lite"* flavour
   and `ConfigUpdater`_ + `tomlkit`_ for implementing the *"full"* flavour.
-  Therefore it inherits the limitations from those libraries (please check the
-  documentations of those libraries for more information).
+  Therefore it inherits the limitations from those libraries (please check
+  their documentation for more information).
   * `ConfigUpdater`_, in particular, will have trouble to parse
     interpolations and the related escaping sequence (``%%``)
     (in this respect, it behaves more similarly to ``RawConfigParser`` than ``ConfigParser``).
@@ -126,7 +126,7 @@ well known limitations:
   to cover all of them in a single code base. Even when considering
   ``setup.cfg``, there are many packages that define different sections in the
   document in addition to the basic definition by ``setuptools``.
-  Because of that ``ini2toml`` adopts a "best-effort" approach, that might not
+  Because of that ``ini2toml``, adopts a "best-effort" approach, that might not
   correspond to what you expect. If that is the case please consider
   contributing or creating your own `plugin`_.
 * The translation procedure analyse only the given input. If the original
@@ -161,7 +161,7 @@ Once you have ``setup.cfg`` then you can use ``ini2toml`` [#setuppy]_.
    ``setup.py`` can be used in tandem with ``pyproject.toml``: ideally all the
    declarative metadata goes to ``pyproject.toml``, but you can keep the
    dynamic bits in ``setup.py``.
-   Remember ``setup.py`` is a perfectly and non deprecated configuration file;
+   Remember: ``setup.py`` is a perfectly valid and non deprecated configuration file;
    what is deprecated is running it as a CLI tool, i.e. ``python setup.py ...`.
 
 
