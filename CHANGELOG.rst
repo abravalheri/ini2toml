@@ -4,11 +4,13 @@ Changelog
 
 Development Version
 ===================
+
+* Introduce ``LiteTranslator`` and ``FullTranslator`` as
+  convenience classes for more deterministic behaviour.
 * ``setuptools`` plugin:
   * Fix ``ValueError`` when ``setup.cfg`` contains ``[options.packages.find]``
     but also lists ``[options] packages = ...`` explicitly as a list of package
     names, :issue:`93`
-
 
 Version 0.13
 ============

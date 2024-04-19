@@ -93,6 +93,12 @@ You can also use ``ini2toml`` in your Python scripts or projects:
 To do so, don't forget to add it to your `virtual environment`_ or specify it as a
 `project dependency`_.
 
+Note that the class ``Translator`` will try to guess which flavour to use based
+on the available installed dependencies. If you need something more
+deterministic, consider using ``LiteTranslator`` and ``FullTranslator``,
+or explicitly specifying the ``ini_loads_fn`` and ``toml_dumps_fn`` keyword
+arguments in the constructor.
+
 More details about ``ini2toml`` and its Python API can be found in `our docs`_.
 
 
