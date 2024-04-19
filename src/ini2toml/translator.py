@@ -8,6 +8,10 @@ from .plugins import list_from_entry_points as list_all_plugins
 _logger = logging.getLogger(__name__)
 
 
+# TODO: Once MyPy/other type checkers handle ``partial`` and ``partialmethod``
+#       we probably can use them to simply the implementations in this module.
+
+
 class Translator(BaseTranslator[str]):
     """``Translator`` is the main public Python API exposed by the ``ini2toml``,
     to convert strings representing ``.ini/.cfg`` files into the ``TOML`` syntax.
@@ -67,3 +71,73 @@ def _discover_toml_dumps_fn() -> types.TomlDumpsFn:
             raise
 
     return convert
+
+
+class LiteTranslator(Translator):
+    """Similar to ``Translator``, but instead of trying to figure out ``ini_loads_fn``
+    and ``toml_dumps_fn`` is will always try to the ``lite`` flavour
+    (ignoring comments).
+    """
+
+    def __init__(
+        self,
+        plugins: Optional[Sequence[types.Plugin]] = None,
+        profiles: Sequence[types.Profile] = (),
+        profile_augmentations: Sequence[types.ProfileAugmentation] = (),
+        ini_parser_opts: Mapping = EMPTY,
+        ini_loads_fn: Optional[types.IniLoadsFn] = None,
+        toml_dumps_fn: Optional[types.TomlDumpsFn] = None,
+    ):
+        if ini_loads_fn:
+            parse = ini_loads_fn
+        else:
+            from .drivers.configparser import parse
+
+        if toml_dumps_fn:
+            convert = toml_dumps_fn
+        else:
+            from .drivers.lite_toml import convert
+
+        super().__init__(
+            ini_loads_fn=parse,
+            toml_dumps_fn=convert,
+            plugins=plugins,
+            ini_parser_opts=ini_parser_opts,
+            profiles=profiles,
+            profile_augmentations=profile_augmentations,
+        )
+
+
+class FullTranslator(Translator):
+    """Similar to ``Translator``, but instead of trying to figure out ``ini_loads_fn``
+    and ``toml_dumps_fn`` is will always try to use the ``full`` version
+    (best effort to maintain comments).
+    """
+
+    def __init__(
+        self,
+        plugins: Optional[Sequence[types.Plugin]] = None,
+        profiles: Sequence[types.Profile] = (),
+        profile_augmentations: Sequence[types.ProfileAugmentation] = (),
+        ini_parser_opts: Mapping = EMPTY,
+        ini_loads_fn: Optional[types.IniLoadsFn] = None,
+        toml_dumps_fn: Optional[types.TomlDumpsFn] = None,
+    ):
+        if ini_loads_fn:
+            parse = ini_loads_fn
+        else:
+            from .drivers.configupdater import parse
+
+        if toml_dumps_fn:
+            convert = toml_dumps_fn
+        else:
+            from .drivers.full_toml import convert
+
+        super().__init__(
+            ini_loads_fn=parse,
+            toml_dumps_fn=convert,
+            plugins=plugins,
+            ini_parser_opts=ini_parser_opts,
+            profiles=profiles,
+            profile_augmentations=profile_augmentations,
+        )

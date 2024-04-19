@@ -5,7 +5,7 @@ import pytest
 from ini2toml.errors import UndefinedProfile
 from ini2toml.plugins import profile_independent_tasks
 from ini2toml.profile import Profile, ProfileAugmentation
-from ini2toml.translator import Translator
+from ini2toml.translator import FullTranslator, LiteTranslator, Translator
 
 
 def test_simple_example():
@@ -139,3 +139,31 @@ def test_deduplicate_plugins():
     ]
     translator = Translator(plugins=plugins)
     assert len(translator.plugins) == 1
+
+
+minimal_example = """\
+# comment
+
+[section1]
+option1 = value
+option2 = value # option comments are considered part of the value
+"""
+
+
+def test_lite_translator():
+    parser_opts = {"inline_comment_prefixes": ["#"]}
+    translator = LiteTranslator(plugins=[], ini_parser_opts=parser_opts)
+    # ensure profile exists
+    translator["simple"]
+    out = translator.translate(dedent(minimal_example), "simple")
+    assert "# comment" not in out
+    assert "part of the value" not in out
+
+
+def test_full_translator():
+    translator = FullTranslator(plugins=[])
+    # ensure profile exists
+    translator["simple"]
+    out = translator.translate(dedent(minimal_example), "simple")
+    assert "# comment" in out
+    assert "part of the value" in out
