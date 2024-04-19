@@ -7,6 +7,7 @@ see the LICENSE.txt file for details.
 A few extra files are collocated in this code base ('tests/examples') exclusively for testing
 purposes during development:
 
+- 'aiohttp/setup.cfg' from https://github.com/aio-libs/aiohttp, licensed under Apache-2.0
 - 'django/setup.cfg' from https://github.com/django/django, licensed under BSD-3-Clause
 - 'flask/setup.cfg' from https://github.com/pallets/flask, licensed under BSD-3-Clause
 - 'pandas/setup.cfg' from https://github.com/pandas-dev/pandas, licensed under BSD-3-Clause
