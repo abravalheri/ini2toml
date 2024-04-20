@@ -83,9 +83,7 @@ def test_examples_api_lite(original, expected, validate):
     assert translated.endswith("\n")
 
     out = remove_flake8_from_toml(translated)
-    out = adapt_multiline_strings_for_lite(out)
     expected_text = remove_flake8_from_toml(Path(expected).read_text(encoding="utf-8"))
-    out = adapt_multiline_strings_for_lite(expected_text)
 
     # At least the Python-equivalents should be the same when parsing
     dict_equivalent = tomli.loads(out)
@@ -133,14 +131,6 @@ def remove_flake8_from_toml(text: str) -> str:
         if key.startswith("flake8"):
             tool.pop(key)
     return full_toml.dumps(doc)
-
-
-def adapt_multiline_strings_for_lite(text: str) -> str:
-    # Both ConfigParser and ConfigUpdater will strip a newline at the end of
-    # multi-line string values. To compensate for that full_toml automatically
-    # adds a newline at the end of a multi-line string.
-    # This feature cannot be implemented with `lite_toml`
-    return text.replace('\\n"""', '"""').replace("\\n'''", "'''")
 
 
 def remove_deprecated(dict_equivalent):
