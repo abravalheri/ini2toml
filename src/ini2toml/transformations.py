@@ -1,4 +1,11 @@
-"""Reusable value and type casting transformations"""
+"""
+Reusable value and type casting transformations
+
+.. testsetup:: *
+
+   # workaround for missing import in sphinx-doctest
+   from ini2toml.transformations import *
+"""
 
 import warnings
 from collections.abc import MutableMapping
