@@ -108,7 +108,8 @@ B011,
 # tests use comparisons but not their returned value
 B015,
 # false positives
-B301"""
+B301
+"""
 exclude = """
 doc/sphinxext/*.py,
 doc/build/*.py,
@@ -116,7 +117,8 @@ doc/temp/*.py,
 .eggs/*.py,
 versioneer.py,
 # exclude asv benchmark environments from linting
-env"""
+env
+"""
 per-file-ignores = """
 # private import across modules
 pandas/tests/*:PDF020
@@ -125,7 +127,8 @@ pandas/tests/extension/*:PDF009
 # os.remove
 doc/make.py:PDF008
 # import from pandas._testing
-pandas/testing.py:PDF014"""
+pandas/testing.py:PDF014
+"""
 
 [tool.flake8-rst]
 max-line-length = "84"
@@ -135,7 +138,8 @@ import pandas as pd
 # avoiding error when importing again numpy or pandas
 np
 # (in some cases we want to do it to show users)
-pd"""
+pd
+"""
 ignore = """
 # space before : (needed for how black formats slicing)
 E203,
@@ -152,12 +156,14 @@ E305,
 # statement ends with a semicolon
 E703,
 # comparison to none should be 'if cond is none:'
-E711,"""
+E711,
+"""
 exclude = """
 doc/source/development/contributing_docstring.rst,
 # work around issue of undefined variable warnings
 # https://github.com/pandas-dev/pandas/pull/38837#issuecomment-752884156
-doc/source/getting_started/comparison/includes/*.rst"""
+doc/source/getting_started/comparison/includes/*.rst
+"""
 
 [tool.codespell]
 ignore-words-list = "ba,blocs,coo,hist,nd,sav,ser"

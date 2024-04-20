@@ -124,7 +124,8 @@ namespaces = true
 # Comment those flags to avoid this pytest issue.
 addopts = """
 --cov pyscaffold --cov-config .coveragerc --cov-report term-missing
---verbose"""
+--verbose
+"""
 # In order to use xdist, the developer can add, for example, the following
 # arguments:
 # --dist=load --numprocesses=auto
@@ -165,7 +166,8 @@ src/pyscaffold/contrib
 build
 dist
 .eggs
-docs/conf.py"""
+docs/conf.py
+"""
 
 [tool.mypy]
 ignore_missing_imports = true
