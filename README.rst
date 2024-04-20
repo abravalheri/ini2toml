@@ -170,7 +170,7 @@ Once you have ``setup.cfg``, you can use ``ini2toml`` [#setuppy]_.
    declarative metadata goes to ``pyproject.toml``, but you can keep the
    dynamic bits in ``setup.py``.
    Remember: ``setup.py`` is a perfectly valid and non deprecated configuration file;
-   what is deprecated is running it as a CLI tool, i.e. ``python setup.py ...`.
+   what is deprecated is running it as a CLI tool, i.e. ``python setup.py ...``.
 
 
 .. _pyscaffold-notes:
