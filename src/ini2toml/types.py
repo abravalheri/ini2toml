@@ -43,6 +43,8 @@ TomlDumpsFn = IReprCollapseFn[str]
 
 
 class CLIChoice(Protocol):
+    """:meta private:"""
+
     name: str
     help_text: str
 
@@ -67,6 +69,7 @@ class ProfileAugmentation(Protocol):
         explicitly asked for the augmentation, ``False`` if the user explicitly denied
         the augmentation, or ``None`` otherwise.
         """
+        ...
 
 
 class Translator(Protocol):
@@ -74,6 +77,7 @@ class Translator(Protocol):
         """Create and register (and return) a translation :class:`Profile`
         (or return a previously registered one) (see :ref:`core-concepts`).
         """
+        ...
 
     def augment_profiles(
         self,
@@ -88,6 +92,7 @@ class Translator(Protocol):
         strings), ``name`` is taken from ``fn.__name__`` and ``help_text`` is taken from
         ``fn.__doc__`` (docstring).
         """
+        ...
 
 
 Plugin = Callable[[Translator], None]
