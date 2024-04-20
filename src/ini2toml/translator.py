@@ -75,7 +75,7 @@ def _discover_toml_dumps_fn() -> types.TomlDumpsFn:
 
 class LiteTranslator(Translator):
     """Similar to ``Translator``, but instead of trying to figure out ``ini_loads_fn``
-    and ``toml_dumps_fn`` is will always try to the ``lite`` flavour
+    and ``toml_dumps_fn`` is will always try to use the ``lite`` flavour
     (ignoring comments).
     """
 

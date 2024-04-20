@@ -68,7 +68,8 @@ class BaseTranslator(Generic[T]):
     Tip
     ---
 
-    Most of the times the usage of :class:`~ini2toml.translator.Translator` is preferred
+    Most of the times the usage of :class:`~ini2toml.translator.Translator`
+    (or its deterministic variants ``LiteTranslator``, ``FullTranslator``) is preferred
     over :class:`~ini2toml.base_translator.BaseTranslator` (unless you are vendoring
     ``ini2toml`` and wants to reduce the number of files included in your project).
     """
