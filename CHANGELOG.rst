@@ -10,7 +10,9 @@ Development Version
 * ``setuptools`` plugin:
   * Fix ``ValueError`` when ``setup.cfg`` contains ``[options.packages.find]``
     but also lists ``[options] packages = ...`` explicitly as a list of package
-    names, :issue:`93`
+    names, :issue:`93`.
+* ``pytest`` plugin:
+  * Remove comments when converting ``addopts`` with multi-line values, :issue:`98`.
 
 Version 0.13
 ============
