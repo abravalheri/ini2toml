@@ -58,7 +58,7 @@ Transformation = Union[Callable[[str], Any], Callable[[M], M]]
   For example: transforming ``"2"`` (string) into ``2`` (integer).
 - The second one tries to preserve metadata (such as comments) from the original CFG/INI
   file. This kind of transformation processes a string value into an intermediary
-  representation (e.g. :obj:`Commented`, :obj:`CommentedList`, obj:`CommentedKV`)
+  representation (e.g. :obj:`Commented`, :obj:`CommentedList`, :obj:`CommentedKV`)
   that needs to be properly handled before adding to the TOML document.
 
 In a higher level we can also consider an ensemble of transformations that transform an
