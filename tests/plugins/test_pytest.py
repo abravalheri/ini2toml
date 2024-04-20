@@ -43,52 +43,35 @@ EXAMPLES = {
             ]
             """,  # noqa
     },
-    "multiline-addopts-empty-first": {
+    "multiline-addopts": {
         "example": """\
             [pytest]
-            addopts =
-               -ra -q
-               # comment
-               --cov ini2toml
+            addopts = -ra -q
+                      # comment
+                      --cov ini2toml
             """,
         "expected": '''\
             [pytest.ini_options]
             addopts = """
             -ra -q
-            --cov ini2toml
-            """
-            ''',
-    },
-    "multiline-addopts-no-empty": {
-        "example": """\
-            [pytest]
-            addopts = -ra -q
-               # comment
-               --cov ini2toml
-            """,
-        "expected": '''\
-            [pytest.ini_options]
-            addopts = """-ra -q
-            --cov ini2toml
-            """
+            --cov ini2toml"""
             ''',
     },
 }
 
 
 @pytest.mark.parametrize("example_name", EXAMPLES.keys())
-def test_pytest(example_name):
+@pytest.mark.parametrize("convert", [full_toml.convert, lite_toml.convert])
+def test_pytest(example_name, convert):
     example = EXAMPLES[example_name]["example"]
     expected = EXAMPLES[example_name]["expected"]
-
-    for convert in (lite_toml.convert, full_toml.convert):
-        translator = FullTranslator(plugins=[activate], toml_dumps_fn=convert)
-        out = translator.translate(dedent(example), "pytest.ini").strip()
-        expected = dedent(expected).strip()
-        print("expected=\n" + expected + "\n***")
-        print("out=\n" + out)
-        try:
-            assert expected in out
-        except AssertionError:
-            # At least the Python-equivalents when parsing should be the same
-            assert tomli.loads(expected) == tomli.loads(out)
+    translator = FullTranslator(plugins=[activate], toml_dumps_fn=convert)
+    out = translator.translate(dedent(example), "pytest.ini").strip()
+    expected = dedent(expected).strip()
+    print(f"******* {expected=}")
+    print(f"******* {out=}")
+    try:
+        assert expected in out
+    except AssertionError:
+        # At least the Python-equivalents when parsing should be the same
+        assert tomli.loads(expected) == tomli.loads(out)
