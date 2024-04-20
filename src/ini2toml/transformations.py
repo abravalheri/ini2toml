@@ -161,11 +161,11 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
         return Commented(coerce_fn(value))
 
     if any(value.startswith(p) for p in comment_prefixes):
-        return Commented(comment=_strip_comment(value, comment_prefixes))
+        return Commented(comment=_strip_prefix(value, comment_prefixes))
 
     prefix = prefixes[0]  # We can only analyse one...
     value, _, cmt = value.partition(prefix)
-    return Commented(coerce_fn(value.strip()), _strip_comment(cmt, comment_prefixes))
+    return Commented(coerce_fn(value.strip()), _strip_prefix(cmt, comment_prefixes))
 
 
 def split_scalar(value: str, *, comment_prefixes=CP) -> Commented[Scalar]:
@@ -357,10 +357,44 @@ def pipe(*fns):
     return lambda x: reduce(apply, fns, x)
 
 
+def remove_comments(text: str, comment_mark="#") -> str:
+    r"""
+    >>> remove_comments("\nhello\n#comment\nworld\n")
+    '\nhello\nworld\n'
+    >>> remove_comments("\n  hello\n\nworld\n")
+    '\n  hello\n\nworld\n'
+    >>> remove_comments("\nhello\n  \nworld\n")
+    '\nhello\n  \nworld\n'
+    """
+    lines = (_line_remove_comment(x, comment_mark) for x in text.splitlines())
+    suffix = "\n" if text.strip(" ").endswith("\n") else ""
+    return "\n".join(x for x in lines if x is not None) + suffix
+
+
 # ---- Private Helpers ----
 
 
-def _strip_comment(msg: Optional[str], prefixes: Sequence[str] = CP) -> Optional[str]:
+def _line_remove_comment(line: str, comment_mark="#") -> Optional[str]:
+    """
+    >>> print(_line_remove_comment("   # hello world"))
+    None
+    >>> _line_remove_comment("   abc # hello world")
+    '   abc'
+    >>> _line_remove_comment("   ")
+    '   '
+    >>> _line_remove_comment("")
+    ''
+    """
+    if comment_mark not in line:
+        # Keep empty lines intentionally added by the user
+        return line
+    if line.strip().startswith(comment_mark):
+        # Remove empty lines that were just inserted as a replacement for comments
+        return None
+    return line.partition(comment_mark)[0].rstrip()
+
+
+def _strip_prefix(msg: Optional[str], prefixes: Sequence[str] = CP) -> Optional[str]:
     if not msg:
         return None
     return remove_prefixes(msg, prefixes)
