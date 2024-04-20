@@ -322,6 +322,11 @@ def _string(obj: str) -> String:
         # so let's add it, since it is better for reading
         obj = "\n" + obj
 
+    if multiline and not obj.endswith("\n"):
+        # ConfigParser/ConfigUpdater will automatically strip newline at the end
+        # so let's add it, since it is better for reading
+        obj = obj + "\n"
+
     try:
         return string(obj, literal=literal, multiline=multiline)
     except ValueError:
