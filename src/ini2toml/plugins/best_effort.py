@@ -7,8 +7,8 @@ from ..types import HiddenKey, IntermediateRepr, Translator
 
 M = TypeVar("M", bound=IntermediateRepr)
 
-SECTION_SPLITTER = re.compile(r"\.|:|\\")
-KEY_SEP = "="
+_SECTION_SPLITTER = re.compile(r"\.|:|\\")
+_KEY_SEP = "="
 
 
 def activate(translator: Translator):
@@ -23,12 +23,12 @@ class BestEffort:
 
     def __init__(
         self,
-        key_sep=KEY_SEP,
-        section_splitter=SECTION_SPLITTER,
+        key_sep=_KEY_SEP,
+        section_splitter=_SECTION_SPLITTER,
     ):
         self.key_sep = key_sep
         self.section_splitter = section_splitter
-        self.split_dict = partial(split_kv_pairs, key_sep=KEY_SEP)
+        self.split_dict = partial(split_kv_pairs, key_sep=key_sep)
 
     def process_values(self, doc: M) -> M:
         doc_items = list(doc.items())

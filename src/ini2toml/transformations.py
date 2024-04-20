@@ -1,6 +1,11 @@
 """
 Reusable value and type casting transformations
 
+This module is stable  on a "best effort"-basis, and small backwards incompatibilities
+can be introduced in "minor"/"patch" version bumps (it will not be considered a
+regression automatically).
+While it can be used by plugin writers, it is not intended for general public use.
+
 .. testsetup:: *
 
    # workaround for missing import in sphinx-doctest
@@ -68,15 +73,18 @@ TF = TypeVar("TF", bound=Transformation)
 
 
 def noop(x: T) -> T:
+    """Return the value unchanged"""
     return x
 
 
 def is_true(value: str) -> bool:
+    """``value in ("true", "1", "yes", "on")``"""
     value = value.lower()
     return value in ("true", "1", "yes", "on")
 
 
 def is_false(value: str) -> bool:
+    """``value in ("false", "0", "no", "off", "none", "null", "nil")``"""
     value = value.lower()
     return value in ("false", "0", "no", "off", "none", "null", "nil")
 
@@ -87,6 +95,7 @@ def is_float(value: str) -> bool:
 
 
 def coerce_bool(value: str) -> bool:
+    """Convert the value based on :func:`~.is_true` and :func:`~.is_false`."""
     if is_true(value):
         return True
     if is_false(value):
@@ -158,6 +167,7 @@ def split_comment(
 
 
 def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
+    """Split a "comment suffix" from the value."""
     if not isinstance(value, str):
         return value
     value = value.strip()
@@ -176,6 +186,7 @@ def split_comment(value, coerce_fn=noop, comment_prefixes=CP):
 
 
 def split_scalar(value: str, *, comment_prefixes=CP) -> Commented[Scalar]:
+    """Combination of :func:`~.split_comment` and :func:`~.coerce_scalar`."""
     return split_comment(value, coerce_scalar, comment_prefixes)
 
 
