@@ -17,6 +17,9 @@ Version 0.14
 
   * Remove comments when converting ``addopts`` with multi-line values, :issue:`98`.
 
+* Remove ``ini2toml.api.{errors,types,transformations}`` as they are redundant with
+  ``ini2toml.{errors,types,transformations}``.
+
 Version 0.13
 ============
 
