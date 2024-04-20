@@ -1,13 +1,16 @@
 # https://docs.pytest.org/en/latest/reference/reference.html#configuration-options
 # https://docs.pytest.org/en/latest/reference/customize.html#config-file-formats
+import logging
 from collections.abc import MutableMapping
 from functools import partial
-from typing import TypeVar
+from typing import TypeVar, Union
 
-from ..transformations import coerce_scalar, split_list
-from ..types import IntermediateRepr, Translator
+from ..transformations import coerce_scalar, remove_comments, split_comment, split_list
+from ..types import Commented, IntermediateRepr, Translator
 
 R = TypeVar("R", bound=IntermediateRepr)
+
+_logger = logging.getLogger(__name__)
 
 split_spaces = partial(split_list, sep=" ")
 split_lines = partial(split_list, sep="\n")
@@ -63,5 +66,27 @@ class Pytest:
                 section[field] = split_lines(section[field])
             elif field in self.SPACE_SEPARATED_LIST_VALUES:
                 section[field] = split_spaces(section[field])
+            elif hasattr(self, f"_process_{field}"):
+                section[field] = getattr(self, f"_process_{field}")(section[field])
             else:
                 section[field] = coerce_scalar(section[field])
+
+    def _process_addopts(self, content: str) -> Union[Commented[str], str]:
+        # pytest-dev/pytest#12228: pytest maintainers recommend addopts as string.
+        # However, it cannot handle embedded comments, so we have to strip them.
+
+        if "\n" not in content:
+            # It is easy to handle inline comments for a single line.
+            return split_comment(content)
+
+        if "#" not in content:
+            return content
+
+        msg = (
+            "Stripping comments from `tool.pytest.ini_options.addopts`.\n"
+            "This field is recommended to be a string, however it cannot "
+            "contain embedded comments (ref: pytest-dev/pytest#12228)."
+        )
+        _logger.warning(msg)
+
+        return remove_comments(content)

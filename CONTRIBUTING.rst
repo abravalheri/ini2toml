@@ -77,7 +77,7 @@ Code Contributions
 ==================
 
 Understanding how the project works
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 If you have a change in mind, please have a look in our :doc:`/dev-guide`.
 It explains the main aspects of the project and provide a brief overview on how
@@ -239,7 +239,6 @@ package:
 
 Maintainer tasks
 ================
-
 
 Releases
 --------

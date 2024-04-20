@@ -318,8 +318,9 @@ def _string(obj: str) -> String:
     literal = '"' in obj or "\\" in single_line
 
     if multiline and not obj.startswith("\n"):
-        # TOML will automatically strip an starting newline
-        # so let's add it, since it is better for reading
+        # TOML feature: during parsing a starting newline character in a multi-line
+        # string will be stripped away.
+        # So we are free to add it, since it is better for reading
         obj = "\n" + obj
 
     try:
