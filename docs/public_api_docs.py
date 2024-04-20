@@ -5,6 +5,13 @@ TOC_TEMPLATE = """
 Module Reference
 ================
 
+The public API of ``ini2toml`` is mainly composed by ``ini2toml.api``.
+Users may also find useful to import ``ini2toml.errors`` and
+``ini2toml.types`` when handling exceptions or specifying type hints.
+
+Plugin developers might try to use ``ini2toml.transformations``,
+but they should take the stability of that module with a grain of salt...
+
 .. toctree::
    :glob:
    :maxdepth: 2
