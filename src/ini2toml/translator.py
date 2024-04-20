@@ -24,6 +24,8 @@ class Translator(BaseTranslator[str]):
     while ``BaseTranslator`` requires the user to explicitly set these parameters.
 
     For most of the users ``Translator`` is recommended over ``BaseTranslator``.
+    Most of the times ``Translator`` (or its deterministic variants ``LiteTranslator``,
+    ``FullTranslator``) is recommended over ``BaseTranslator``.
 
     See :class:`~ini2toml.base_translator.BaseTranslator` for a description of the
     instantiation parameters.
@@ -110,7 +112,7 @@ class LiteTranslator(Translator):
 
 class FullTranslator(Translator):
     """Similar to ``Translator``, but instead of trying to figure out ``ini_loads_fn``
-    and ``toml_dumps_fn`` is will always try to use the ``full`` version
+    and ``toml_dumps_fn`` is will always try to use the ``full`` flavour
     (best effort to maintain comments).
     """
 
