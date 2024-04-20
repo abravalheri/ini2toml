@@ -68,8 +68,8 @@ def test_pytest(example_name, convert):
     translator = FullTranslator(plugins=[activate], toml_dumps_fn=convert)
     out = translator.translate(dedent(example), "pytest.ini").strip()
     expected = dedent(expected).strip()
-    print(f"******* {expected=}")
-    print(f"******* {out=}")
+    print("expected=\n" + expected + "\n***")
+    print("out=\n" + out)
     try:
         assert expected in out
     except AssertionError:
