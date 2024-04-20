@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Development Version
-===================
+Version 0.14
+============
 
 * Introduce ``LiteTranslator`` and ``FullTranslator`` as
   convenience classes for more deterministic behaviour, :pr:`95`.
