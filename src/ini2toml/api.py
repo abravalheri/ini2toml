@@ -13,13 +13,11 @@ but instead act as :class:`protocols <typing.Protocol>` (i.e. abstract descripti
 for checking `structural polymorphism`_ during static analysis).
 These should be preferred when writing type hints and signatures.
 
-Plugin authors can also rely on the functions exported by
-:mod:`~ini2toml.transformations`.
+Plugin authors can also use functions exported by :mod:`~ini2toml.transformations`.
 
 .. _structural polymorphism: https://www.python.org/dev/peps/pep-0544/
 """
 
-from . import errors, transformations, types
 from .base_translator import BaseTranslator
 from .translator import FullTranslator, LiteTranslator, Translator
 
@@ -28,7 +26,4 @@ __all__ = [
     "FullTranslator",
     "LiteTranslator",
     "Translator",
-    "errors",
-    "types",
-    "transformations",
 ]

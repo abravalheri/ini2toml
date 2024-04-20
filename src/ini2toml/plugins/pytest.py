@@ -12,8 +12,8 @@ R = TypeVar("R", bound=IntermediateRepr)
 
 _logger = logging.getLogger(__name__)
 
-split_spaces = partial(split_list, sep=" ")
-split_lines = partial(split_list, sep="\n")
+_split_spaces = partial(split_list, sep=" ")
+_split_lines = partial(split_list, sep="\n")
 # ^ most of the list values in pytest use whitespace separators,
 #   but markers/filterwarnings are a special case.
 
@@ -63,9 +63,9 @@ class Pytest:
             if field in self.DONT_TOUCH:
                 continue
             if field in self.LINE_SEPARATED_LIST_VALUES:
-                section[field] = split_lines(section[field])
+                section[field] = _split_lines(section[field])
             elif field in self.SPACE_SEPARATED_LIST_VALUES:
-                section[field] = split_spaces(section[field])
+                section[field] = _split_spaces(section[field])
             elif hasattr(self, f"_process_{field}"):
                 section[field] = getattr(self, f"_process_{field}")(section[field])
             else:

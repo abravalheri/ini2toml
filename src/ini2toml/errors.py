@@ -15,6 +15,7 @@ class UndefinedProfile(ValueError):
 
     @classmethod
     def check(cls, name: str, available: List[str]):
+        """:meta private:"""
         if name not in available:
             raise cls(name, available)
 
@@ -37,6 +38,7 @@ class AlreadyRegisteredAugmentation(ValueError):
     def check(
         cls, name: str, fn: Callable, registry: Mapping[str, types.ProfileAugmentation]
     ):
+        """:meta private:"""
         if name in registry:
             raise cls(name, fn, registry[name].fn)
 
@@ -63,7 +65,7 @@ class InvalidTOMLKey(ValueError):
 
 
 class InvalidCfgBlock(ValueError):  # pragma: no cover -- not supposed to happen
-    """Something is wrong with the provided CFG AST, the given block is not valid."""
+    """Something is wrong with the provided ``.ini/.cfg`` AST"""
 
     def __init__(self, block):
         super().__init__(f"{block.__class__}: {block}", {"block_object": block})
