@@ -116,11 +116,14 @@ well known limitations:
 * ``ini2toml`` uses `ConfigParser`_ + `tomli-w`_ for implementing the *"lite"* flavour
   and `ConfigUpdater`_ + `tomlkit`_ for implementing the *"full"* flavour.
   Therefore it inherits the limitations from those libraries (please check
-  their documentation for more information).
+  their documentation for more information). For example:
 
-  * `ConfigUpdater`_, in particular, will have trouble to parse
-     interpolations and the related escaping sequence (``%%``)
-     (in this respect, it behaves more similarly to ``RawConfigParser`` than ``ConfigParser``).
+  * `ConfigUpdater`_, will have trouble to parse interpolations and the related
+    escaping sequence (``%%``) (in this respect, it behaves more similarly to
+    ``RawConfigParser`` than ``ConfigParser``).
+
+  * `tomli-w`_ is not very flexible regarding formatting and will have trouble
+    with multi-line strings.
 
 * ``ini2toml`` *expects the input to be valid* and will not perform extensive
   checks on the provided document. If something in the output is not working as you would
