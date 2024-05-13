@@ -23,6 +23,8 @@ try:
 except ImportError:  # pragma: no cover
     from setuptools.extern.packaging.requirements import Requirement  # type: ignore
 
+from distutils import command as distutils_commands
+
 from ..transformations import (
     apply,
     coerce_bool,
@@ -37,11 +39,6 @@ from ..types import Commented, CommentedKV, CommentedList, CommentKey, HiddenKey
 from ..types import IntermediateRepr as IR
 from ..types import Transformation, Translator, WhitespaceKey
 from .best_effort import BestEffort
-
-try:
-    from setuptools._distutils import command as distutils_commands
-except ImportError:  # pragma: no cover
-    from distutils import command as distutils_commands
 
 R = TypeVar("R", bound=IR)
 
