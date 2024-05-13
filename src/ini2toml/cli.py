@@ -84,7 +84,7 @@ META: Dict[str, dict] = {
 }
 
 try:
-    from pyproject_fmt import Config, format_pyproject
+    import pyproject_fmt  # noqa
 
     META["auto_format"] = dict(
         flags=("-F", "--auto-format"),
@@ -95,6 +95,8 @@ try:
 
     def apply_auto_formatting(text: str) -> str:
         try:
+            from pyproject_fmt import Config, format_pyproject
+
             return format_pyproject(Config(Path("pyproject.toml"), text))
         except Exception as ex:  # pragma: no cover
             _logger.debug(f"pyproject-fmt failed: {ex}", exc_info=True)
