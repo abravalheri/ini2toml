@@ -1,9 +1,106 @@
 [build-system]
-# AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5", "wheel"]
+requires = ["setuptools>=61.2", "setuptools_scm[toml]>=5"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "ini2toml"
+description = "Automatically conversion of .ini/.cfg files to TOML equivalents"
+authors = [{name = "Anderson Bravalheri", email = "andersonbravalheri@gmail.com"}]
+readme ="README.rst"
+license = {text = "MPL-2.0"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+]
+dependencies = [
+    "packaging>=20.7",
+    "setuptools>=60",  # local setuptools._distutils is the default
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/abravalheri/ini2toml/"
+Documentation = "https://ini2toml.readthedocs.io/"
+Source = "https://github.com/abravalheri/ini2toml"
+Tracker = "https://github.com/abravalheri/ini2toml/issues"
+Changelog = "https://ini2toml.readthedocs.io/en/latest/changelog.html"
+Download = "https://pypi.org/project/ini2toml/#files"
+
+[project.optional-dependencies]
+full = [
+    'importlib-metadata; python_version<"3.8"',
+    "configupdater>=3.0.1,<4",
+    "tomlkit>=0.10.0,<2",
+]
+lite = [
+    'importlib-metadata; python_version<"3.8"',
+    "tomli-w>=0.4.0,<2",
+]
+all = [
+    "configupdater>=3.0.1,<4",
+    "tomlkit>=0.10.0,<2",
+    "tomli-w>=0.4.0,<2",
+]
+experimental = [
+    'pyproject-fmt>=0.4.0,<2; python_version>="3.7"'
+]
+testing = [
+    "isort",
+    "setuptools",
+    "tomli",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest-randomly",
+    "validate-pyproject>=0.6,<2",
+]
+
+[project.scripts]
+ini2toml = "ini2toml.cli:run"
+
+[project.entry-points."ini2toml.processing"]
+setuptools_pep621 = "ini2toml.plugins.setuptools_pep621:activate"
+best_effort = "ini2toml.plugins.best_effort:activate"
+isort = "ini2toml.plugins.isort:activate"
+coverage = "ini2toml.plugins.coverage:activate"
+pytest = "ini2toml.plugins.pytest:activate"
+mypy = "ini2toml.plugins.mypy:activate"
+independent_tasks = "ini2toml.plugins.profile_independent_tasks:activate"
+toml_incompatibilities = "ini2toml.plugins.toml_incompatibilities:activate"
+
 [tool.setuptools_scm]
-# For smarter version schemes and other configuration options,
-# check out https://github.com/pypa/setuptools_scm
 version_scheme = "no-guess-dev"
+
+[tool.pytest.ini_options]
+addopts = """
+    --cov ini2toml
+    --cov-report term-missing
+    --doctest-modules
+    -vv
+"""
+norecursedirs = [
+    "dist",
+    "build",
+    ".tox",
+]
+testpaths = ["src", "tests"]
+# Use pytest markers to select/deselect specific tests
+# markers =
+# slow: mark tests as slow (deselect with '-m "not slow"')
+# system: mark end-to-end system tests
+
+[tool.codespell]
+skip = "tests/examples/*"
+
+[mypy]
+pretty = true
+show_error_codes = true
+show_error_context = true
+show_traceback = true
+ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+# Add here plugins
+# plugins = mypy_django_plugin.main, returns.contrib.mypy.returns_plugin
