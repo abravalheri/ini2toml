@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version 0.15
+============
+
+* Due to the change in API for ``pyproject-fmt`` introduce a dependency cap.
+
 Version 0.14
 ============
 
