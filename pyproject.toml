@@ -29,12 +29,10 @@ Download = "https://pypi.org/project/ini2toml/#files"
 
 [project.optional-dependencies]
 full = [
-    'importlib-metadata; python_version<"3.8"',
     "configupdater>=3.0.1,<4",
     "tomlkit>=0.10.0,<2",
 ]
 lite = [
-    'importlib-metadata; python_version<"3.8"',
     "tomli-w>=0.4.0,<2",
 ]
 all = [
@@ -43,7 +41,7 @@ all = [
     "tomli-w>=0.4.0,<2",
 ]
 experimental = [
-    'pyproject-fmt>=0.4.0,<2; python_version>="3.7"'
+    "pyproject-fmt>=0.4.0,<2"
 ]
 testing = [
     "isort",

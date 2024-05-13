@@ -2,7 +2,6 @@
 # published under the MIT license
 # The original PyScaffold license can be found in 'tests/examples/pyscaffold'
 
-import sys
 from textwrap import dedent
 from typing import Any, Callable, Iterable, List, Optional, cast
 
@@ -12,11 +11,7 @@ from ..types import Plugin
 ENTRYPOINT_GROUP = "ini2toml.processing"
 
 try:
-    if sys.version_info[:2] >= (3, 8):  # pragma: no cover
-        # TODO: Import directly (no conditional) when `python_requires = >= 3.8`
-        from importlib.metadata import EntryPoint, entry_points
-    else:  # pragma: no cover
-        from importlib_metadata import EntryPoint, entry_points
+    from importlib.metadata import EntryPoint, entry_points
 
     def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
         """Produces a generator yielding an EntryPoint object for each plugin registered
