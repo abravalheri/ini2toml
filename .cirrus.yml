@@ -86,21 +86,19 @@ check_task:
 
 linux_task:
   matrix:
-    - name: test (Linux - 3.6)
-      container: {image: "python:3.6-bullseye"}
-      allow_failures: true  # EoL
-    - name: test (Linux - 3.7)
-      container: {image: "python:3.7-bullseye"}
     - name: test (Linux - 3.8)
-      container: {image: "python:3.8-bullseye"}
+      container: {image: "python:3.8-bookworm"}
     - name: test (Linux - 3.9)
-      container: {image: "python:3.9-bullseye"}
+      container: {image: "python:3.9-bookworm"}
     - name: test (Linux - 3.10)
-      container: {image: "python:3.10-bullseye"}
+      container: {image: "python:3.10-bookworm"}
     - name: test (Linux - 3.11)
-      container: {image: "python:3.11-bullseye"}
+      container: {image: "python:3.11-bookworm"}
     - name: test (Linux - 3.12)
-      container: {image: "python:3.12-bullseye"}
+      container: {image: "python:3.12-bookworm"}
+    - name: test (Linux - 3.6)
+      container: {image: "python:3.13-rc-bookworm"}
+      allow_failures: true  # RC
   install_script:
     - python -m pip install --upgrade pip tox pipx
   <<: *test-template
