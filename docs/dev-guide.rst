@@ -374,9 +374,6 @@ Please notice plugins are activated in a specific order, which can interfere
 with the order that the processors run. They are sorted using Python's built-in
 ``sorted`` function.
 
-When writing your own plugin, please have a look on `our library of helper
-functions`_ that implement common operations.
-
 
 .. |basename| replace:: ``basename``
 .. |ini_cfg| replace:: ``.ini/.cfg``
@@ -390,7 +387,6 @@ functions`_ that implement common operations.
 .. _entry-point: https://setuptools.pypa.io/en/stable/userguide/entry_point.html#entry-points
 .. _idempotent: https://en.wikipedia.org/wiki/Idempotence#Computer_science_meaning
 .. _our docs: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
-.. _our library of helper functions: https://ini2toml.readthedocs.io/en/stable/api/ini2toml.html
 .. _PyPI: https://pypi.org
 .. _Python package: https://packaging.python.org/
 .. _TOML: https://toml.io/en/

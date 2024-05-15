@@ -8,7 +8,7 @@ try:
     from tomli_w import dumps
 except ImportError:  # pragma: no cover
     # Let's try another API-compatible popular library as a last hope
-    from toml import dumps  # type: ignore[import-untyped]
+    from toml import dumps  # type: ignore[import-untyped,no-redef]
 
 from ..types import IntermediateRepr
 from . import plain_builtins
