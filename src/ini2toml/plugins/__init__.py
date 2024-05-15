@@ -2,6 +2,7 @@
 # published under the MIT license
 # The original PyScaffold license can be found in 'tests/examples/pyscaffold'
 
+from importlib.metadata import EntryPoint, entry_points
 from textwrap import dedent
 from typing import Any, Callable, Iterable, List, Optional, cast
 
@@ -10,36 +11,28 @@ from ..types import Plugin
 
 ENTRYPOINT_GROUP = "ini2toml.processing"
 
-try:
-    from importlib.metadata import EntryPoint, entry_points
 
-    def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
-        """Produces a generator yielding an EntryPoint object for each plugin registered
-        via `setuptools`_ entry point mechanism.
+def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
+    """Produces a generator yielding an EntryPoint object for each plugin registered
+    via `setuptools`_ entry point mechanism.
 
-        This method can be used in conjunction with :obj:`load_from_entry_point` to
-        filter the plugins before actually loading them.
+    This method can be used in conjunction with :obj:`load_from_entry_point` to
+    filter the plugins before actually loading them.
 
 
-        .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/entry_point.html
-        """  # noqa
-        entries = entry_points()
-        if hasattr(entries, "select"):
-            # The select method was introduced in importlib_metadata 3.9/3.10
-            # and the previous dict interface was declared deprecated
-            select = cast(Any, getattr(entries, "select"))  # typecheck gymnastic # noqa
-            entries_: Iterable[EntryPoint] = select(group=group)
-        else:
-            # TODO: Once Python 3.10 becomes the oldest version supported, this fallback
-            #       and conditional statement can be removed.
-            entries_ = (plugin for plugin in entries.get(group, []))
-        return sorted(entries_, key=lambda e: e.name)
-
-except ImportError:  # pragma: no cover
-    from pkg_resources import EntryPoint, iter_entry_points  # type: ignore
-
-    def iterate_entry_points(group=ENTRYPOINT_GROUP) -> Iterable[EntryPoint]:
-        return iter_entry_points(group)
+    .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/entry_point.html
+    """  # noqa
+    entries = entry_points()
+    if hasattr(entries, "select"):
+        # The select method was introduced in importlib_metadata 3.9/3.10
+        # and the previous dict interface was declared deprecated
+        select = cast(Any, getattr(entries, "select"))  # typecheck gymnastic # noqa
+        entries_: Iterable[EntryPoint] = select(group=group)
+    else:
+        # TODO: Once Python 3.10 becomes the oldest version supported, this fallback
+        #       and conditional statement can be removed.
+        entries_ = (plugin for plugin in entries.get(group, []))
+    return sorted(entries_, key=lambda e: e.name)
 
 
 def load_from_entry_point(entry_point: EntryPoint) -> Plugin:
