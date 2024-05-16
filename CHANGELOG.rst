@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.16
+============
+
+* Removed experimental auto-formatting feature, :pr:`108`.
+  This includes removing the ``experimental`` extra group for optional dependencies.
+  Users that are interested in auto-formatting the output are suggested to run
+  ``pyproject-fmt`` as an additional step, after ``ini2toml``.
+
 Version 0.15
 ============
 
