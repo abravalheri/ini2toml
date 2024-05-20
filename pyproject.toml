@@ -40,9 +40,6 @@ all = [
     "tomlkit>=0.10.0,<2",
     "tomli-w>=0.4.0,<2",
 ]
-experimental = [
-    "pyproject-fmt>=0.4.0,<2"
-]
 testing = [
     "isort",
     "setuptools",
