@@ -21,7 +21,7 @@ repos:
     args: ['--fix=lf']
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.15.2
+  rev: v3.17.0
   hooks:
   - id: pyupgrade
     args: [--py38-plus]
@@ -48,20 +48,20 @@ repos:
       language_version: python3
 
 - repo: https://github.com/asottile/blacken-docs
-  rev: 1.16.0
+  rev: 1.18.0
   hooks:
   - id: blacken-docs
     additional_dependencies: [black]
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.6
+  rev: v2.3.0
   hooks:
   - id: codespell
     args: [-w]
     additional_dependencies: ["tomli; python_version<'3.11'"]
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 7.0.0
+  rev: 7.1.1
   hooks:
   - id: flake8
     additional_dependencies: [flake8-bugbear>=23.2.13]
