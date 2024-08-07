@@ -88,7 +88,7 @@ testpaths = ["src", "tests"]
 [tool.codespell]
 skip = "tests/examples/*"
 
-[mypy]
+[tool.mypy]
 pretty = true
 show_error_codes = true
 show_error_context = true
