@@ -87,6 +87,7 @@ testpaths = ["src", "tests"]
 
 [tool.codespell]
 skip = "tests/examples/*"
+ignore-words-list = "thirdparty"
 
 [mypy]
 pretty = true
