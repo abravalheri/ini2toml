@@ -89,7 +89,7 @@ testpaths = ["src", "tests"]
 skip = "tests/examples/*"
 ignore-words-list = "thirdparty"
 
-[mypy]
+[tool.mypy]
 pretty = true
 show_error_codes = true
 show_error_context = true
