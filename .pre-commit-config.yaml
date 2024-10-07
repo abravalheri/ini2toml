@@ -2,7 +2,7 @@ exclude: '^docs/conf.py'
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
   - id: trailing-whitespace
     exclude: 'test_(.*)\.py$'
@@ -42,7 +42,7 @@ repos:
   - id: isort
 
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.4.2
+  rev: 24.8.0
   hooks:
     - id: black
       language_version: python3
