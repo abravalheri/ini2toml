@@ -188,7 +188,6 @@ class SetuptoolsPEP621:
             ),
             ("options.packages.find", "include"): split_list_comma,
             ("options.packages.find", "exclude"): split_list_comma,
-            ("options.packages.find", "exclude"): split_list_comma,
         }
         # See also dependent_processing_rules
 
