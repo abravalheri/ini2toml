@@ -92,8 +92,7 @@ linux_task:
     - name: test (Linux - 3.12)
       container: {image: "python:3.12-bookworm"}
     - name: test (Linux - 3.13)
-      container: {image: "python:3.13-rc-bookworm"}
-      allow_failures: true  # RC
+      container: {image: "python:3.13-bookworm"}
   install_script:
     - python -m pip install --upgrade pip tox pipx
   <<: *test-template
