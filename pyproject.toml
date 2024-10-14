@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "packaging>=20.7",
-    "setuptools>=60",  # local setuptools._distutils is the default
+    "setuptools>=64",  # local setuptools._distutils is the default
 ]
 dynamic = ["version"]
 
