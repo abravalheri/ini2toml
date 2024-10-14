@@ -69,21 +69,15 @@ version_scheme = "no-guess-dev"
 
 [tool.pytest.ini_options]
 addopts = """
+    --import-mode importlib
     --cov ini2toml
     --cov-report term-missing
     --doctest-modules
-    -vv
+    --strict-markers
+    --verbose
 """
-norecursedirs = [
-    "dist",
-    "build",
-    ".tox",
-]
+norecursedirs = ["dist", "build", ".*"]
 testpaths = ["src", "tests"]
-# Use pytest markers to select/deselect specific tests
-# markers =
-# slow: mark tests as slow (deselect with '-m "not slow"')
-# system: mark end-to-end system tests
 
 [tool.codespell]
 skip = "tests/examples/*"
