@@ -136,10 +136,11 @@ windows_task:
   env:
     CIRRUS_SHELL: bash
     PATH: /c/Python312:/c/Python312/Scripts:/c/tools:${PATH}
-  install_script:
+  windows_config_script:
     # Activate long file paths to avoid some errors
     - ps: New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
-    - choco install -y --no-progress python3 --version=3.12.6 --params "/NoLockdown" -dv
+  install_script:
+    - choco install -y --no-progress python3 --version=3.12.6 --params "/NoLockdown"
     - choco install -y --no-progress curl
     - pip install --upgrade certifi
     - python -m pip install -U pip tox pipx
