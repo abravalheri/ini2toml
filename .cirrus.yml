@@ -139,7 +139,7 @@ windows_task:
   install_script:
     # Activate long file paths to avoid some errors
     - ps: New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
-    - choco install -y --no-progress python3 --version=3.12.6 --params "/NoLockdown"
+    - choco install -y --no-progress python3 --version=3.12.6 --params "/NoLockdown" -dv
     - choco install -y --no-progress curl
     - pip install --upgrade certifi
     - python -m pip install -U pip tox pipx
