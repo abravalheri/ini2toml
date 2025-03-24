@@ -202,7 +202,7 @@ For details and usage information on PyScaffold see https://pyscaffold.org/.
 .. _pipx: https://pipx.pypa.io/stable/
 .. _project dependency: https://packaging.python.org/tutorials/managing-dependencies/
 .. _plugin: https://ini2toml.readthedocs.io/en/latest/dev-guide.html#plugins
-.. _setup-py-upgrade: https://pypi.org/project/setup-cfg-fmt/
+.. _setup-py-upgrade: https://pypi.org/project/setup-py-upgrade/
 .. _setuptools-py2cfg: https://pypi.org/project/setuptools-py2cfg/
 .. _setuptools' docs: https://setuptools.pypa.io/en/latest/userguide/quickstart.html#setuppy-discouraged
 .. _TOML: https://toml.io/en/
