@@ -6,7 +6,9 @@ on:
     # relevant branches and tags. Other branches can be checked via PRs.
     # branches: [main]
     tags: ['v[0-9]*', '[0-9]+.[0-9]+*']  # Match tags that resemble a version
-  # pull_request:  # Run in every PR
+  pull_request:
+    paths:
+      - '.github/workflows/ci.yml'  # Only runs when the file itself is modified.
   workflow_dispatch:  # Allow manually triggering the workflow
   schedule:
     # Run roughly every 15 days at 00:00 UTC
@@ -25,9 +27,9 @@ jobs:
     outputs:
       wheel-distribution: ${{ steps.wheel-distribution.outputs.path }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with: {fetch-depth: 0}  # deep clone for setuptools-scm
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with: {python-version: "3.10"}
       - name: Run static analysis and format checkers
         run: pipx run --python python3.10 tox -e lint,typecheck
@@ -39,7 +41,7 @@ jobs:
       - name: Store the distribution files for use in other stages
         # `tests` and `publish` will use the same pre-built distributions,
         # so we make sure to release the exact same package that was tested
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-distribution-files
           path: dist/
@@ -58,12 +60,12 @@ jobs:
         - windows-latest
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: Retrieve pre-built distribution files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with: {name: python-distribution-files, path: dist/}
       - name: Run tests
         run: >-
@@ -73,7 +75,7 @@ jobs:
       - name: Generate coverage report
         run: pipx run coverage lcov -o coverage.lcov
       - name: Upload partial coverage report
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           path-to-lcov: coverage.lcov
           github-token: ${{ secrets.github_token }}
@@ -85,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Finalize coverage report
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
@@ -95,11 +97,11 @@ jobs:
     if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with: {python-version: "3.10"}
       - name: Retrieve pre-built distribution files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with: {name: python-distribution-files, path: dist/}
       - name: Publish Package
         env:
