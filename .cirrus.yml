@@ -71,7 +71,7 @@ build_task:
   container: {image: "python:3.11-bullseye"}
   clone_script: *clone
   <<: *task-template
-  install_script: pip install tox
+  install_script: pip install tox tox-uv
   build_script:
     - tox -e clean,lint,typecheck,build
     - tar czf dist.tar.gz dist
@@ -86,16 +86,16 @@ linux_task:
     - name: test (Linux - 3.10)
       container: {image: "python:3.10-bookworm"}
       skip: $BRANCH !=~ "^(main|master)$"
-    - name: test (Linux - 3.11)
-      container: {image: "python:3.11-bookworm"}
-      skip: $BRANCH !=~ "^(main|master)$"
     - name: test (Linux - 3.12)
       container: {image: "python:3.12-bookworm"}
+      skip: $BRANCH !=~ "^(main|master)$"
     - name: test (Linux - 3.13)
-      container: {image: "python:3.13-rc-bookworm"}
+      container: {image: "python:3.13-bookworm"}
+    - name: test (Linux - 3.14)
+      container: {image: "python:3.14-rc-bookworm"}
       allow_failures: true  # RC
   install_script:
-    - python -m pip install --upgrade pip tox pipx
+    - python -m pip install --upgrade pip tox tox-uv pipx
   <<: *test-template
   alias: base-test
 
@@ -120,7 +120,7 @@ macos_task:
 
 freebsd_task:
   name: test (freebsd - 3.11)
-  freebsd_instance: {image_family: freebsd-14-0}
+  freebsd_instance: {image_family: freebsd-14-2}
   install_script:
     - pkg remove -y python lang/python
     - pkg install -y git python311 py311-pip py311-gdbm py311-sqlite3 py311-tox py311-tomli py311-pipx
@@ -142,7 +142,7 @@ windows_task:
     - choco install -y --no-progress python3 --version=3.12.5 --params "/NoLockdown"
     - choco install -y --no-progress curl
     - pip install --upgrade certifi
-    - python -m pip install -U pip tox pipx
+    - python -m pip install -U pip tox tox-uv pipx
   <<: *test-template
   depends_on: [build, base-test]
 
@@ -150,7 +150,7 @@ doctest_task:
   container: {image: "python:3.10-bullseye"}
   depends_on: [build]
   <<: *task-template
-  install_script: pip install tox
+  install_script: pip install tox tox-uv
   download_artifact_script: *download-artifact
   doctest_script: tox --installpkg dist/*.whl -e docs,doctests
   depends_on: [build, base-test]
@@ -170,7 +170,7 @@ linkcheck_task:
   depends_on: [finalize]
   allow_failures: true
   <<: *task-template
-  install_script: pip install tox
+  install_script: pip install tox tox-uv
   download_artifact_script: *download-artifact
   linkcheck_script: tox --installpkg dist/*.whl -e linkcheck -- -q
 
@@ -187,7 +187,7 @@ linkcheck_task:
 #     TWINE_USERNAME: __token__
 #     TWINE_PASSWORD: $PYPI_TOKEN
 #     # See: https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
-#   install_script: pip install tox
+#   install_script: pip install tox tox-uv
 #   download_artifact_script: *download-artifact
 #   publish_script:
 #     - ls dist/*
