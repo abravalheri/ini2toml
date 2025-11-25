@@ -137,7 +137,9 @@ def kebab_case(field: str) -> str:
 
 
 def deprecated(
-    name: str, fn: TF = noop, instead: str = ""  # type: ignore[assignment]
+    name: str,
+    fn: TF = noop,
+    instead: str = "",  # type: ignore[assignment]
 ) -> TF:
     """Wrapper around the ``fn`` transformation to warn user about deprecation."""
     extra = f". Use {instead!r} instead" if instead else ""

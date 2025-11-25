@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "packaging>=20.7",
-    "setuptools>=60",  # local setuptools._distutils is the default
+    "setuptools>=64",  # local setuptools._distutils is the default
 ]
 dynamic = ["version"]
 
@@ -84,6 +84,7 @@ skip = "tests/examples/*"
 ignore-words-list = "thirdparty"
 
 [tool.mypy]
+python_version = "3.8"
 pretty = true
 show_error_codes = true
 show_error_context = true

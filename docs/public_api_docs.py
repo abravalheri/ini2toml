@@ -63,7 +63,7 @@ def iter_public():
 
 def iter_plugins(module_dir: str):
     return (
-        f'ini2toml.plugins.{path.with_suffix("").name}'
+        f"ini2toml.plugins.{path.with_suffix('').name}"
         for path in Path(module_dir, "plugins").iterdir()
         if path.is_file()
         and path.name not in {".", "..", "__init__.py"}
