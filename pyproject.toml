@@ -84,6 +84,7 @@ skip = "tests/examples/*"
 ignore-words-list = "thirdparty"
 
 [tool.mypy]
+python_version = "3.8"
 pretty = true
 show_error_codes = true
 show_error_context = true
