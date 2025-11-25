@@ -228,8 +228,8 @@ by using a :class:`~ini2toml.intermediate_repr.HiddenKey`:
 .. testcode::
 
    ir = IntermediateRepr()
-   ir[CommentKey()] = "comment"  # => represents `# comment`
-   ir[WhitespaceKey()] = ""  # => represents a `"\n"` in the TOML
+   ir[CommentKey()] = "comment"  # => represents ``# comment``
+   ir[WhitespaceKey()] = ""  # => represents a ``"\n"`` in the TOML
 
 .. doctest::
    :hide:
