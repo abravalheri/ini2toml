@@ -205,7 +205,7 @@ def _convert_irepr_to_toml(irepr: IntermediateRepr, out: T) -> T:
             if len(rest) == 1:
                 nested_key = rest[0]
                 collapsed_value = collapse(value)
-                collapsed_str = f"{nested_key} = {dumps(collapsed_value)}"
+                collapsed_str = f"{nested_key} = {collapsed_value.as_string()}"
                 simplified_str = collapsed_str.replace("= {}", "").replace("= []", "")
                 # Force inline table for the simplest cases
                 if (
