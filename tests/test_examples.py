@@ -110,7 +110,7 @@ def test_examples_api_lite(original, expected, validate):
 @pytest.mark.parametrize(("original", "expected"), list(examples()))
 def test_examples_cli(original, expected, capsys):
     cli.run([original])
-    (out, err) = capsys.readouterr()
+    out, err = capsys.readouterr()
 
     # Make sure file ends in a newline (requirement for posix text files)
     assert out.endswith("\n")
