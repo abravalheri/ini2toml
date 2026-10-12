@@ -136,6 +136,5 @@ universal = true
 markers = ["slow"]
 junit_family = "xunit2"
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-env = """
-PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command
+env = """PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command
 PYTHONIOENCODING=utf-8"""

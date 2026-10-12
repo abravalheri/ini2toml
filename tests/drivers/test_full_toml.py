@@ -1,3 +1,6 @@
+import pytest
+import tomli
+
 from ini2toml.drivers import full_toml as lib
 from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
 from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
@@ -66,3 +69,36 @@ example_parsed = IR(
 def test_convert():
     converted = lib.convert(example_parsed)
     assert remove_empty_table_headers(converted) == example_toml.strip()
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "first\nsecond",
+        'first "quoted"\nsecond',
+        "C:\\first\nC:\\second",
+        "first \"'''\nsecond",
+        "first\n\nsecond",
+        "first\n",
+        "single line",
+    ],
+)
+def test_convert_string_roundtrip(value):
+    converted = lib.convert(IR(value=value))
+    assert tomli.loads(converted)["value"] == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "\r\n",
+        "\r\nfirst\r\nsecond",
+        "\r\nfirst\r\n\r\nsecond",
+        '\r\nfirst "quoted"\r\nsecond',
+        "\r\nC:\\first\r\nC:\\second",
+        "\r\nfirst \"'''\r\nsecond",
+    ],
+)
+def test_convert_crlf_string_roundtrip(value):
+    converted = lib.convert(IR(value=value))
+    assert tomli.loads(converted)["value"] == value.replace("\r\n", "\n")

@@ -317,10 +317,12 @@ def _string(obj: str) -> String:
     single_line = "".join(x.strip().rstrip("\\") for x in obj.splitlines())
     literal = '"' in obj or "\\" in single_line
 
-    if multiline and not obj.startswith("\n"):
-        # TOML feature: during parsing a starting newline character in a multi-line
-        # string will be stripped away.
-        # So we are free to add it, since it is better for reading
+    # Preserve leading CRLF: unlike LF, it was padded by this driver before.
+    # Older tomlkit versions still need padding to avoid TOML newline trimming.
+    if (
+        obj.startswith("\r\n")
+        and string("\r\n", multiline=True).as_string() == '"""\r\n"""'
+    ):
         obj = "\n" + obj
 
     try:
