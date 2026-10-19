@@ -119,7 +119,10 @@ def coerce_scalar(value: str) -> Scalar:
     if value.isdecimal():
         return int(value)
     if is_float(value):
-        return float(value)
+        try:
+            return float(value)
+        except ValueError:
+            return value
     if is_true(value):
         return True
     elif is_false(value):

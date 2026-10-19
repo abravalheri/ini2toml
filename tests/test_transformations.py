@@ -8,6 +8,30 @@ from ini2toml.drivers.configupdater import parse as loads
 from ini2toml.drivers.full_toml import convert as dumps
 
 
+@pytest.mark.parametrize("value", ["1__2", "--1", "+-1", "1_", "_1", "1_.2"])
+def test_coerce_scalar_invalid_number(value):
+    assert lib.coerce_scalar(value) == value
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("1", 1),
+        ("1.2", 1.2),
+        ("-1", -1.0),
+        ("1_2", 12.0),
+        ("true", True),
+        ("abc", "abc"),
+        ("1e3", "1e3"),
+        ("1.2.3", "1.2.3"),
+    ],
+)
+def test_coerce_scalar_existing_types(value, expected):
+    result = lib.coerce_scalar(value)
+    assert result == expected
+    assert type(result) is type(expected)
+
+
 def test_coerce_bool():
     for value in ("true", "1", "yes", "on"):
         assert lib.coerce_bool(value) is True

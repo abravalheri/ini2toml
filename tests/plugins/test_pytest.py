@@ -5,7 +5,7 @@ import tomli
 
 from ini2toml.drivers import full_toml, lite_toml
 from ini2toml.plugins.pytest import activate
-from ini2toml.translator import FullTranslator
+from ini2toml.translator import FullTranslator, LiteTranslator
 
 EXAMPLES = {
     "simple": {
@@ -58,6 +58,17 @@ EXAMPLES = {
             ''',
     },
 }
+
+
+@pytest.mark.parametrize("translator_class", [FullTranslator, LiteTranslator])
+@pytest.mark.parametrize("suite_name", ["1__2", "--1", "ordinary-suite"])
+def test_junit_suite_name(translator_class, suite_name):
+    translator = translator_class(plugins=[activate])
+    source = f"[pytest]\njunit_suite_name = {suite_name}\n"
+    output = translator.translate(source, "pytest.ini")
+    assert (
+        tomli.loads(output)["pytest"]["ini_options"]["junit_suite_name"] == suite_name
+    )
 
 
 @pytest.mark.parametrize("example_name", EXAMPLES.keys())
