@@ -5,9 +5,8 @@ from functools import partial
 from typing import List, TypeVar, cast
 
 from ..transformations import coerce_scalar, split_list
-from ..types import IntermediateRepr
+from ..types import IntermediateRepr, Translator
 from ..types import Transformation as T
-from ..types import Translator
 
 M = TypeVar("M", bound=MutableMapping)
 R = TypeVar("R", bound=IntermediateRepr)
