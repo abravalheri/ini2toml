@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ini2toml import cli
+from ini2toml.errors import UndefinedProfile
 from ini2toml.plugins import ErrorLoadingPlugin
 from ini2toml.profile import Profile, ProfileAugmentation
 
@@ -77,6 +78,14 @@ def test_critical_logging_does_nothing_if_no_argv(monkeypatch, caplog):
         with cli.critical_logging():
             raise ValueError
     assert spy.call_args is None
+
+
+def test_undefined_profile_message_lists_available():
+    with pytest.raises(UndefinedProfile) as excinfo:
+        UndefinedProfile.check("nonsense", ["best_effort", "setup.cfg"])
+    message = str(excinfo.value)
+    assert "Available: best_effort, setup.cfg." in message
+    assert not message.rstrip().endswith(")")
 
 
 def test_exceptions2exit():

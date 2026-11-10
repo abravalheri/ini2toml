@@ -11,7 +11,7 @@ class UndefinedProfile(ValueError):
 
     def __init__(self, name: str, available: Sequence[str]):
         msg = self.__class__.__doc__ or ""
-        super().__init__(msg.format(name=name) + f"Available: {', '.join(available)})")
+        super().__init__(msg.format(name=name) + f"Available: {', '.join(available)}.")
 
     @classmethod
     def check(cls, name: str, available: List[str]):
