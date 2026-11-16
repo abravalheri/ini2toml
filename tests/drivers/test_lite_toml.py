@@ -1,7 +1,12 @@
 from ini2toml.drivers import lite_toml as lib
-from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
+from ini2toml.types import (
+    Commented,
+    CommentedKV,
+    CommentedList,
+    CommentKey,
+    WhitespaceKey,
+)
 from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import WhitespaceKey
 
 example_toml = """\
 [section1]

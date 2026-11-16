@@ -1,7 +1,6 @@
 from ini2toml.drivers import configupdater as lib
-from ini2toml.types import CommentKey
+from ini2toml.types import CommentKey, WhitespaceKey
 from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import WhitespaceKey
 
 example_cfg = """\
 [section1]
