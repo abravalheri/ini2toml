@@ -35,9 +35,17 @@ from ..transformations import (
     split_kv_pairs,
     split_list,
 )
-from ..types import Commented, CommentedKV, CommentedList, CommentKey, HiddenKey
+from ..types import (
+    Commented,
+    CommentedKV,
+    CommentedList,
+    CommentKey,
+    HiddenKey,
+    Transformation,
+    Translator,
+    WhitespaceKey,
+)
 from ..types import IntermediateRepr as IR
-from ..types import Transformation, Translator, WhitespaceKey
 from .best_effort import BestEffort
 
 R = TypeVar("R", bound=IR)

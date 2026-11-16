@@ -1,7 +1,12 @@
 from ini2toml.drivers import plain_builtins as lib
-from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
+from ini2toml.types import (
+    Commented,
+    CommentedKV,
+    CommentedList,
+    CommentKey,
+    WhitespaceKey,
+)
 from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import WhitespaceKey
 
 example_output = {
     "section1": {"value": 42},

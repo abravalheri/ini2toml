@@ -1,8 +1,13 @@
 from ini2toml.drivers import full_toml as lib
 from ini2toml.plugins.profile_independent_tasks import remove_empty_table_headers
-from ini2toml.types import Commented, CommentedKV, CommentedList, CommentKey
+from ini2toml.types import (
+    Commented,
+    CommentedKV,
+    CommentedList,
+    CommentKey,
+    WhitespaceKey,
+)
 from ini2toml.types import IntermediateRepr as IR
-from ini2toml.types import WhitespaceKey
 
 example_toml = """\
 [section1]
